@@ -23,8 +23,8 @@
     "@tsparticles/slim": "^3.9.1",
     "drizzle-orm": "^0.45.4",
     "next": "16.4.2",
-    "react": "19.3.0",
-    "react-dom": "19.3.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "server-only": "^0.0.1",
     "sharp": "^0.35.5",
     "zod": "^4.6.7"
