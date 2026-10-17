@@ -52,6 +52,8 @@ One task per day, sized for evenings during classes.
 | Fri Oct 23 | Admin page with profile count, hide profile and freeze signups. "Report this page" link. Test on a budget Android phone on campus wifi | Backend, plus frontend for the admin screen | Hiding a page works from a phone, and a real 4 MB photo uploads |
 | Sat Oct 24 | **Soft launch** to about 10 classmates, invited by name | Both | Ten invites sent |
 
+**Progress, Oct 17:** the app is scaffolded, and the backend for Sunday's task is done early. That covers the schema and migrations, the course seed, and tested services for sign-in rules, profiles, projects, image upload and admin. What is left for the backend this week is Next.js wiring: sign-in, server actions, the upload route, and page refreshes. See [BACKEND.md](./BACKEND.md).
+
 **If behind schedule:** move the soft launch to Oct 31. Do not cut the admin hide switch or the upload limits to make the date.
 
 ## Phase 2: Soft launch to public launch (Oct 24 to Nov 6)
