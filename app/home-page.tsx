@@ -45,7 +45,6 @@ export function HomePage() {
   const onParticleError = useCallback(() => setParticleFailed(true), []);
   const showParticles = environment.ready && !environment.reducedMotion && !particleFailed;
 
-  const published = useMemo(() => listGridProfiles(profiles), [profiles]);
   const visible = useMemo(
     () => listGridProfiles(profiles, courseId),
     [courseId, profiles],
@@ -101,19 +100,12 @@ export function HomePage() {
           onActive={setShowcaseActive}
         />
 
-        <section id="after-showcase" tabIndex={-1} aria-label="Community statistics" className="border-y border-ink/10 bg-paper">
-          <div className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-8 sm:grid-cols-3 sm:px-6">
-            <Stat label="Published pages" value={String(published.length)} />
-            <Stat label="Courses on the filter" value={String(COURSES.length)} />
-            <Stat
-              label="Status"
-              value="Mock"
-              hint="Edits in this tab update the showcase"
-            />
-          </div>
-        </section>
-
-        <section className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
+        <section
+          id="after-showcase"
+          tabIndex={-1}
+          aria-label="Publishing steps"
+          className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6"
+        >
           <p className="font-mono text-[11px] uppercase tracking-wide text-muted">
             /publish
           </p>
@@ -132,24 +124,6 @@ export function HomePage() {
             ))}
           </ol>
         </section>
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-}) {
-  return (
-    <div>
-      <p className="font-mono text-[11px] uppercase tracking-wide text-muted">{label}</p>
-      <p className="mt-2 text-3xl font-medium tracking-tight">{value}</p>
-      {hint ? <p className="mt-1 text-sm text-muted">{hint}</p> : null}
     </div>
   );
 }
