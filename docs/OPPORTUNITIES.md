@@ -35,7 +35,7 @@ Each kind needs a date, so every post can expire:
 - **Events** need a start time.
 - **Competitions** need a deadline or a start time.
 
-**Closing time** is the deadline if there is one, otherwise the end time, otherwise the start time. Dates are Philippine time. A date without a time means the end of that day, 11:59 pm.
+**Closing time** is the deadline if there is one, otherwise the end time, otherwise the end of the start day, so an event with only a start time stays listed through that day. Dates are Philippine time. A date without a time means the end of that day, 11:59 pm.
 
 ## Pages
 
@@ -58,6 +58,8 @@ Each post page carries a "Report a problem with this post" email link, for broke
 - **Link preview:** each post gets a generated 1200x630 card with kind, title, organization and closing date. It uses the same design as student cards.
 
 ## Backend work (JohnCarl-30)
+
+**Status, Oct 17:** steps 1 to 5 are done and tested. The frontend can build against them now. The contract is in [BACKEND.md](./BACKEND.md#opportunities).
 
 1. **Schema.** An `opportunities` table with the fields above, plus `slug`, `is_hidden`, `created_by`, `created_at` and `updated_at`, and a migration.
 2. **Services** in `lib/services/opportunities.ts`:
