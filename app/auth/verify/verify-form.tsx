@@ -13,14 +13,14 @@ export function VerifyForm({ token }: { token: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="h-12 rounded-lg bg-zinc-900 text-base font-medium text-white disabled:opacity-60 dark:bg-white dark:text-zinc-900"
+        className="press h-12 border border-ink bg-ink font-mono text-[11px] uppercase tracking-wide text-white outline-none hover:border-accent hover:bg-accent focus-visible:ring-2 focus-visible:ring-ink disabled:opacity-60"
       >
         {pending ? "Signing in…" : "Continue to PCU Community"}
       </button>
       {state.error && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="rise text-sm text-red-700">
           {state.error}{" "}
-          <Link href="/login" className="underline">
+          <Link href="/login" className="underline underline-offset-4 transition-colors hover:text-ink">
             Get a new link
           </Link>
         </p>

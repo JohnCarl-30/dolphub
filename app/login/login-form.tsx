@@ -10,9 +10,9 @@ export function LoginForm() {
 
   if (state.status === "sent") {
     return (
-      <div role="status" className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+      <div role="status" className="rise border border-ink/10 bg-paper p-4">
         <p className="font-medium">Check your email</p>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mt-1 text-sm leading-6 text-muted">
           We sent a sign-in link to {state.email}. It expires in 15 minutes. If you can&apos;t find it, check
           your spam folder.
         </p>
@@ -22,7 +22,7 @@ export function LoginForm() {
 
   return (
     <form action={action} className="flex flex-col gap-3">
-      <label htmlFor="email" className="text-sm font-medium">
+      <label htmlFor="email" className="font-mono text-[11px] uppercase tracking-wide text-muted">
         PCU email
       </label>
       <input
@@ -34,17 +34,17 @@ export function LoginForm() {
         inputMode="email"
         placeholder="you@pcu.edu.ph"
         defaultValue={state.status === "error" ? state.email : ""}
-        className="h-12 rounded-lg border border-zinc-300 px-3 text-base dark:border-zinc-700 dark:bg-zinc-900"
+        className="h-12 border border-ink/15 bg-white px-3 text-base outline-none transition-colors hover:border-ink/40 focus-visible:border-ink focus-visible:ring-2 focus-visible:ring-ink"
       />
       {state.status === "error" && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="rise text-sm text-red-700">
           {state.message}
         </p>
       )}
       <button
         type="submit"
         disabled={pending}
-        className="h-12 rounded-lg bg-zinc-900 text-base font-medium text-white disabled:opacity-60 dark:bg-white dark:text-zinc-900"
+        className="press h-12 border border-ink bg-ink font-mono text-[11px] uppercase tracking-wide text-white outline-none hover:border-accent hover:bg-accent focus-visible:ring-2 focus-visible:ring-ink disabled:opacity-60"
       >
         {pending ? "Sending…" : "Email me a sign-in link"}
       </button>

@@ -29,7 +29,20 @@ Do not invent a second palette.
 - Sans: Space Grotesk (`font-sans`) for body and titles.
 - Mono: Geist Mono (`font-mono`) for index, filters, slash labels, and chrome.
 - Focus: `focus-visible:ring-2 focus-visible:ring-ink`.
+- Header links carry `aria-current="page"` through `components/nav-link.tsx`.
+- Form hints go in `aria-describedby`, never inside the label.
 - No `dark:` and no zinc palette on new or restyled screens.
+
+## Motion
+
+Tokens live in `app/globals.css` under `@theme`. Do not add a motion library; CSS runs off the main thread while the particle chunk loads.
+
+- Easing: `ease-out` is `cubic-bezier(0.23, 1, 0.32, 1)` for anything entering; `ease-in-out` is `cubic-bezier(0.77, 0, 0.175, 1)` for movement on screen; plain `ease` for color and border changes. Never `ease-in`.
+- Press: put `press` on every button, link-button and card. It scales to 0.97 over 160ms while held and snaps back on release.
+- Entrance: put `rise` on content that just arrived (a new filter result, a saved notice, a new project row). It rises 16px over 400ms; stagger siblings with `--i` (50ms apart, cap at 8).
+- Hover and color changes use `transition-colors` with the 160ms default.
+- Reduced motion keeps the fade and the color change and drops every transform. Both utilities already do this.
+- Durations stay under 300ms for controls. Nothing animates on a keyboard shortcut.
 
 ## Layout
 
