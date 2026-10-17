@@ -66,7 +66,6 @@ One task per day, sized for evenings during classes.
 - **Build opportunities.** Internships, events, competitions and programs, posted by admins and linking out. The plan and schedule are in [OPPORTUNITIES.md](./OPPORTUNITIES.md).
 
 - **Fix what testers hit.** Watch the first 10 students sign up and upload. Fix every blocker they report.
-- **Talk to PCU.** Meet student affairs or a faculty adviser about using the PCU name. Do this before any public post.
 - **Remove the single point of failure.** Add a second owner on Vercel, Cloudflare, Neon, Resend and the domain. Write a one-page runbook in this repo.
 - **Prepare the launch post.** Seed the grid with the testers' pages so it is not empty on day one.
 
@@ -78,7 +77,6 @@ All must be true before Nov 7:
 - [ ] Upload works on a budget Android phone, and failed uploads show a retry
 - [ ] At least 5 real profiles with a project are live
 - [ ] Admin hide switch and signup freeze work from a phone
-- [ ] PCU has been told about the project, and has not objected
 - [ ] A second person can deploy and use the hide switch
 - [ ] At least 10 open opportunities across at least 3 kinds, every link checked
 
@@ -132,7 +130,7 @@ There are two servers, built in this order. Both are Next.js route handlers usin
 - **Student text is untrusted.** Taglines and descriptions reach other people's AI assistants. Return them as plain, length-capped data fields, never as instructions.
 - **Rate limited.** Use a per-IP limit, because every call counts against Vercel's free tier.
 
-**Wait for these first:** PCU has approved the project, there are at least 50 profiles, and the opt-in toggle exists. An AI directory of four profiles helps nobody.
+**Wait for these first:** at least 50 profiles, and the opt-in toggle exists. An AI directory of four profiles helps nobody.
 
 ## Backlog after launch
 
@@ -154,7 +152,6 @@ Built in this order once the public launch is stable:
 
 Tracked in detail in [ARCHITECTURE.md](./ARCHITECTURE.md#open-items-and-risks).
 
-1. Not yet sanctioned by PCU
-2. Email deliverability to PCU untested
-3. Unknown whether PCU mailboxes cover every student and survive graduation
-4. Only one person holds every account. fnzh-i can be the second owner
+1. Email deliverability to PCU untested
+2. Unknown whether PCU mailboxes cover every student and survive graduation
+3. Only one person holds every account. fnzh-i can be the second owner

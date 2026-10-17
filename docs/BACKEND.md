@@ -148,7 +148,7 @@ Students sign in with a one-time link emailed through Resend. The link opens a p
 
 | Function | Does |
 |---|---|
-| `requestSignInLink(ctx, sender, settings, email)` | Emails a link to `APP_URL/auth/verify`. Existing users can always ask. New addresses must pass the domain check and open signups. Limits: 3 links per address per 15 minutes, and `DAILY_EMAIL_CAP` per 24 hours |
+| `requestSignInLink(ctx, sender, settings, email, clientIp?)` | Emails a link to `APP_URL/auth/verify`. Existing users can always ask. New addresses must pass the domain check and open signups. Limits: 3 links per address per 15 minutes, `SIGNIN_LINKS_PER_NETWORK_PER_HOUR` per network, and `DAILY_EMAIL_CAP` per 24 hours. Networks are stored only as a keyed hash |
 | `consumeSignInLink(ctx, settings, token)` | Uses the link once, creates the account if needed, and returns a 30-day session token |
 | `getSessionUser(ctx, token)` | The user behind a session token, or null if expired or the account is being deleted |
 | `signOut(ctx, token)` | Ends that session |

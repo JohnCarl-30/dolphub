@@ -52,7 +52,7 @@ The metric is one count query shown on the admin page. No tracking script, no co
 16. **One service layer.** All reads and writes live in plain functions under `lib/services/`. Server actions, API routes and MCP servers are thin wrappers over them, so logic is written once.
 17. **MCP servers, in two stages. Proposed, not yet confirmed.** Both use Vercel's `mcp-handler` in Next.js route handlers and call the service layer. Neither calls a model, so neither adds AI cost.
     - **Admin MCP (by 2026-11-21):** private, bearer-token auth, used from Claude Code. Tools for stats, hiding pages, freezing signups, posting opportunities and deleting accounts. Every write is recorded in `admin_audit_log`. The phone kill switch stays on the admin web page, because claude.ai and the phone apps need OAuth.
-    - **Public directory MCP (January 2027):** read-only, rate-limited, opt-in profiles only. Tools to search students, get one student, and list open opportunities. Student-written text is returned as length-capped data. It waits for PCU approval, 50 profiles, and the opt-in toggle.
+    - **Public directory MCP (January 2027):** read-only, rate-limited, opt-in profiles only. Tools to search students, get one student, and list open opportunities. Student-written text is returned as length-capped data. It waits for 50 profiles and the opt-in toggle.
 18. **Drizzle ORM with Neon's HTTP driver.** Schema lives in `lib/db/schema.ts`, and migrations are generated into `drizzle/`. Tests run the real migrations against PGlite, an in-memory Postgres, so they need no accounts or network.
 19. **Signup domains are configuration.** `PCU_EMAIL_DOMAINS` lists the allowed email domains, matched exactly. The real PCU student email domain still needs confirming.
 20. **Custom magic-link sign-in instead of Auth.js.** The emailed link opens a page with a button, and only the button press uses the link. University mail scanners often open links before the student does, which would use up a link that signs in on open. Links last 15 minutes and work once. Sessions last 30 days in an httpOnly `__Host-session` cookie. Only hashes of links and session tokens are stored.
@@ -106,12 +106,11 @@ Added later: `/api/mcp/admin` for the admin MCP server, and `/api/mcp` for the p
 
 Ordered by danger.
 
-1. **Not sanctioned by PCU.** Talk to student affairs or a faculty adviser before the public launch on 2026-11-07.
-2. **Email deliverability untested.** Sign-in is built, but no real email has reached a PCU inbox yet. Verify `dolphub.tech` in Resend, then send a sign-in link to a PCU address and check inbox versus spam. Resend's 100-per-day cap also limits launch-day signups, and the site stops at `DAILY_EMAIL_CAP`.
-3. **PCU mailbox coverage.** Confirm with PCU IT that every tech student has a mailbox, and whether it survives graduation.
-4. **Bus factor of one.** Add fnzh-i as a second owner on Vercel, Cloudflare, Neon, Resend and the domain, and keep a runbook in this repo.
-5. **Phone upload untested.** Test compression with a real 4 MB photo on a budget Android phone on campus wifi. Test that a backgrounded tab shows a clear retry, not a silent empty slot.
-6. **Handle typos.** Consider allowing one handle change within 24 hours of signup.
-7. **Frontend and backend drift apart.** With two people building in parallel, a changed action signature can break screens silently. Keep action inputs and results typed, list them in `docs/BACKEND.md`, and change them only in a pull request both people see.
-8. **MCP package versions.** `mcp-handler` 2.x needs the v2 MCP SDK packages and Node 20 or newer, and 1.x pairs with `@modelcontextprotocol/sdk` 1.x. Check the README when building, and use SDK 1.26.0 or later on 1.x because of a known security issue in earlier versions.
-9. **Sign-in email abuse.** Anyone can request links for made-up `@pcu.edu.ph` addresses, three per address, and use up the daily email cap. That blocks real sign-ins until the 24-hour window clears, and bounces hurt `dolphub.tech`'s sending reputation. The signup freeze stops links to new addresses. If it happens, add a per-IP limit or a challenge on the sign-in form.
+1. **Email deliverability untested.** Sign-in is built, but no real email has reached a PCU inbox yet. Verify `dolphub.tech` in Resend, then send a sign-in link to a PCU address and check inbox versus spam. Resend's 100-per-day cap also limits launch-day signups, and the site stops at `DAILY_EMAIL_CAP`.
+2. **PCU mailbox coverage.** Confirm with PCU IT that every tech student has a mailbox, and whether it survives graduation.
+3. **Bus factor of one.** Add fnzh-i as a second owner on Vercel, Cloudflare, Neon, Resend and the domain, and keep a runbook in this repo.
+4. **Phone upload untested.** Test compression with a real 4 MB photo on a budget Android phone on campus wifi. Test that a backgrounded tab shows a clear retry, not a silent empty slot.
+5. **Handle typos.** Consider allowing one handle change within 24 hours of signup.
+6. **Frontend and backend drift apart.** With two people building in parallel, a changed action signature can break screens silently. Keep action inputs and results typed, list them in `docs/BACKEND.md`, and change them only in a pull request both people see.
+7. **MCP package versions.** `mcp-handler` 2.x needs the v2 MCP SDK packages and Node 20 or newer, and 1.x pairs with `@modelcontextprotocol/sdk` 1.x. Check the README when building, and use SDK 1.26.0 or later on 1.x because of a known security issue in earlier versions.
+8. **Sign-in email limits.** Sign-in links are limited per address, per network and per day, to stay within Resend's free tier. If the daily limit is reached, sign-in pauses until it clears. Adding a challenge to the sign-in form is the next step if the limits are not enough.
