@@ -6,16 +6,18 @@ test.describe("home", () => {
     await page.goto("/");
     await expect(page.getByRole("tab")).toHaveCount(0);
     const group = page.getByRole("group", { name: "Filter by course" });
-    const all = group.getByRole("button", { name: /^All \[/ });
-    const cs = group.getByRole("button", { name: /^CS \[(\d+)\]/ });
+    const all = group.getByRole("button", { name: /^Everyone/ });
+    const cs = group.getByRole("button", { name: /^CS/ });
     await expect(all).toHaveAttribute("aria-pressed", "true");
     await cs.click();
     await expect(cs).toHaveAttribute("aria-pressed", "true");
     await expect(all).toHaveAttribute("aria-pressed", "false");
-    const expected = Number(/\[(\d+)\]/.exec((await cs.textContent()) ?? "")?.[1]);
+    const expected = Number(await cs.locator("span").innerText());
     await expect(page.locator("[data-showcase-card]")).toHaveCount(expected);
-    await expect(page.getByRole("link", { name: "[ 00 ] Students" })).toHaveAttribute("aria-current", "page");
-    await expect(page.getByRole("link", { name: "[ 01 ] Dashboard" })).not.toHaveAttribute("aria-current", "page");
+    // The text links hide on a phone, so match by destination rather than by role.
+    const nav = page.getByRole("navigation", { name: "Primary" });
+    await expect(nav.locator("a[href='/']")).toHaveAttribute("aria-current", "page");
+    await expect(nav.locator("a[href='/dashboard']").first()).not.toHaveAttribute("aria-current", "page");
   });
 });
 
@@ -67,8 +69,10 @@ test.describe("dashboard", () => {
 
   test("adding a project reveals a fieldset that rises in", async ({ page }) => {
     await page.goto("/dashboard");
+    const add = page.getByRole("button", { name: "Add project" });
+    await expect(add).toBeVisible();
     const before = await page.locator("fieldset").count();
-    await page.getByRole("button", { name: "Add project" }).click();
+    await add.click();
     const fieldsets = page.locator("fieldset");
     await expect(fieldsets).toHaveCount(before + 1);
     await expect(fieldsets.last()).toHaveClass(/rise/);

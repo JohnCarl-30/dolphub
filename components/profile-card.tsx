@@ -3,44 +3,40 @@ import { courseById, type MockProfile } from "@/lib/mock-profiles";
 
 export function ProfileCard({
   profile,
-  index,
   preview = false,
 }: {
   profile: MockProfile;
-  index: number;
+  index?: number;
   preview?: boolean;
 }) {
   const course = courseById(profile.courseId);
-  const number = String(index).padStart(3, "0");
+  const featured = profile.projects[0];
 
   return (
     <Link
       href={`/u/${profile.handle}`}
-      className={`press group flex h-full flex-col border border-ink/10 bg-paper outline-none hover:border-ink focus-visible:ring-2 focus-visible:ring-ink ${preview ? "showcase-card" : ""}`}
+      className={`press group flex h-full flex-col bg-paper outline-none focus-visible:ring-2 focus-visible:ring-ink ${preview ? "showcase-card" : ""}`}
     >
-      <div className="flex items-center justify-between px-4 py-3 font-mono text-[11px] uppercase tracking-wide text-muted">
-        <span>{number}</span>
-        <span>{course?.label}</span>
+      <div className="flex items-baseline justify-between gap-3 px-5 pt-5 text-note">
+        <span className="text-accent transition-colors group-hover:text-ink">/u/{profile.handle}</span>
+        <span className="text-muted">{course?.label}</span>
       </div>
-      <div className="flex aspect-[16/10] items-center justify-center border-y border-ink/10 bg-white text-muted">
-        <span className="font-mono text-[11px] uppercase tracking-wide">Image slot</span>
+      {/* The featured project stands where a photograph will go once students upload one. */}
+      <div className="mx-5 mt-5 flex min-h-32 flex-col justify-end bg-white px-4 py-4">
+        {featured ? (
+          <>
+            <p className="text-note text-muted">Featured project</p>
+            <p className="mt-1 text-xl font-medium leading-tight">{featured.title}</p>
+          </>
+        ) : (
+          <p className="text-note text-muted">No project yet</p>
+        )}
       </div>
-      <div className="flex flex-1 flex-col gap-3 px-4 py-5">
-        <h2 className="text-2xl font-medium tracking-tight">{profile.displayName}</h2>
-        <p className="font-mono text-[11px] uppercase tracking-wide text-muted">
-          {course?.name}
-        </p>
-        <p className="text-sm leading-6 text-muted">{profile.tagline}</p>
-        {preview && profile.projects[0] ? (
-          <div className="border-t border-ink/10 pt-3">
-            <p className="font-mono text-[10px] uppercase tracking-wide text-muted">Featured project</p>
-            <h3 className="mt-1 text-lg font-medium tracking-tight">{profile.projects[0].title}</h3>
-            <p className="mt-1 text-sm leading-6 text-muted">{profile.projects[0].description}</p>
-          </div>
-        ) : null}
-        <p className="mt-auto font-mono text-[11px] uppercase tracking-wide transition-colors group-hover:text-accent">
-          /u/{profile.handle} →
-        </p>
+      <div className="flex flex-1 flex-col gap-2 px-5 pb-6 pt-5">
+        <h3 className="text-2xl font-medium tracking-tight">{profile.displayName}</h3>
+        <p className="text-note text-muted">{course?.name}</p>
+        <p className="text-lede text-ink">{profile.tagline}</p>
+        <p className="mt-auto pt-3 text-note font-medium text-ink">Open the page →</p>
       </div>
     </Link>
   );
@@ -48,13 +44,12 @@ export function ProfileCard({
 
 export function FirstCard() {
   return (
-    <div className="flex min-h-64 flex-col justify-between border border-dashed border-ink/30 bg-paper px-4 py-5">
-      <p className="font-mono text-[11px] uppercase tracking-wide text-muted">000</p>
+    <div className="flex min-h-64 flex-col justify-between bg-paper px-5 py-6">
+      <p className="text-note text-muted">Nobody yet</p>
       <div>
-        <h2 className="text-2xl font-medium tracking-tight">Be the first</h2>
-        <p className="mt-3 max-w-sm text-sm leading-6 text-muted">
-          No published page in this filter yet. Add a project on the dashboard and it shows up
-          here.
+        <h3 className="text-2xl font-medium tracking-tight">Be the first</h3>
+        <p className="mt-3 max-w-sm text-lede text-ink">
+          No published page in this course yet. Add a project on the dashboard and it shows up here.
         </p>
       </div>
     </div>

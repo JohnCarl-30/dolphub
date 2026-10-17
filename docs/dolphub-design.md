@@ -44,16 +44,27 @@ Tokens live in `app/globals.css` under `@theme`. Do not add a motion library; CS
 - Reduced motion keeps the fade and the color change and drops every transform. Both utilities already do this.
 - Durations stay under 300ms for controls. Nothing animates on a keyboard shortcut.
 
+## Home page
+
+The home page follows a drawn art direction ("the sentence is the layout", taste-skill seed 1061191173, kept in `.taste-skill/direction.json` locally). Its rules differ from the inner pages:
+
+- The headline is a two-line sentence at display size, and the word "link" is shown instead of said: a live `/u/handle` slot sits in its place.
+- No monospace labels, no `01 / 02 / 03` numbering, no hairline rules, no shadows at rest. Surfaces are told apart by a tone step (`bg-paper` on white) or a whole field of the accent.
+- Five type steps only: `text-display`, `text-words`, `text-statement`, `text-lede`, `text-note`. Margins come from `px-margin`.
+- The course names at `text-words` are the filter. The chosen one is in ink, the rest in muted.
+- Real pictures of PCU's world (Taft Avenue, Manila) live in `public/world/` with their licences in `credits.json`. Every one is credited on the page. They show the world around the students, never the students themselves.
+- Interface fragments inside the page carry `data-ui` and keep the product's own borders.
+- Motion: the masked line reveal on the headline is the one loud move. Sections arrive once on scroll through `data-reveal` and `--i`; the Taft Avenue picture settles with `data-drift`.
+
 ## Layout
 
 - Shell: header + main + footer from `components/site-shell.tsx`.
 - Content width: `max-w-6xl` on public pages. `max-w-md` on dashboard and auth forms.
 - Slash section labels: `/students`, `/u/{handle}`, `/publish`, `/dashboard`, `/login`.
-- Numbered header index: `[ 00 ] Students`, `[ 01 ] Dashboard`.
-- Home grid: 3 columns on desktop, 1 on phone.
-- Profile cards: `001` index, display name, one-line tagline, uppercase course tag, image slot placeholder.
-- Empty filter: dashed “Be the first” card.
-- Under the grid: quiet stats row, then a numbered publish sequence.
+- Header: wordmark, two plain links, one filled action.
+- Profile cards: handle in the accent, featured project on a white field, display name, course, tagline. No index number and no border.
+- Empty filter: a “Be the first” card on the paper tone.
+- Under the showcase: the Taft Avenue picture, the figures sentence, the drag-through stages, two more pictures, the claim-a-handle sentence, and the accent footer field.
 - Dashboard is phone-first. Image upload is a labeled slot only.
 
 Headings are large and phone-safe (`text-5xl` / `sm:text-7xl`). Do not lock to ITSUA’s 120px `/work` size.

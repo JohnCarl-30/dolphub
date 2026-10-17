@@ -67,9 +67,11 @@ export function DashboardPage() {
 
   useEffect(() => {
     if (!ready || !current) return;
-    // Fill the form once the mock store has loaded from the browser.
+    // Fill the form once the mock store has loaded from the browser. A handle
+    // claimed on the home page arrives as ?handle= and goes into the draft.
+    const claimed = new URLSearchParams(window.location.search).get("handle")?.trim().toLowerCase();
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setForm(toForm(current));
+    setForm((previous) => previous ?? { ...toForm(current), handle: claimed || current.handle });
   }, [ready, current]);
 
   if (!ready) {

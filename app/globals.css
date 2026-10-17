@@ -10,6 +10,22 @@
 }
 
 @theme {
+  /* Page measure: tight margins so type and fields reach the edges. */
+  --spacing-margin: clamp(1rem, 2.2vw, 2rem);
+  /* Five type steps for the home page. */
+  --text-display: clamp(2.6rem, 10vw, 9.5rem);
+  --text-display--line-height: 0.95;
+  --text-display--letter-spacing: -0.04em;
+  --text-words: clamp(2rem, 4.4vw, 4rem);
+  --text-words--line-height: 1;
+  --text-words--letter-spacing: -0.03em;
+  --text-statement: clamp(1.4rem, 2.5vw, 2.25rem);
+  --text-statement--line-height: 1.15;
+  --text-statement--letter-spacing: -0.02em;
+  --text-lede: 1.125rem;
+  --text-lede--line-height: 1.55;
+  --text-note: 1rem;
+  --text-note--line-height: 1.5;
   /* Motion. Strong curves read as intentional; the built-in ones are too soft. */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
@@ -79,6 +95,169 @@ p {
   }
 }
 
+/* The signature move: each authored headline line rises from behind its baseline. */
+.lines .line {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+
+.lines [data-line] {
+  display: block;
+}
+
+/* Rest state is the visible one; the hidden state lives only in the keyframes, so a
+   browser that skips animations still shows the content. */
+@media (prefers-reduced-motion: no-preference) {
+  .lines [data-line] {
+    animation: line-up 900ms var(--ease-out) backwards;
+    animation-delay: calc(var(--i, 0) * 110ms + 150ms);
+  }
+
+  [data-after-lines] {
+    animation: fade 600ms var(--ease-out) backwards;
+    animation-delay: calc(var(--i, 0) * 90ms + 700ms);
+  }
+}
+
+@keyframes line-up {
+  from {
+    transform: translateY(105%);
+  }
+}
+
+/* Reveal on scroll, once. Hidden only after the observer is attached, so content
+   never depends on the script. Each part arrives in reading order via --i. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-reveal-ready] [data-reveal] {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+      opacity 700ms var(--ease-out),
+      transform 900ms var(--ease-out);
+    transition-delay: calc(var(--i, 0) * 80ms);
+  }
+
+  [data-reveal-ready] [data-reveal].is-in {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* The one moving picture: a slow settle once it is on screen. */
+  [data-reveal-ready] [data-drift] img {
+    transform: scale(1.06);
+    transition: transform 9s var(--ease-out);
+  }
+
+  [data-reveal-ready] [data-drift].is-in img {
+    transform: none;
+  }
+}
+
+/* The inline slot inside the hero sentence: one line-height tall, scales with the type. */
+.slot {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: text-bottom;
+  height: 0.98em;
+  min-width: 2.6em;
+  padding-inline: 0.16em;
+  border-radius: 0.1em;
+  background: var(--paper);
+  color: var(--accent);
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.slot a {
+  font-size: 0.62em;
+  line-height: 1;
+}
+
+.slot a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.slot a:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+/* Range input for the publish stages, square thumb in the accent. */
+.stages-range {
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  background: linear-gradient(to right, var(--ink) 0 var(--passed, 0%), #ffffff var(--passed, 0%) 100%); /* taste-skill-ignore: a filled track, not decoration */
+  outline-offset: 6px;
+}
+
+.stages-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 32px;
+  height: 32px;
+  background: var(--accent);
+  cursor: grab;
+  transition: transform 160ms var(--ease-out);
+}
+
+.stages-range::-moz-range-thumb {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 0;
+  background: var(--accent);
+  cursor: grab;
+}
+
+.stages-range:active::-webkit-slider-thumb {
+  transform: scale(0.94);
+  cursor: grabbing;
+}
+
+@media (pointer: coarse) {
+  .stages-range::-webkit-slider-thumb {
+    width: 40px;
+    height: 40px;
+  }
+  .stages-range::-moz-range-thumb {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* The claim form: the input sits inside the sentence on its baseline. */
+.claim-input {
+  display: inline-block;
+  vertical-align: baseline;
+  width: 7em;
+  max-width: 100%;
+  padding-inline: 0.25em;
+  border: 0;
+  border-radius: 0.08em;
+  background: var(--paper);
+  font: inherit;
+  color: var(--ink);
+  outline-offset: 4px;
+}
+
+.claim-input::placeholder {
+  color: var(--muted);
+}
+
+.claim-submit {
+  display: inline-block;
+  vertical-align: baseline;
+  padding-inline: 0.3em;
+  border-radius: 0.08em;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+}
+
 /* Decorative fallback remains available before JS, on error, and with reduced motion. */
 .home-network-window {
   overflow: clip;
@@ -126,16 +305,11 @@ p {
   list-style: none;
 }
 
-.showcase-card > div:nth-child(2) {
-  aspect-ratio: 16 / 5;
-  max-height: 8rem;
-}
-
 .showcase-progress {
   display: none;
-  height: 2px;
+  height: 6px;
   overflow: clip;
-  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  background: var(--paper);
 }
 
 .showcase:is([data-layout="scroll"], [data-layout="measuring"]) .showcase-frame {

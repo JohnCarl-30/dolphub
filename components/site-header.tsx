@@ -2,30 +2,37 @@ import Link from "next/link";
 import { NavLink } from "./nav-link";
 
 const NAV = [
-  { href: "/", index: "00", label: "Students" },
-  { href: "/dashboard", index: "01", label: "Dashboard" },
+  { href: "/", label: "Students" },
+  { href: "/dashboard", label: "Dashboard" },
 ];
 
 export function SiteHeader() {
   return (
-    <header className="border-b border-ink/10">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+    <header>
+      <div className="flex w-full items-center justify-between gap-4 px-margin py-4">
         <Link
           href="/"
-          className="font-mono text-xs tracking-wide uppercase outline-none transition-colors hover:text-accent focus-visible:ring-2 focus-visible:ring-ink"
+          className="text-base font-medium tracking-tight outline-none transition-colors hover:text-accent focus-visible:ring-2 focus-visible:ring-ink"
         >
-          ● Dolphub
+          Dolphub
         </Link>
-        <nav aria-label="Primary" className="flex flex-wrap items-center gap-x-4 gap-y-1">
+        <nav aria-label="Primary" className="flex items-center gap-4 text-note sm:gap-5">
           {NAV.map((item) => (
+            // On a phone the wordmark and the button cover both destinations.
             <NavLink
               key={item.href}
               href={item.href}
-              className="font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink"
+              className="hidden outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink sm:inline"
             >
-              [ {item.index} ] {item.label}
+              {item.label}
             </NavLink>
           ))}
+          <Link
+            href="/dashboard"
+            className="press inline-flex min-h-11 items-center whitespace-nowrap bg-ink px-4 text-note font-medium text-white outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ink"
+          >
+            Publish<span className="hidden sm:inline">&nbsp;your page</span>
+          </Link>
         </nav>
       </div>
     </header>

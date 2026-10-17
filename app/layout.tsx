@@ -36,7 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${spaceGrotesk.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full font-sans">
+      <body id="top" className="min-h-full font-sans">
         <Providers>
           <SiteShell>{children}</SiteShell>
         </Providers>

@@ -53,13 +53,13 @@ export function StudentShowcase({ profiles, courseId, counts, onCourseChange, ho
   };
 
   return (
-    <section ref={section} aria-label="Student showcase" className="showcase mx-auto w-full max-w-6xl px-4 sm:px-6">
+    <section ref={section} aria-label="Student showcase" className="showcase w-full px-margin">
       <div ref={frame} className="showcase-frame">
         <div ref={controls} className="showcase-controls">
           <CourseFilter value={courseId} counts={counts} onChange={(value) => { requestReset(); onCourseChange(value); }} />
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 font-mono text-[11px] uppercase tracking-wide">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-note">
             <p className="text-muted" aria-live="polite">
-              {ready && reducedMotion ? "List view · reduced motion" : layout === "short" ? "List view · more room to read" : layout === "scroll" ? "Scroll down to explore →" : "Explore student projects"}
+              {ready && reducedMotion ? "List view, reduced motion" : layout === "short" ? "List view, more room to read" : layout === "scroll" ? "Scroll down to move through the pages" : "Published pages"}
             </p>
             <div className="flex flex-wrap items-center gap-4">
               {ready && !reducedMotion && layout !== "short" ? (
@@ -77,7 +77,7 @@ export function StudentShowcase({ profiles, courseId, counts, onCourseChange, ho
             </div>
           </div>
           <div ref={progress} className="showcase-progress" role="progressbar" aria-label="Student showcase progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={0}>
-            <div ref={fill} className="h-full origin-left bg-accent" />
+            <div ref={fill} className="h-full origin-left bg-ink" />
           </div>
         </div>
         <div ref={viewport} className="showcase-viewport">
