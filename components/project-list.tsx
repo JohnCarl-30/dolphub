@@ -33,7 +33,7 @@ export function ProjectList({ projects }: { projects: MockProject[] }) {
                   href={project.demoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="outline-none transition-colors hover:text-accent focus-visible:ring-2 focus-visible:ring-ink"
+                  className="outline-none transition-colors hover:text-muted focus-visible:ring-2 focus-visible:ring-ink"
                 >
                   Demo →
                 </a>
@@ -43,7 +43,7 @@ export function ProjectList({ projects }: { projects: MockProject[] }) {
                   href={project.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="outline-none transition-colors hover:text-accent focus-visible:ring-2 focus-visible:ring-ink"
+                  className="outline-none transition-colors hover:text-muted focus-visible:ring-2 focus-visible:ring-ink"
                 >
                   Source →
                 </a>

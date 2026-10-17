@@ -32,7 +32,7 @@ async function Verify({ searchParams }: { searchParams: PageProps<"/auth/verify"
     return (
       <p className="text-sm leading-6">
         This link is incomplete.{" "}
-        <Link href="/login" className="underline underline-offset-4 transition-colors hover:text-accent">
+        <Link href="/login" className="underline underline-offset-4 transition-colors hover:text-muted">
           Request a new one
         </Link>
         .

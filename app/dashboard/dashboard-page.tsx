@@ -276,7 +276,7 @@ export function DashboardPage() {
             <button
               type="button"
               onClick={() => update("projects", [...form.projects, emptyProject()])}
-              className="press font-mono text-[11px] uppercase tracking-wide outline-none hover:text-accent focus-visible:ring-2 focus-visible:ring-ink"
+              className="press font-mono text-[11px] uppercase tracking-wide outline-none hover:text-muted focus-visible:ring-2 focus-visible:ring-ink"
             >
               Add project
             </button>
@@ -336,11 +336,11 @@ export function DashboardPage() {
 
         {/* Keyed so a repeated message rises in again instead of silently staying put. */}
         {error ? <p key={error} role="alert" className="rise text-sm text-red-700">{error}</p> : null}
-        {notice ? <p key={notice} role="status" className="rise text-sm text-accent">{notice}</p> : null}
+        {notice ? <p key={notice} role="status" className="rise text-sm text-ink">{notice}</p> : null}
 
         <button
           type="submit"
-          className="press h-12 border border-ink bg-ink font-mono text-[11px] uppercase tracking-wide text-white outline-none hover:border-accent hover:bg-accent focus-visible:ring-2 focus-visible:ring-ink"
+          className="press h-12 border border-ink bg-ink font-mono text-[11px] uppercase tracking-wide text-white outline-none hover:border-ink/85 hover:bg-ink/85 focus-visible:ring-2 focus-visible:ring-ink"
         >
           Save in this tab
         </button>

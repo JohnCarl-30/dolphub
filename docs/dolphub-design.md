@@ -23,7 +23,6 @@ Do not invent a second palette.
 | ink / foreground | `#0e1012` | `text-ink`, `text-foreground` |
 | muted | `#60636a` | `text-muted` |
 | paper | `#f5f5f3` | `bg-paper` |
-| accent | `#047857` | `text-accent`, `bg-accent` |
 | hairline | ink at 10% | `border-ink/10` |
 
 - Sans: Space Grotesk (`font-sans`) for body and titles.

@@ -38,7 +38,7 @@ export function ProfileCard({
             <p className="mt-1 text-sm leading-6 text-muted">{profile.projects[0].description}</p>
           </div>
         ) : null}
-        <p className="mt-auto font-mono text-[11px] uppercase tracking-wide transition-colors group-hover:text-accent">
+        <p className="mt-auto font-mono text-[11px] uppercase tracking-wide transition-colors group-hover:text-muted">
           /u/{profile.handle} →
         </p>
       </div>

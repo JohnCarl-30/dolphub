@@ -12,7 +12,7 @@ export function SiteHeader() {
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <Link
           href="/"
-          className="font-mono text-xs tracking-wide uppercase outline-none transition-colors hover:text-accent focus-visible:ring-2 focus-visible:ring-ink"
+          className="font-mono text-xs tracking-wide uppercase outline-none transition-colors hover:text-muted focus-visible:ring-2 focus-visible:ring-ink"
         >
           ● Dolphub
         </Link>

@@ -19,7 +19,7 @@ export function ProfilePage({ handle }: { handle: string }) {
         </p>
         <Link
           href="/"
-          className="mt-8 inline-block font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:text-accent focus-visible:ring-2 focus-visible:ring-ink"
+          className="mt-8 inline-block font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:text-muted focus-visible:ring-2 focus-visible:ring-ink"
         >
           ← Back to students
         </Link>
@@ -51,9 +51,9 @@ export function ProfilePage({ handle }: { handle: string }) {
 }
 
 const primaryLink =
-  "press inline-flex min-h-11 items-center border border-ink bg-ink px-4 py-2 font-mono text-[11px] uppercase tracking-wide text-white outline-none hover:border-accent hover:bg-accent focus-visible:ring-2 focus-visible:ring-ink";
+  "press inline-flex min-h-11 items-center border border-ink bg-ink px-4 py-2 font-mono text-[11px] uppercase tracking-wide text-white outline-none hover:border-ink/85 hover:bg-ink/85 focus-visible:ring-2 focus-visible:ring-ink";
 const secondaryLink =
-  "press inline-flex min-h-11 items-center border border-ink px-4 py-2 font-mono text-[11px] uppercase tracking-wide outline-none hover:border-accent hover:text-accent focus-visible:ring-2 focus-visible:ring-ink";
+  "press inline-flex min-h-11 items-center border border-ink px-4 py-2 font-mono text-[11px] uppercase tracking-wide outline-none hover:bg-paper focus-visible:ring-2 focus-visible:ring-ink";
 
 function ContactLinks({ profile }: { profile: MockProfile }) {
   // Older saved mock data may not have the newer fields.

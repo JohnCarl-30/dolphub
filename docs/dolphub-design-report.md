@@ -24,7 +24,7 @@ The mock already uses one palette and ITSUA-derived structure. Login and verify 
 
 ## Readback
 
-Hex values in `docs/dolphub-design.md` match `:root` in `app/globals.css`: `#ffffff`, `#0e1012`, `#60636a`, `#f5f5f3`, `#047857`. Fonts are Space Grotesk and Geist Mono.
+Hex values in `docs/dolphub-design.md` match `:root` in `app/globals.css`: `#ffffff`, `#0e1012`, `#60636a`, `#f5f5f3`. There is no colour accent. Fonts are Space Grotesk and Geist Mono.
 
 ## Test cases
 
