@@ -46,6 +46,8 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const stored = readStoredProfiles();
     if (stored) {
+      // Saved mock data is only readable in the browser, so it loads after the first render.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setProfiles(stored);
       const stillThere = stored.some((profile) => profile.handle === EDITABLE_HANDLE);
       if (!stillThere) {

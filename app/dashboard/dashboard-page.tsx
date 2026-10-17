@@ -62,6 +62,8 @@ export function DashboardPage() {
 
   useEffect(() => {
     if (!ready || !current) return;
+    // Fill the form once the mock store has loaded from the browser.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setForm(toForm(current));
   }, [ready, current]);
 
