@@ -1,4 +1,5 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, createHmac, randomBytes } from "node:crypto";
+import { isIP } from "node:net";
 import { and, count, eq, gt, gte, isNull, lt } from "drizzle-orm";
 import { z } from "zod";
 import { loginTokens, sessions, users } from "../db/schema";
@@ -16,6 +17,11 @@ export const AUTH_LIMITS = {
   linkWindowMs: 15 * 60 * 1000,
   /** Default rolling 24-hour cap. Resend's free tier allows 100 emails a day. */
   defaultDailyEmailCap: 90,
+  /**
+   * Default links per network per hour. Campus Wi-Fi puts a whole classroom
+   * behind one address, so this must allow a group sign-up session.
+   */
+  defaultLinksPerNetworkPerHour: 30,
 };
 
 export interface AuthSettings {
@@ -23,6 +29,38 @@ export interface AuthSettings {
   /** Site origin used in emailed links, such as https://dolphub.tech */
   appUrl: string;
   dailyEmailCap?: number;
+  /** Links one network may request per hour. */
+  linksPerNetworkPerHour?: number;
+  /** Secret for hashing networks. Without it, the per-network limit is off. */
+  rateLimitKey?: string;
+}
+
+/**
+ * The part of an IP address that identifies a network. IPv4 addresses are
+ * used whole. IPv6 addresses are cut to their /64 prefix, because one device
+ * can rotate through many addresses inside it. Returns null for anything
+ * that is not an IP address.
+ */
+export function networkOf(rawIp: string | null | undefined): string | null {
+  const ip = rawIp?.trim();
+  if (!ip) return null;
+  const mapped = ip.toLowerCase().match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+  if (mapped) return mapped[1]!;
+  const version = isIP(ip);
+  if (version === 4) return ip;
+  if (version !== 6) return null;
+  const [head, tail = ""] = ip.toLowerCase().split("::");
+  const headParts = head ? head.split(":") : [];
+  const tailParts = tail ? tail.split(":") : [];
+  const groups = ip.includes("::")
+    ? [...headParts, ...Array(8 - headParts.length - tailParts.length).fill("0"), ...tailParts]
+    : headParts;
+  return `${groups.slice(0, 4).map((g) => g.replace(/^0+(?=.)/, "")).join(":")}::/64`;
+}
+
+/** Keyed hash of a network, so the stored value cannot be turned back into an address. */
+export function hashNetwork(network: string, key: string): string {
+  return createHmac("sha256", key).update(network).digest("hex");
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -68,6 +106,8 @@ export async function requestSignInLink(
   sender: EmailSender,
   settings: AuthSettings,
   rawEmail: string,
+  /** The requester's IP address, as set by the hosting platform. Optional. */
+  clientIp?: string | null,
 ): Promise<{ email: string }> {
   const parsed = emailSchema.safeParse(normalizeEmail(rawEmail));
   if (!parsed.success) throw new ServiceError("VALIDATION", "Enter a valid email address", "email");
@@ -100,6 +140,26 @@ export async function requestSignInLink(
       "email",
     );
   }
+  const network = settings.rateLimitKey ? networkOf(clientIp) : null;
+  const requesterHash = network ? hashNetwork(network, settings.rateLimitKey!) : null;
+  if (requesterHash) {
+    const [fromNetwork] = await ctx.db
+      .select({ n: count() })
+      .from(loginTokens)
+      .where(
+        and(
+          eq(loginTokens.requesterHash, requesterHash),
+          gte(loginTokens.createdAt, new Date(now.getTime() - 60 * 60 * 1000)),
+        ),
+      );
+    const limit = settings.linksPerNetworkPerHour ?? AUTH_LIMITS.defaultLinksPerNetworkPerHour;
+    if (Number(fromNetwork!.n) >= limit) {
+      throw new ServiceError(
+        "LIMIT_REACHED",
+        "Too many sign-in requests from this network. Please try again in an hour.",
+      );
+    }
+  }
   if (Number(lastDay!.n) >= (settings.dailyEmailCap ?? AUTH_LIMITS.defaultDailyEmailCap)) {
     throw new ServiceError(
       "LIMIT_REACHED",
@@ -114,6 +174,7 @@ export async function requestSignInLink(
       email,
       tokenHash: hashToken(token),
       expiresAt: new Date(now.getTime() + AUTH_LIMITS.linkTtlMs),
+      requesterHash,
       createdAt: now,
     })
     .returning({ id: loginTokens.id });

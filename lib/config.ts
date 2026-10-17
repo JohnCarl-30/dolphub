@@ -35,6 +35,10 @@ const envSchema = z
     RESEND_API_KEY: optional,
     EMAIL_FROM: z.string().trim().min(3).default("PCU Community <login@dolphub.tech>"),
     DAILY_EMAIL_CAP: z.coerce.number().int().positive().default(90),
+    /** Sign-in links one network may request per hour. */
+    SIGNIN_LINKS_PER_NETWORK_PER_HOUR: z.coerce.number().int().positive().default(30),
+    /** Key for hashing requester networks. Falls back to one derived from DATABASE_URL. */
+    RATE_LIMIT_SECRET: optional.pipe(z.string().min(16, "use at least 16 characters").optional()),
     R2_ACCOUNT_ID: optional,
     R2_ACCESS_KEY_ID: optional,
     R2_SECRET_ACCESS_KEY: optional,

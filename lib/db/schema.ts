@@ -141,11 +141,14 @@ export const loginTokens = pgTable(
     tokenHash: text("token_hash").notNull().unique(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     usedAt: timestamp("used_at", { withTimezone: true }),
+    /** Keyed hash of the requester's network, for the per-network limit. Never the raw IP. */
+    requesterHash: text("requester_hash"),
     createdAt: createdAt(),
   },
   (t) => [
     index("login_tokens_email_created_idx").on(t.email, t.createdAt),
     index("login_tokens_created_idx").on(t.createdAt),
+    index("login_tokens_requester_created_idx").on(t.requesterHash, t.createdAt),
   ],
 );
 
