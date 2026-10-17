@@ -62,6 +62,10 @@ The app refuses to start in production if Resend, R2, Neon or an https `APP_URL`
 | `npm run db:seed` | Adds the tech course list and settings row. Safe to rerun |
 | `npm run db:make-admin -- <email>` | Gives an existing user admin rights |
 
+## CI
+
+GitHub Actions runs on every pull request and every push to `main`: lint, typecheck, a check that migrations match the schema, tests, and a production build. It needs no secrets, because tests use an in-memory database. The workflow is in `.github/workflows/ci.yml`.
+
 ## Layout
 
 ```

@@ -12,7 +12,7 @@ export type Profile = typeof profiles.$inferSelect;
 const createSchema = z.object({
   handle: z.string(),
   displayName: v.displayName,
-  courseId: z.number().int().positive("Choose your course"),
+  courseId: z.coerce.number<unknown>().int().positive("Choose your course"),
   tagline: v.tagline.optional().default(""),
   messengerUrl: v.optional(v.messengerUrl),
 });
@@ -20,7 +20,7 @@ const createSchema = z.object({
 const updateSchema = z
   .object({
     displayName: v.displayName,
-    courseId: z.number().int().positive("Choose your course"),
+    courseId: z.coerce.number<unknown>().int().positive("Choose your course"),
     tagline: v.tagline,
     messengerUrl: v.optional(v.messengerUrl),
     coverImageId: z.uuid().nullable(),

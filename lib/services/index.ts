@@ -13,3 +13,4 @@ export * from "./projects";
 export * from "./images";
 export * from "./admin";
 export * from "./auth";
+export * from "./dashboard";
