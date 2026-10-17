@@ -20,6 +20,29 @@ export function isAllowedSignupEmail(email: string, allowedDomains: string[]): b
   return allowedDomains.some((d) => d.trim().toLowerCase() === domain);
 }
 
+/** Throws unless a new account may be created for this address right now. */
+export async function assertCanRegister(
+  db: Db,
+  email: string,
+  allowedDomains: string[],
+): Promise<void> {
+  if (!isAllowedSignupEmail(email, allowedDomains)) {
+    throw new ServiceError("FORBIDDEN", "Sign up with your PCU email address", "email");
+  }
+  if (await getSignupsFrozen(db)) {
+    throw new ServiceError("SIGNUPS_FROZEN", "New signups are paused. Please try again later.");
+  }
+}
+
+/** The active account for this address, if there is one. */
+export async function findActiveUserByEmail(db: Db, email: string) {
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(and(eq(users.email, normalizeEmail(email)), isNull(users.deletedAt)));
+  return user ?? null;
+}
+
 export interface SignedInUser {
   id: string;
   email: string;
@@ -38,20 +61,12 @@ export async function signInOrRegister(
 ): Promise<SignedInUser> {
   const normalized = normalizeEmail(email);
 
-  const [existing] = await db
-    .select()
-    .from(users)
-    .where(and(eq(users.email, normalized), isNull(users.deletedAt)));
+  const existing = await findActiveUserByEmail(db, normalized);
   if (existing) {
     return { id: existing.id, email: existing.email, isAdmin: existing.isAdmin, isNew: false };
   }
 
-  if (!isAllowedSignupEmail(normalized, allowedDomains)) {
-    throw new ServiceError("FORBIDDEN", "Sign up with your PCU email address", "email");
-  }
-  if (await getSignupsFrozen(db)) {
-    throw new ServiceError("SIGNUPS_FROZEN", "New signups are paused. Please try again later.");
-  }
+  await assertCanRegister(db, normalized, allowedDomains);
 
   const [created] = await db
     .insert(users)

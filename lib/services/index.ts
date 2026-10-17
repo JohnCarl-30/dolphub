@@ -12,3 +12,4 @@ export * from "./profiles";
 export * from "./projects";
 export * from "./images";
 export * from "./admin";
+export * from "./auth";

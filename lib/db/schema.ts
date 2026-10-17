@@ -129,3 +129,35 @@ export const adminAuditLog = pgTable("admin_audit_log", {
   reason: text("reason"),
   createdAt: createdAt(),
 });
+
+/** One row per emailed sign-in link. Only a hash of the link's token is stored. */
+export const loginTokens = pgTable(
+  "login_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    email: text("email").notNull(),
+    tokenHash: text("token_hash").notNull().unique(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("login_tokens_email_created_idx").on(t.email, t.createdAt),
+    index("login_tokens_created_idx").on(t.createdAt),
+  ],
+);
+
+/** Signed-in browser sessions. The cookie holds the token; only its hash is stored. */
+export const sessions = pgTable(
+  "sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull().unique(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("sessions_user_id_idx").on(t.userId)],
+);

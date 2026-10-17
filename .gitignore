@@ -42,3 +42,6 @@ next-env.d.ts
 
 # allow the template
 !.env.example
+
+# local development database
+/.data
