@@ -20,6 +20,8 @@ export type MockProfile = {
   tagline: string;
   courseId: CourseId;
   messengerUrl: string | null;
+  githubUsername: string | null;
+  contactEmail: string | null;
   projects: MockProject[];
 };
 
@@ -33,6 +35,8 @@ export const INITIAL_PROFILES: MockProfile[] = [
     tagline: "Campus apps for people who still use Messenger.",
     courseId: "it",
     messengerUrl: "https://m.me/mira.santos.pcu",
+    githubUsername: "mira-santos",
+    contactEmail: "mira.santos@example.com",
     projects: [
       {
         id: "mira-orgs",
@@ -56,6 +60,8 @@ export const INITIAL_PROFILES: MockProfile[] = [
     tagline: "Embedded projects that still compile on a lab PC.",
     courseId: "cpe",
     messengerUrl: "https://m.me/kenji.ramos.pcu",
+    githubUsername: "kenji-ramos",
+    contactEmail: null,
     projects: [
       {
         id: "kenji-gate",
@@ -72,6 +78,8 @@ export const INITIAL_PROFILES: MockProfile[] = [
     tagline: "Small tools for class groups that hate shared drives.",
     courseId: "cs",
     messengerUrl: "https://m.me/aisha.villanueva.pcu",
+    githubUsername: null,
+    contactEmail: null,
     projects: [
       {
         id: "aisha-notes",
@@ -88,6 +96,8 @@ export const INITIAL_PROFILES: MockProfile[] = [
     tagline: "Maps and schedules, nothing fancier than a phone can load.",
     courseId: "it",
     messengerUrl: null,
+    githubUsername: null,
+    contactEmail: null,
     projects: [
       {
         id: "paolo-jeep",
@@ -104,6 +114,8 @@ export const INITIAL_PROFILES: MockProfile[] = [
     tagline: "Still writing the first project.",
     courseId: "cs",
     messengerUrl: "https://m.me/lea.mendoza.pcu",
+    githubUsername: null,
+    contactEmail: null,
     projects: [],
   },
 ];

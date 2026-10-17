@@ -35,6 +35,28 @@ export const messengerUrl = httpsUrl.refine(
   "Messenger link must start with https://m.me/ or https://www.messenger.com/",
 );
 
+const GITHUB_PROFILE_PREFIX = /^(?:https:\/\/)?(?:www\.)?github\.com\//i;
+/** 1 to 39 letters, digits or single hyphens, with no hyphen at either end. */
+const GITHUB_USERNAME = /^(?!-)(?!.*--)[a-z0-9-]{1,39}(?<!-)$/i;
+
+/** A GitHub username, typed bare or pasted as a profile link. Stored as the username only. */
+export const githubUsername = z
+  .string()
+  .trim()
+  .transform((value) => value.replace(GITHUB_PROFILE_PREFIX, "").replace(/\/$/, ""))
+  .refine(
+    (value) => GITHUB_USERNAME.test(value),
+    "Enter your GitHub username, such as octocat, or your github.com profile link",
+  );
+
+/** A public contact address. Any domain, since students may prefer a personal one. */
+export const contactEmail = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .max(254, "Email must be at most 254 characters")
+  .pipe(z.email("Enter a valid email address"));
+
 /** Empty strings from forms become null. */
 export const optional = <T extends z.ZodType>(schema: T) =>
   z.preprocess((v) => (v === "" ? null : v), schema.nullable().optional());

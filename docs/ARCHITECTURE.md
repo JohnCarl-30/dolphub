@@ -4,7 +4,7 @@ Last updated: 2026-10-17. Produced from a design review ("grill me") session bef
 
 ## What it is
 
-A showcase site where PCU **tech students** each get a public portfolio page at `/u/<handle>` showing their projects, with a Messenger link for contact. Admins also post opportunities: internships, events, competitions and programs.
+A showcase site where PCU **tech students** each get a public portfolio page at `/u/<handle>` showing their projects, with a Messenger link, and optionally a GitHub link and a contact email, for contact. Admins also post opportunities: internships, events, competitions and programs.
 
 Not a marketplace. No payments happen on the platform, and students pay nothing.
 
@@ -39,7 +39,7 @@ The metric is one count query shown on the admin page. No tracking script, no co
 3. **Tech students only.** Signup is gated by PCU email domain. Course comes from a fixed tech-only list the owner maintains. Non-tech students are stopped at the course step with a "not supported yet" message.
 4. **Pages stay after graduation.** A recovery email will be added before the first graduating class. It is not needed at launch.
 5. **Images.** Max 10 per student, max 500 KB each after compression. The browser compresses first, which is required because of the Vercel 4.5 MB body limit. The server then checks type, size and the per-student count, and re-encodes with sharp. Only R2 keys are stored in Postgres, never image bytes.
-6. **Contact by Messenger link only.** No prices or payments handled by the platform.
+6. **Contact by link.** Messenger is the main way to reach a student. A student can also add a GitHub username and a public contact email, both optional and empty by default. The email is never taken from the sign-in address and never goes into structured data, previews or logs. No prices or payments handled by the platform.
 7. **Projects need links.** Each project has optional demo and source code URLs, which must be valid `https` links.
 8. **Public pages are static.** `/u/<handle>` uses ISR and revalidates when the owner saves, so visitors never wait on a Neon cold start.
 9. **Link previews.** `generateMetadata` sets title, tagline and image. The preview image is the chosen cover, or else the first image of the first project. The image URL carries an `updated_at` version so changed photos refresh. Stuck previews are refreshed with Facebook's Sharing Debugger.
@@ -65,7 +65,7 @@ Defined in `lib/db/schema.ts`.
 
 - `users`: id, email (lowercase, unique), is_admin, created_at, deleted_at
 - `courses`: id, name, active (tech list, admin-maintained)
-- `profiles`: id, user_id (one per user), handle (unique, lowercase, permanent), display_name, tagline (up to 100 chars), course_id, messenger_url, cover_image_id (nullable), is_hidden, hidden_reason, search_visible (default true), created_at, updated_at
+- `profiles`: id, user_id (one per user), handle (unique, lowercase, permanent), display_name, tagline (up to 100 chars), course_id, messenger_url, github_username (nullable), contact_email (nullable, public, lowercase), cover_image_id (nullable), is_hidden, hidden_reason, search_visible (default true), created_at, updated_at
 - `projects`: id, profile_id, title, description, demo_url, source_url, sort_order, created_at, updated_at
 - `images`: id, project_id, profile_id (for the per-student cap), r2_key, width, height, bytes, sort_order, created_at
 - `app_settings`: one row holding signups_frozen

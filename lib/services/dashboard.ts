@@ -22,6 +22,8 @@ export interface Dashboard {
     tagline: string;
     courseId: number;
     messengerUrl: string | null;
+    githubUsername: string | null;
+    contactEmail: string | null;
     coverImageId: string | null;
     /** When true, show the owner a notice. Visitors cannot see the page. */
     isHidden: boolean;
@@ -63,6 +65,8 @@ export async function getOwnDashboard(ctx: ServiceContext, userId: string): Prom
       tagline: profile.tagline,
       courseId: profile.courseId,
       messengerUrl: profile.messengerUrl,
+      githubUsername: profile.githubUsername,
+      contactEmail: profile.contactEmail,
       coverImageId: profile.coverImageId,
       isHidden: profile.isHidden,
       hiddenReason: profile.hiddenReason,
