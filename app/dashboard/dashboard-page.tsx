@@ -175,7 +175,7 @@ export function DashboardPage() {
       </p>
 
       <form onSubmit={onSubmit} className="mt-8 grid gap-5">
-        <Field label="Handle">
+        <Field id="handle" label="Handle">
           <input
             id="handle"
             name="handle"
@@ -185,7 +185,7 @@ export function DashboardPage() {
             autoComplete="off"
           />
         </Field>
-        <Field label="Name">
+        <Field id="displayName" label="Name">
           <input
             id="displayName"
             name="displayName"
@@ -194,7 +194,7 @@ export function DashboardPage() {
             className={inputClass}
           />
         </Field>
-        <Field label="Tagline">
+        <Field id="tagline" label="Tagline">
           <input
             id="tagline"
             name="tagline"
@@ -204,7 +204,7 @@ export function DashboardPage() {
             className={inputClass}
           />
         </Field>
-        <Field label="Course">
+        <Field id="courseId" label="Course">
           <select
             id="courseId"
             name="courseId"
@@ -219,7 +219,7 @@ export function DashboardPage() {
             ))}
           </select>
         </Field>
-        <Field label="Messenger link">
+        <Field id="messengerUrl" label="Messenger link">
           <input
             id="messengerUrl"
             name="messengerUrl"
@@ -230,10 +230,11 @@ export function DashboardPage() {
             className={inputClass}
           />
         </Field>
-        <Field label="GitHub" hint="Your username or profile link. Shown on your page.">
+        <Field id="githubUsername" label="GitHub" hint="Your username or profile link. Shown on your page.">
           <input
             id="githubUsername"
             name="githubUsername"
+            aria-describedby="githubUsername-hint"
             placeholder="octocat"
             value={form.githubUsername}
             onChange={(event) => update("githubUsername", event.target.value)}
@@ -244,12 +245,14 @@ export function DashboardPage() {
           />
         </Field>
         <Field
+          id="contactEmail"
           label="Contact email"
           hint="Anyone who opens your page can see this address. Leave it empty to keep it private."
         >
           <input
             id="contactEmail"
             name="contactEmail"
+            aria-describedby="contactEmail-hint"
             type="email"
             placeholder="you@example.com"
             value={form.contactEmail}
@@ -273,13 +276,13 @@ export function DashboardPage() {
             <button
               type="button"
               onClick={() => update("projects", [...form.projects, emptyProject()])}
-              className="font-mono text-[11px] uppercase tracking-wide outline-none focus-visible:ring-2 focus-visible:ring-ink"
+              className="press font-mono text-[11px] uppercase tracking-wide outline-none hover:text-accent focus-visible:ring-2 focus-visible:ring-ink"
             >
               Add project
             </button>
           </div>
           {form.projects.map((project, index) => (
-            <fieldset key={project.id} className="grid gap-3 border border-ink/10 p-4">
+            <fieldset key={project.id} className="rise grid gap-3 border border-ink/10 p-4">
               <legend className="px-1 font-mono text-[11px] uppercase tracking-wide text-muted">
                 Project {String(index + 1).padStart(2, "0")}
               </legend>
@@ -323,20 +326,21 @@ export function DashboardPage() {
                     form.projects.filter((item) => item.id !== project.id),
                   )
                 }
-                className="justify-self-start font-mono text-[11px] uppercase tracking-wide text-muted outline-none focus-visible:ring-2 focus-visible:ring-ink"
+                className="press justify-self-start font-mono text-[11px] uppercase tracking-wide text-muted outline-none hover:text-red-700 focus-visible:ring-2 focus-visible:ring-ink"
               >
-                Remove
+                Remove project
               </button>
             </fieldset>
           ))}
         </div>
 
-        {error ? <p className="text-sm text-red-700">{error}</p> : null}
-        {notice ? <p className="text-sm text-accent">{notice}</p> : null}
+        {/* Keyed so a repeated message rises in again instead of silently staying put. */}
+        {error ? <p key={error} role="alert" className="rise text-sm text-red-700">{error}</p> : null}
+        {notice ? <p key={notice} role="status" className="rise text-sm text-accent">{notice}</p> : null}
 
         <button
           type="submit"
-          className="h-12 border border-ink bg-ink font-mono text-[11px] uppercase tracking-wide text-white outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ink"
+          className="press h-12 border border-ink bg-ink font-mono text-[11px] uppercase tracking-wide text-white outline-none hover:border-accent hover:bg-accent focus-visible:ring-2 focus-visible:ring-ink"
         >
           Save in this tab
         </button>
@@ -346,22 +350,31 @@ export function DashboardPage() {
 }
 
 function Field({
+  id,
   label,
   hint,
   children,
 }: {
+  id: string;
   label: string;
   hint?: string;
   children: React.ReactNode;
 }) {
+  // The hint describes the field; it must not become part of its name.
   return (
-    <label className="grid gap-2">
-      <span className="font-mono text-[11px] uppercase tracking-wide text-muted">{label}</span>
+    <div className="grid gap-2">
+      <label htmlFor={id} className="font-mono text-[11px] uppercase tracking-wide text-muted">
+        {label}
+      </label>
       {children}
-      {hint ? <span className="text-xs leading-5 text-muted">{hint}</span> : null}
-    </label>
+      {hint ? (
+        <p id={`${id}-hint`} className="text-xs leading-5 text-muted">
+          {hint}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
 const inputClass =
-  "w-full border border-ink/15 bg-white px-3 py-2 text-base outline-none focus-visible:border-ink focus-visible:ring-2 focus-visible:ring-ink";
+  "w-full border border-ink/15 bg-white px-3 py-2 text-base outline-none transition-colors hover:border-ink/40 focus-visible:border-ink focus-visible:ring-2 focus-visible:ring-ink";

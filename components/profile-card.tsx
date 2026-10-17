@@ -16,7 +16,7 @@ export function ProfileCard({
   return (
     <Link
       href={`/u/${profile.handle}`}
-      className={`group flex h-full flex-col border border-ink/10 bg-paper outline-none transition-colors hover:border-ink focus-visible:ring-2 focus-visible:ring-ink ${preview ? "showcase-card" : ""}`}
+      className={`press group flex h-full flex-col border border-ink/10 bg-paper outline-none hover:border-ink focus-visible:ring-2 focus-visible:ring-ink ${preview ? "showcase-card" : ""}`}
     >
       <div className="flex items-center justify-between px-4 py-3 font-mono text-[11px] uppercase tracking-wide text-muted">
         <span>{number}</span>
@@ -38,7 +38,7 @@ export function ProfileCard({
             <p className="mt-1 text-sm leading-6 text-muted">{profile.projects[0].description}</p>
           </div>
         ) : null}
-        <p className="mt-auto font-mono text-[11px] uppercase tracking-wide">
+        <p className="mt-auto font-mono text-[11px] uppercase tracking-wide transition-colors group-hover:text-accent">
           /u/{profile.handle} →
         </p>
       </div>

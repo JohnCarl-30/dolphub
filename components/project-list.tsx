@@ -10,7 +10,11 @@ export function ProjectList({ projects }: { projects: MockProject[] }) {
   return (
     <ol className="grid gap-4">
       {projects.map((project, index) => (
-        <li key={project.id} className="border border-ink/10 bg-paper">
+        <li
+          key={project.id}
+          className="rise border border-ink/10 bg-paper"
+          style={{ "--i": Math.min(index, 8) } as React.CSSProperties}
+        >
           <div className="flex items-center justify-between px-4 py-3 font-mono text-[11px] uppercase tracking-wide text-muted">
             <span>{String(index + 1).padStart(2, "0")}</span>
             <span>Project</span>
@@ -29,7 +33,7 @@ export function ProjectList({ projects }: { projects: MockProject[] }) {
                   href={project.demoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="outline-none hover:text-accent focus-visible:ring-2 focus-visible:ring-ink"
+                  className="outline-none transition-colors hover:text-accent focus-visible:ring-2 focus-visible:ring-ink"
                 >
                   Demo →
                 </a>
@@ -39,7 +43,7 @@ export function ProjectList({ projects }: { projects: MockProject[] }) {
                   href={project.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="outline-none hover:text-accent focus-visible:ring-2 focus-visible:ring-ink"
+                  className="outline-none transition-colors hover:text-accent focus-visible:ring-2 focus-visible:ring-ink"
                 >
                   Source →
                 </a>
