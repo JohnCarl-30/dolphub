@@ -16,7 +16,7 @@ export function particleOptions(ink: string): ISourceOptions {
     background: { opacity: 0 },
     fpsLimit: 60,
     detectRetina: true,
-    // Visibility is managed alongside the user's pause state by the homepage.
+    // Visibility and showcase traversal are managed by the homepage.
     pauseOnBlur: false,
     pauseOnOutsideViewport: false,
     particles: {
@@ -52,8 +52,7 @@ export interface MotionEnvironment {
 
 export function shouldPlayParticles(
   environment: MotionEnvironment,
-  paused: boolean,
   showcaseActive = false,
 ): boolean {
-  return environment.ready && !environment.reducedMotion && !environment.hidden && !paused && !showcaseActive;
+  return environment.ready && !environment.reducedMotion && !environment.hidden && !showcaseActive;
 }

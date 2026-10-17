@@ -39,14 +39,15 @@ export function HomePage() {
   const { profiles } = useMockStore();
   const [courseId, setCourseId] = useState<string | null>(null);
   const environment = useMotionEnvironment();
-  const [paused, setPaused] = useState(false);
   const [showcaseActive, setShowcaseActive] = useState(false);
   const homepage = useRef<HTMLDivElement>(null);
   const network = useRef<HTMLDivElement>(null);
-  const [particleStatus, setParticleStatus] = useState<"loading" | "ready" | "failed">("loading");
-  const onParticleStatus = useCallback((status: "ready" | "failed") => setParticleStatus(status), []);
-  const onParticleError = useCallback(() => setParticleStatus("failed"), []);
-  const showParticles = environment.ready && !environment.reducedMotion && particleStatus !== "failed";
+  const [particleFailed, setParticleFailed] = useState(false);
+  const onParticleStatus = useCallback((status: "ready" | "failed") => {
+    if (status === "failed") setParticleFailed(true);
+  }, []);
+  const onParticleError = useCallback(() => setParticleFailed(true), []);
+  const showParticles = environment.ready && !environment.reducedMotion && !particleFailed;
 
   const published = useMemo(() => listGridProfiles(profiles), [profiles]);
   const visible = useMemo(
@@ -69,7 +70,7 @@ export function HomePage() {
             {showParticles ? (
               <ParticleBoundary onError={onParticleError}>
                 <ParticleBackground
-                  playing={shouldPlayParticles(environment, paused, showcaseActive)}
+                  playing={shouldPlayParticles(environment, showcaseActive)}
                   finePointer={environment.finePointer}
                   onStatus={onParticleStatus}
                 />
@@ -94,29 +95,13 @@ export function HomePage() {
             students. Explore people who have published at least one
             project.
           </p>
-          <div className="mt-6 min-h-11" aria-live="polite">
-            {environment.ready && environment.reducedMotion ? (
-              <p className="py-3 font-mono text-[11px] text-muted">Reduced motion · static background</p>
-            ) : showParticles && particleStatus === "ready" ? (
-              <motion.button
-                type="button"
-                aria-pressed={paused}
-                onClick={() => setPaused((value) => !value)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="min-h-11 border border-ink/15 bg-background px-3 font-mono text-[11px] uppercase tracking-wide text-ink hover:border-ink focus-visible:ring-2 focus-visible:ring-ink"
-              >
-                {paused ? "Resume particles" : "Pause particles"}
-              </motion.button>
-            ) : null}
-          </div>
         </motion.section>
 
         <StudentShowcase
           profiles={visible} courseId={courseId} counts={counts} onCourseChange={setCourseId}
           homepage={homepage} network={network} ready={environment.ready}
           reducedMotion={environment.reducedMotion} hidden={environment.hidden}
-          paused={paused} onActive={setShowcaseActive}
+          onActive={setShowcaseActive}
         />
 
         <section id="after-showcase" tabIndex={-1} aria-label="Community statistics" className="border-y border-ink/10 bg-paper">

@@ -9,7 +9,7 @@ import type { ShowcaseLayout } from "@/lib/showcase";
 
 const VIEW_KEY = "dolphub-showcase-view";
 
-export function StudentShowcase({ profiles, courseId, counts, onCourseChange, homepage, network, ready, reducedMotion, hidden, paused, onActive }: {
+export function StudentShowcase({ profiles, courseId, counts, onCourseChange, homepage, network, ready, reducedMotion, hidden, onActive }: {
   profiles: MockProfile[];
   courseId: string | null;
   counts: Record<string, number>;
@@ -19,7 +19,6 @@ export function StudentShowcase({ profiles, courseId, counts, onCourseChange, ho
   ready: boolean;
   reducedMotion: boolean;
   hidden: boolean;
-  paused: boolean;
   onActive: (active: boolean) => void;
 }) {
   const section = useRef<HTMLElement>(null);
@@ -43,7 +42,7 @@ export function StudentShowcase({ profiles, courseId, counts, onCourseChange, ho
   const { captureAnchor, requestReset, revealFocused } = useShowcaseScroll({
     homepage, network, section, frame, controls, viewport, track, progress, fill, profiles,
     motionAllowed: ready && !reducedMotion && preference !== "pending",
-    listPreferred: preference === "list", hidden, paused, onLayout: setLayout, onActive,
+    listPreferred: preference === "list", hidden, onLayout: setLayout, onActive,
   });
 
   const toggle = () => {

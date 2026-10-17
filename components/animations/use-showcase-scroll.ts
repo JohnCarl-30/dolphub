@@ -28,7 +28,6 @@ export function useShowcaseScroll({
   motionAllowed,
   listPreferred,
   hidden,
-  paused,
   onLayout,
   onActive,
 }: {
@@ -45,7 +44,6 @@ export function useShowcaseScroll({
   motionAllowed: boolean;
   listPreferred: boolean;
   hidden: boolean;
-  paused: boolean;
   onLayout: (layout: ShowcaseLayout) => void;
   onActive: (active: boolean) => void;
 }) {
@@ -99,7 +97,7 @@ export function useShowcaseScroll({
       }
       if (!motionAllowed) {
         layer.style.transform = "";
-      } else if (!paused && !hidden) {
+      } else if (!hidden) {
         const pageProgress = clampProgress((scrollY - pageStart) / pageTravel);
         const networkOffset = networkPosition(pageProgress, position.progress, screenWidth, screenHeight);
         layer.style.transform = `translate3d(${networkOffset.x}px, ${networkOffset.y}px, 0)`;
@@ -205,7 +203,7 @@ export function useShowcaseScroll({
       reveal.current = () => {};
       notifyActive(false);
     };
-  }, [homepage, network, section, frame, controls, viewport, track, progress, fill, profiles, motionAllowed, listPreferred, hidden, paused]);
+  }, [homepage, network, section, frame, controls, viewport, track, progress, fill, profiles, motionAllowed, listPreferred, hidden]);
 
   const captureAnchor = () => {
     if (anchor.current) return;
