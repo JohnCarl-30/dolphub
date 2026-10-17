@@ -39,7 +39,6 @@ One task per day, sized for evenings during classes.
 
 - **Fix what testers hit.** Watch the first 10 students sign up and upload. Fix every blocker they report.
 - **Talk to PCU.** Meet student affairs or a faculty adviser about using the PCU name. Do this before any public post.
-- **Decide the subdomain fee.** Choose free, deferred, or paid. If paid, it waits until PCU has said yes.
 - **Remove the single point of failure.** Add a second owner on Vercel, Cloudflare, Neon, Resend and the domain. Write a one-page runbook in this repo.
 - **Prepare the launch post.** Seed the grid with the testers' pages so it is not empty on day one.
 
@@ -70,14 +69,12 @@ Built in this order once the public launch is stable:
 3. Self-serve account deletion that removes the row, R2 images and cached page
 4. Tech internship posts: company, role, deadline and link, expiring after the deadline
 5. Recovery email, needed before the first graduating class
-6. Optional subdomains such as `juan.<domain>`, only if decided in Phase 2
 
 ## Open risks
 
 Tracked in detail in [ARCHITECTURE.md](./ARCHITECTURE.md#open-items-and-risks).
 
 1. Not yet sanctioned by PCU
-2. Subdomain fee undecided
-3. Email deliverability to PCU untested
-4. Unknown whether PCU mailboxes cover every student and survive graduation
-5. Only one person holds every account
+2. Email deliverability to PCU untested
+3. Unknown whether PCU mailboxes cover every student and survive graduation
+4. Only one person holds every account

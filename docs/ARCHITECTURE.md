@@ -6,7 +6,7 @@ Last updated: 2026-10-17. Produced from a design review ("grill me") session bef
 
 A showcase site where PCU **tech students** each get a public portfolio page at `/u/<handle>` showing their projects, with a Messenger link for contact. Later, the owner posts tech internship openings.
 
-Not a marketplace. No payments happen on the platform.
+Not a marketplace. No payments happen on the platform, and students pay nothing.
 
 ## Target and timeline
 
@@ -34,7 +34,7 @@ The metric is one count query shown on the admin page. No tracking script, no co
 ## Decisions
 
 1. **Showcase before opportunities.** Profiles ship first. Internship posts come later.
-2. **Path URLs.** Pages live at `/u/<handle>`. Subdomains such as `juan.<domain>` can be added later with wildcard DNS and a middleware rewrite to the same route.
+2. **One link per student, no subdomains.** Each page lives at `/u/<handle>`, and that link is what students share in bios, resumes and chats. There are no subdomains and no fees.
 3. **Tech students only.** Signup is gated by PCU email domain. Course comes from a fixed tech-only list the owner maintains. Non-tech students are stopped at the course step with a "not supported yet" message.
 4. **Pages stay after graduation.** A recovery email will be added before the first graduating class. It is not needed at launch.
 5. **Images.** Max 10 per student, max 500 KB each after compression. The browser compresses first, which is required because of the Vercel 4.5 MB body limit. The server then checks type, size and the per-student count, and re-encodes with sharp. Only R2 keys are stored in Postgres, never image bytes.
@@ -85,9 +85,8 @@ Added after launch: `profiles.recovery_email`, `reports`, `internships`.
 Ordered by danger.
 
 1. **Not sanctioned by PCU.** Talk to student affairs or a faculty adviser before the public launch on 2026-11-07.
-2. **Subdomain fee undecided.** The idea of a paid subdomain (about ₱50 by GCash, verified by hand) is undecided. Charging students under PCU's name while unsanctioned is the highest-risk version of this project.
-3. **Email deliverability untested.** Send a test from Resend to a PCU address before writing sign-in code. Resend's 100-per-day cap also limits launch-day signups.
-4. **PCU mailbox coverage.** Confirm with PCU IT that every tech student has a mailbox, and whether it survives graduation.
-5. **Bus factor of one.** Add a second owner on Vercel, Cloudflare, Neon, Resend and the domain, and keep a runbook in this repo.
-6. **Phone upload untested.** Test compression with a real 4 MB photo on a budget Android phone on campus wifi. Test that a backgrounded tab shows a clear retry, not a silent empty slot.
-7. **Handle typos.** Consider allowing one handle change within 24 hours of signup.
+2. **Email deliverability untested.** Send a test from Resend to a PCU address before writing sign-in code. Resend's 100-per-day cap also limits launch-day signups.
+3. **PCU mailbox coverage.** Confirm with PCU IT that every tech student has a mailbox, and whether it survives graduation.
+4. **Bus factor of one.** Add a second owner on Vercel, Cloudflare, Neon, Resend and the domain, and keep a runbook in this repo.
+5. **Phone upload untested.** Test compression with a real 4 MB photo on a budget Android phone on campus wifi. Test that a backgrounded tab shows a clear retry, not a silent empty slot.
+6. **Handle typos.** Consider allowing one handle change within 24 hours of signup.
