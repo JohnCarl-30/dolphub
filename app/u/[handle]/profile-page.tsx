@@ -2,7 +2,7 @@
 
 import { ProjectList } from "@/components/project-list";
 import { useMockStore } from "@/components/mock-store";
-import { courseName, getPublicProfile } from "@/lib/mock-profiles";
+import { courseName, getPublicProfile, type MockProfile } from "@/lib/mock-profiles";
 import Link from "next/link";
 
 export function ProfilePage({ handle }: { handle: string }) {
@@ -37,18 +37,7 @@ export function ProfilePage({ handle }: { handle: string }) {
         {courseName(profile.courseId)}
       </p>
       <p className="mt-6 max-w-xl text-lg leading-8 text-muted">{profile.tagline}</p>
-      {profile.messengerUrl ? (
-        <a
-          href={profile.messengerUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-8 inline-flex border border-ink bg-ink px-4 py-2 font-mono text-[11px] uppercase tracking-wide text-white outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ink"
-        >
-          Message on Messenger
-        </a>
-      ) : (
-        <p className="mt-8 text-sm text-muted">No Messenger link on this page.</p>
-      )}
+      <ContactLinks profile={profile} />
 
       <section className="mt-14">
         <p className="font-mono text-[11px] uppercase tracking-wide text-muted">/projects</p>
@@ -58,5 +47,56 @@ export function ProfilePage({ handle }: { handle: string }) {
         </div>
       </section>
     </article>
+  );
+}
+
+const primaryLink =
+  "inline-flex min-h-11 items-center border border-ink bg-ink px-4 py-2 font-mono text-[11px] uppercase tracking-wide text-white outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ink";
+const secondaryLink =
+  "inline-flex min-h-11 items-center border border-ink px-4 py-2 font-mono text-[11px] uppercase tracking-wide outline-none hover:border-accent hover:text-accent focus-visible:ring-2 focus-visible:ring-ink";
+
+function ContactLinks({ profile }: { profile: MockProfile }) {
+  // Older saved mock data may not have the newer fields.
+  const github = profile.githubUsername ?? null;
+  const email = profile.contactEmail ?? null;
+
+  if (!profile.messengerUrl && !github && !email) {
+    return <p className="mt-8 text-sm text-muted">No contact links on this page.</p>;
+  }
+
+  return (
+    <ul className="mt-8 flex flex-wrap gap-3">
+      {profile.messengerUrl ? (
+        <li>
+          <a href={profile.messengerUrl} target="_blank" rel="noopener noreferrer" className={primaryLink}>
+            Message on Messenger
+          </a>
+        </li>
+      ) : null}
+      {github ? (
+        <li>
+          <a
+            href={`https://github.com/${github}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`GitHub: ${github}`}
+            className={secondaryLink}
+          >
+            GitHub
+          </a>
+        </li>
+      ) : null}
+      {email ? (
+        <li>
+          <a
+            href={`mailto:${email}`}
+            aria-label={`Email ${profile.displayName}`}
+            className={secondaryLink}
+          >
+            Email
+          </a>
+        </li>
+      ) : null}
+    </ul>
   );
 }

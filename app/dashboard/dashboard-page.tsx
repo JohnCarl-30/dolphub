@@ -7,6 +7,7 @@ import {
   type CourseId,
   type MockProfile,
 } from "@/lib/mock-profiles";
+import { contactEmail, githubUsername } from "@/lib/services/validation";
 import { useEffect, useState } from "react";
 
 type FormProject = {
@@ -23,6 +24,8 @@ type FormState = {
   tagline: string;
   courseId: CourseId;
   messengerUrl: string;
+  githubUsername: string;
+  contactEmail: string;
   projects: FormProject[];
 };
 
@@ -43,6 +46,8 @@ function toForm(profile: MockProfile): FormState {
     tagline: profile.tagline,
     courseId: profile.courseId,
     messengerUrl: profile.messengerUrl ?? "",
+    githubUsername: profile.githubUsername ?? "",
+    contactEmail: profile.contactEmail ?? "",
     projects: profile.projects.map((project) => ({
       id: project.id,
       title: project.title,
@@ -124,12 +129,26 @@ export function DashboardPage() {
       return;
     }
 
+    // Same rules the server enforces, so the mock and the real form agree.
+    const github = githubUsername.safeParse(draft.githubUsername);
+    if (draft.githubUsername.trim() && !github.success) {
+      setError(github.error.issues[0]?.message ?? "Check your GitHub username.");
+      return;
+    }
+    const email = contactEmail.safeParse(draft.contactEmail);
+    if (draft.contactEmail.trim() && !email.success) {
+      setError(email.error.issues[0]?.message ?? "Check your contact email.");
+      return;
+    }
+
     const next: MockProfile = {
       handle,
       displayName: draft.displayName.trim(),
       tagline: draft.tagline.trim().slice(0, 100),
       courseId: draft.courseId,
       messengerUrl: draft.messengerUrl.trim() || null,
+      githubUsername: github.success ? github.data : null,
+      contactEmail: email.success ? email.data : null,
       projects: draft.projects
         .filter((project) => project.title.trim())
         .map((project) => ({
@@ -209,6 +228,35 @@ export function DashboardPage() {
             value={form.messengerUrl}
             onChange={(event) => update("messengerUrl", event.target.value)}
             className={inputClass}
+          />
+        </Field>
+        <Field label="GitHub" hint="Your username or profile link. Shown on your page.">
+          <input
+            id="githubUsername"
+            name="githubUsername"
+            placeholder="octocat"
+            value={form.githubUsername}
+            onChange={(event) => update("githubUsername", event.target.value)}
+            className={inputClass}
+            autoCapitalize="none"
+            autoComplete="off"
+            spellCheck={false}
+          />
+        </Field>
+        <Field
+          label="Contact email"
+          hint="Anyone who opens your page can see this address. Leave it empty to keep it private."
+        >
+          <input
+            id="contactEmail"
+            name="contactEmail"
+            type="email"
+            placeholder="you@example.com"
+            value={form.contactEmail}
+            onChange={(event) => update("contactEmail", event.target.value)}
+            className={inputClass}
+            autoCapitalize="none"
+            autoComplete="off"
           />
         </Field>
 
@@ -299,15 +347,18 @@ export function DashboardPage() {
 
 function Field({
   label,
+  hint,
   children,
 }: {
   label: string;
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (
     <label className="grid gap-2">
       <span className="font-mono text-[11px] uppercase tracking-wide text-muted">{label}</span>
       {children}
+      {hint ? <span className="text-xs leading-5 text-muted">{hint}</span> : null}
     </label>
   );
 }

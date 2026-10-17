@@ -15,6 +15,8 @@ const createSchema = z.object({
   courseId: z.coerce.number<unknown>().int().positive("Choose your course"),
   tagline: v.tagline.optional().default(""),
   messengerUrl: v.optional(v.messengerUrl),
+  githubUsername: v.optional(v.githubUsername),
+  contactEmail: v.optional(v.contactEmail),
 });
 
 const updateSchema = z
@@ -23,6 +25,8 @@ const updateSchema = z
     courseId: z.coerce.number<unknown>().int().positive("Choose your course"),
     tagline: v.tagline,
     messengerUrl: v.optional(v.messengerUrl),
+    githubUsername: v.optional(v.githubUsername),
+    contactEmail: v.optional(v.contactEmail),
     coverImageId: z.uuid().nullable(),
     searchVisible: z.boolean(),
   })
@@ -103,6 +107,8 @@ export async function createProfile(
         courseId: data.courseId,
         tagline: data.tagline,
         messengerUrl: data.messengerUrl ?? null,
+        githubUsername: data.githubUsername ?? null,
+        contactEmail: data.contactEmail ?? null,
       })
       .returning();
     return created!;
@@ -162,6 +168,9 @@ export interface PublicProfile {
   tagline: string;
   courseName: string;
   messengerUrl: string | null;
+  githubUsername: string | null;
+  /** Shown to anyone who opens the page. Keep it out of structured data, previews and logs. */
+  contactEmail: string | null;
   coverImage: PublicImage | null;
   projects: PublicProject[];
   /** False when the student opted out of search engines. Pages then get noindex. */
@@ -226,6 +235,8 @@ export async function getPublicProfile(
     tagline: profile.tagline,
     courseName: row.courseName,
     messengerUrl: profile.messengerUrl,
+    githubUsername: profile.githubUsername,
+    contactEmail: profile.contactEmail,
     coverImage,
     projects: publicProjects,
     searchVisible: profile.searchVisible,

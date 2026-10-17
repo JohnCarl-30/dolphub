@@ -57,8 +57,8 @@ type ActionResult<T> =
 | Action | Input | Returns on success |
 |---|---|---|
 | `checkHandleAction(handle)` | The handle being typed | `{ available }`. A reserved or badly formed handle returns an error instead |
-| `createProfileAction(input)` | `handle`, `displayName`, `courseId`, optional `tagline` and `messengerUrl` | `{ handle }` |
-| `updateProfileAction(input)` | Only the changed fields: `displayName`, `tagline`, `courseId`, `messengerUrl`, `coverImageId`, `searchVisible` | `{ handle }` |
+| `createProfileAction(input)` | `handle`, `displayName`, `courseId`, optional `tagline`, `messengerUrl`, `githubUsername` and `contactEmail` | `{ handle }` |
+| `updateProfileAction(input)` | Only the changed fields: `displayName`, `tagline`, `courseId`, `messengerUrl`, `githubUsername`, `contactEmail`, `coverImageId`, `searchVisible` | `{ handle }` |
 | `createProjectAction(input)` | `title`, optional `description`, `demoUrl`, `sourceUrl` | `{ projectId }` |
 | `updateProjectAction(projectId, input)` | Only the changed fields, plus `sortOrder` | `null` |
 | `deleteProjectAction(projectId)` | | `null` |
@@ -69,6 +69,8 @@ Rules the actions enforce, so the frontend doesn't have to:
 - **Signed out:** the action redirects to `/login`.
 - **Text limits:** name up to 60 characters, tagline 100, project title 80, description 1,000.
 - **Links:** project links must start with `https://`, and the Messenger link must be `https://m.me/...` or `https://www.messenger.com/...`. An empty string clears an optional field.
+- **GitHub:** `githubUsername` takes a bare username or a pasted `https://github.com/<username>` link, and stores the username only. It is 1 to 39 letters, digits or single hyphens, with no hyphen at either end. The page builds the link as `https://github.com/<username>`.
+- **Contact email:** `contactEmail` is stored lowercase, up to 254 characters, any domain. It is separate from the sign-in email and is empty until the student adds one. It shows to anyone on the public page, so the dashboard must say so. It must stay out of structured data, link previews, the sitemap and logs.
 - **Course:** `courseId` may be a number or the text from a `<select>`, such as `"3"`.
 - **Handle:** cannot change after creation.
 - **Refresh:** every successful write refreshes the student's public page and the home grid.
@@ -256,8 +258,8 @@ In pages and actions, use the helpers in `lib/auth.ts`:
 |---|---|
 | `listActiveCourses(db)` | Courses for the signup dropdown |
 | `isHandleAvailable(db, handle)` | For live checking while typing. Throws `VALIDATION` on a badly formed or reserved handle |
-| `createProfile(db, userId, input)` | Handle, name, course, optional tagline and Messenger link. Handle is permanent |
-| `updateProfile(db, userId, patch)` | Name, tagline, course, Messenger link, cover image. Rejects a handle change |
+| `createProfile(db, userId, input)` | Handle, name, course, optional tagline, Messenger link, GitHub username and contact email. Handle is permanent |
+| `updateProfile(db, userId, patch)` | Name, tagline, course, Messenger link, GitHub username, contact email, cover image. Rejects a handle change |
 | `getProfileByUserId(db, userId)` | The dashboard's own profile, or null |
 | `getPublicProfile(ctx, handle)` | Everything `/u/<handle>` shows, with image URLs and the preview cover. Null when missing, hidden, or being deleted. `updatedAt` is the preview image version |
 | `listGridProfiles(ctx, { limit, after })` | Home grid: visible profiles with a project, newest first. Pass the last card's `createdAt` and `id` as `after` for the next page |

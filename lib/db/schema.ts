@@ -52,6 +52,10 @@ export const profiles = pgTable(
       .notNull()
       .references(() => courses.id),
     messengerUrl: text("messenger_url"),
+    /** The username only. The link is always built as https://github.com/<username>. */
+    githubUsername: text("github_username"),
+    /** Shown publicly, so it is opt-in. Always lowercase, and separate from users.email. */
+    contactEmail: text("contact_email"),
     /** Preview image override. Null means the first image of the first project. */
     coverImageId: uuid("cover_image_id").references((): AnyPgColumn => images.id, {
       onDelete: "set null",
