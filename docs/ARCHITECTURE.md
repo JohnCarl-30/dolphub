@@ -47,6 +47,7 @@ The metric is one count query shown on the admin page. No tracking script, no co
 12. **Moderation.** The admin can hide any profile and freeze signups from a phone. Later, a report button auto-hides a profile after 3 distinct reporters and notifies the owner.
 13. **Deletion removes everything.** Order of operations: mark deleted in Neon, delete R2 objects, purge the cache. A nightly sweep removes orphaned R2 keys. Reports survive with the profile reference nulled, so repeat offenders keep their history.
 14. **Internship posts.** Company, role, deadline and link only. Only the admin posts. They expire by query (`deadline >= today`), with no cron job.
+15. **The project owner focuses on backend, not frontend.** That covers the database, sign-in, the upload pipeline, server actions and API routes, page revalidation, and admin and moderation logic. Frontend work has no owner yet. That means the dashboard screens, the public page and grid layout, browser image compression, and phone testing.
 
 ## Data model (launch)
 
@@ -90,3 +91,4 @@ Ordered by danger.
 4. **Bus factor of one.** Add a second owner on Vercel, Cloudflare, Neon, Resend and the domain, and keep a runbook in this repo.
 5. **Phone upload untested.** Test compression with a real 4 MB photo on a budget Android phone on campus wifi. Test that a backgrounded tab shows a clear retry, not a silent empty slot.
 6. **Handle typos.** Consider allowing one handle change within 24 hours of signup.
+7. **Frontend has no owner.** The owner is focusing on backend. Find a frontend collaborator before the build week's screen tasks, or use a ready-made component kit and keep screens plain. A collaborator could also become the second account owner in item 4.
