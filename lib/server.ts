@@ -1,4 +1,5 @@
 import "server-only";
+import { createHash } from "node:crypto";
 import { loadConfig, type Config } from "./config";
 import type { Db } from "./db";
 import { createNeonDb } from "./db/neon";
@@ -67,5 +68,10 @@ export function getAuthSettings(): AuthSettings {
     allowedDomains: c.PCU_EMAIL_DOMAINS,
     appUrl: c.APP_URL,
     dailyEmailCap: c.DAILY_EMAIL_CAP,
+    linksPerNetworkPerHour: c.SIGNIN_LINKS_PER_NETWORK_PER_HOUR,
+    // DATABASE_URL is secret and present everywhere, so it makes a safe fallback key.
+    rateLimitKey:
+      c.RATE_LIMIT_SECRET ??
+      createHash("sha256").update(`dolphub-rate-limit:${c.DATABASE_URL}`).digest("hex"),
   };
 }

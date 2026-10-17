@@ -7,7 +7,9 @@ import {
   AUTH_LIMITS,
   consumeSignInLink,
   getSessionUser,
+  hashNetwork,
   hashToken,
+  networkOf,
   purgeExpiredAuthRecords,
   requestSignInLink,
   signOut,
@@ -149,5 +151,80 @@ describe("sign-in links", () => {
     await consumeSignInLink(ctx, settings, tokenFrom(sender));
     advance(AUTH_LIMITS.sessionTtlMs + 1);
     expect(await purgeExpiredAuthRecords(ctx)).toEqual({ loginTokens: 1, sessions: 1 });
+  });
+});
+
+describe("networkOf", () => {
+  it("keeps IPv4 whole and groups IPv6 by its /64 prefix", () => {
+    expect(networkOf("203.0.113.7")).toBe("203.0.113.7");
+    expect(networkOf(" ::ffff:203.0.113.7 ")).toBe("203.0.113.7");
+    expect(networkOf("2001:db8:aa:1::5")).toBe("2001:db8:aa:1::/64");
+    expect(networkOf("2001:0db8:00aa:0001:9:9:9:9")).toBe("2001:db8:aa:1::/64");
+    expect(networkOf("2001:db8::1")).toBe("2001:db8:0:0::/64");
+  });
+
+  it("ignores values that are not IP addresses", () => {
+    expect(networkOf(undefined)).toBeNull();
+    expect(networkOf("")).toBeNull();
+    expect(networkOf("unknown")).toBeNull();
+    expect(networkOf("1.2.3.4; drop table")).toBeNull();
+  });
+});
+
+describe("per-network sign-in limit", () => {
+  let env: TestEnv;
+  let sender: MemoryEmailSender;
+  const limited = { ...settings, linksPerNetworkPerHour: 3, rateLimitKey: "test-secret-key-123" };
+
+  beforeEach(async () => {
+    env = await createTestContext();
+    sender = new MemoryEmailSender();
+  });
+
+  it("stops one network after the limit, across different addresses", async () => {
+    for (const name of ["a", "b", "c"]) {
+      await requestSignInLink(env.ctx, sender, limited, `${name}@pcu.edu.ph`, "203.0.113.7");
+    }
+    await expect(
+      requestSignInLink(env.ctx, sender, limited, "d@pcu.edu.ph", "203.0.113.7"),
+    ).rejects.toThrow(/from this network/);
+    // Another device on the same IPv6 /64 counts as the same network.
+    for (const n of [1, 2, 3]) {
+      await requestSignInLink(env.ctx, sender, limited, `v6${n}@pcu.edu.ph`, `2001:db8:aa:1::${n}`);
+    }
+    await expect(
+      requestSignInLink(env.ctx, sender, limited, "v64@pcu.edu.ph", "2001:db8:aa:1:ffff::9"),
+    ).rejects.toThrow(/from this network/);
+    // A different network is unaffected.
+    await requestSignInLink(env.ctx, sender, limited, "e@pcu.edu.ph", "198.51.100.2");
+    expect(sender.sent).toHaveLength(7);
+  });
+
+  it("allows the network again after an hour", async () => {
+    let clock = new Date("2026-10-20T08:00:00Z");
+    const ctx = { ...env.ctx, now: () => clock };
+    for (const name of ["a", "b", "c"]) {
+      await requestSignInLink(ctx, sender, limited, `${name}@pcu.edu.ph`, "203.0.113.7");
+    }
+    clock = new Date(clock.getTime() + 60 * 60 * 1000 + 1);
+    await requestSignInLink(ctx, sender, limited, "d@pcu.edu.ph", "203.0.113.7");
+  });
+
+  it("stores only a keyed hash, never the address", async () => {
+    await requestSignInLink(env.ctx, sender, limited, "a@pcu.edu.ph", "203.0.113.7");
+    const [row] = await env.db.select().from(loginTokens);
+    expect(row!.requesterHash).toBe(hashNetwork("203.0.113.7", "test-secret-key-123"));
+    expect(row!.requesterHash).not.toContain("203.0.113");
+    expect(hashNetwork("203.0.113.7", "other-key-123456")).not.toBe(row!.requesterHash);
+  });
+
+  it("is off without a key or an address", async () => {
+    for (const name of ["a", "b", "c", "d"]) {
+      await requestSignInLink(env.ctx, sender, { ...limited, rateLimitKey: undefined }, `${name}@pcu.edu.ph`, "203.0.113.7");
+    }
+    for (const name of ["e", "f", "g", "h"]) {
+      await requestSignInLink(env.ctx, sender, limited, `${name}@pcu.edu.ph`, null);
+    }
+    expect(sender.sent).toHaveLength(8);
   });
 });

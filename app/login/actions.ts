@@ -1,6 +1,7 @@
 "use server";
 
 import { logError } from "@/lib/log";
+import { getClientIp } from "@/lib/request-ip";
 import { requestSignInLink } from "@/lib/services/auth";
 import { ServiceError } from "@/lib/services/errors";
 import { getAuthSettings, getEmailSender, getServiceContext } from "@/lib/server";
@@ -18,6 +19,7 @@ export async function requestLinkAction(_prev: LoginState, formData: FormData): 
       getEmailSender(),
       getAuthSettings(),
       email,
+      await getClientIp(),
     );
     return { status: "sent", email: result.email };
   } catch (error) {
