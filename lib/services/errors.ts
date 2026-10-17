@@ -4,7 +4,8 @@ export type ServiceErrorCode =
   | "FORBIDDEN"
   | "CONFLICT"
   | "LIMIT_REACHED"
-  | "SIGNUPS_FROZEN";
+  | "SIGNUPS_FROZEN"
+  | "UNAVAILABLE";
 
 /**
  * The only error type services throw on purpose. Callers map `code`

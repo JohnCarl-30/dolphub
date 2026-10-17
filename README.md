@@ -6,21 +6,38 @@ A public portfolio page at `/u/<handle>` for every PCU tech student. See [docs/P
 
 Next.js, TypeScript and Tailwind on Vercel. Neon Postgres through Drizzle ORM. Images in Cloudflare R2.
 
-## Setup
+## Run locally, no accounts needed
 
-1. Install packages.
+```bash
+npm install
+cp .env.example .env.local
+```
 
-   ```bash
-   npm install
-   ```
+In `.env.local`, keep `DATABASE_URL=pglite:./.data/pglite`, set `APP_URL=http://localhost:3000`, and leave `RESEND_API_KEY` and the R2 values empty. Then:
 
-2. Copy the environment template and fill it in.
+```bash
+npm run dev
+```
 
-   ```bash
-   cp .env.example .env.local
-   ```
+Open http://localhost:3000/login and enter a PCU address. The sign-in link prints in the terminal. The local database lives in `.data/` and is created on first start.
 
-3. Create the tables, then add the course list and settings row.
+## Production setup
+
+1. **Resend.** Add `dolphub.tech` as a domain in Resend and create the DNS records it lists at your domain registrar. Wait until Resend shows the domain as verified, then create an API key.
+2. **Neon.** Create a project and copy its connection string.
+3. **Cloudflare R2.** Create a bucket with public access or a custom domain, and an API token for it.
+4. **Vercel.** Set these environment variables for Production:
+
+   | Variable | Value |
+   |---|---|
+   | `DATABASE_URL` | Neon connection string |
+   | `APP_URL` | `https://dolphub.tech` |
+   | `PCU_EMAIL_DOMAINS` | `pcu.edu.ph` |
+   | `RESEND_API_KEY` | From Resend |
+   | `EMAIL_FROM` | `PCU Community <login@dolphub.tech>` |
+   | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_BASE_URL` | From Cloudflare |
+
+5. **Database.** From your computer, create the tables and seed data:
 
    ```bash
    export DATABASE_URL="<your Neon connection string>"
@@ -28,17 +45,9 @@ Next.js, TypeScript and Tailwind on Vercel. Neon Postgres through Drizzle ORM. I
    npm run db:seed
    ```
 
-4. Sign in once with your PCU email, then make yourself an admin.
+6. **Admin.** Sign in once on the live site, then run `npm run db:make-admin -- you@pcu.edu.ph`.
 
-   ```bash
-   npm run db:make-admin -- you@pcu.edu.ph
-   ```
-
-5. Start the app.
-
-   ```bash
-   npm run dev
-   ```
+The app refuses to start in production if Resend, R2, Neon or an https `APP_URL` is missing.
 
 ## Scripts
 

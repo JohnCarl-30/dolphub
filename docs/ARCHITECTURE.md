@@ -29,7 +29,8 @@ The metric is one count query shown on the admin page. No tracking script, no co
 | Hosting | Vercel | Function request bodies are capped at 4.5 MB |
 | Database | Neon Postgres, through Drizzle ORM and Neon's HTTP driver | About 0.5 GB storage. Compute suspends when idle, so cold starts are possible. The HTTP driver needs no pooler, because it holds no connections open |
 | Images | Cloudflare R2 | 10 GB free, no egress fees |
-| Email | Resend | About 3,000 per month and **100 per day** |
+| Email | Resend, sending from `login@dolphub.tech` | About 3,000 per month and **100 per day** |
+| Domain | `dolphub.tech` | Site and sign-in links at `https://dolphub.tech` |
 
 ## Decisions
 
@@ -54,6 +55,8 @@ The metric is one count query shown on the admin page. No tracking script, no co
     - **Public directory MCP (January 2027):** read-only, rate-limited, opt-in profiles only. Tools to search students, get one student, and list internships. Student-written text is returned as length-capped data. It waits for PCU approval, 50 profiles, and the opt-in toggle.
 18. **Drizzle ORM with Neon's HTTP driver.** Schema lives in `lib/db/schema.ts`, and migrations are generated into `drizzle/`. Tests run the real migrations against PGlite, an in-memory Postgres, so they need no accounts or network.
 19. **Signup domains are configuration.** `PCU_EMAIL_DOMAINS` lists the allowed email domains, matched exactly. The real PCU student email domain still needs confirming.
+20. **Custom magic-link sign-in instead of Auth.js.** The emailed link opens a page with a button, and only the button press uses the link. University mail scanners often open links before the student does, which would use up a link that signs in on open. Links last 15 minutes and work once. Sessions last 30 days in an httpOnly `__Host-session` cookie. Only hashes of links and session tokens are stored.
+21. **Local development needs no accounts.** `DATABASE_URL=pglite:<folder>` runs Postgres inside Node, and without `RESEND_API_KEY` sign-in links print to the terminal. Production refuses to start without Neon, Resend, R2 and an https `APP_URL`.
 
 ## Data model (launch)
 
@@ -66,6 +69,8 @@ Defined in `lib/db/schema.ts`.
 - `images`: id, project_id, profile_id (for the per-student cap), r2_key, width, height, bytes, sort_order, created_at
 - `app_settings`: one row holding signups_frozen
 - `admin_audit_log`: actor_user_id, action, target (an id, never a name), reason, created_at
+- `login_tokens`: email, token_hash, expires_at, used_at, created_at
+- `sessions`: user_id, token_hash, expires_at, created_at
 
 Added after launch: `profiles.recovery_email`, `profiles.in_directory` (opt-in for the public MCP, default false), `reports`, `internships`.
 
@@ -75,7 +80,9 @@ Added after launch: `profiles.recovery_email`, `profiles.in_directory` (opt-in f
 |---|---|
 | `/` | Grid of profiles with at least one project |
 | `/u/[handle]` | Public profile page, ISR, preview tags |
-| `/dashboard` | Owner edits profile and projects, phone-first |
+| `/login` | Email form that sends a sign-in link |
+| `/auth/verify` | Where the emailed link lands. A button finishes sign-in |
+| `/dashboard` | Owner edits profile and projects, phone-first. Signed-in only |
 | `/api/upload` | Validates, re-encodes and stores an image in R2 |
 | `/admin` | Profile count metric, hide profile, freeze signups |
 
@@ -98,10 +105,11 @@ Added later: `/api/mcp/admin` for the admin MCP server, and `/api/mcp` for the p
 Ordered by danger.
 
 1. **Not sanctioned by PCU.** Talk to student affairs or a faculty adviser before the public launch on 2026-11-07.
-2. **Email deliverability untested.** Send a test from Resend to a PCU address before writing sign-in code. Resend's 100-per-day cap also limits launch-day signups.
+2. **Email deliverability untested.** Sign-in is built, but no real email has reached a PCU inbox yet. Verify `dolphub.tech` in Resend, then send a sign-in link to a PCU address and check inbox versus spam. Resend's 100-per-day cap also limits launch-day signups, and the site stops at `DAILY_EMAIL_CAP`.
 3. **PCU mailbox coverage.** Confirm with PCU IT that every tech student has a mailbox, and whether it survives graduation.
 4. **Bus factor of one.** Add a second owner on Vercel, Cloudflare, Neon, Resend and the domain, and keep a runbook in this repo.
 5. **Phone upload untested.** Test compression with a real 4 MB photo on a budget Android phone on campus wifi. Test that a backgrounded tab shows a clear retry, not a silent empty slot.
 6. **Handle typos.** Consider allowing one handle change within 24 hours of signup.
 7. **Frontend has no owner.** The owner is focusing on backend. Find a frontend collaborator before the build week's screen tasks, or use a ready-made component kit and keep screens plain. A collaborator could also become the second account owner in item 4.
 8. **MCP package versions.** `mcp-handler` 2.x needs the v2 MCP SDK packages and Node 20 or newer, and 1.x pairs with `@modelcontextprotocol/sdk` 1.x. Check the README when building, and use SDK 1.26.0 or later on 1.x because of a known security issue in earlier versions.
+9. **Sign-in email abuse.** Anyone can request links for made-up `@pcu.edu.ph` addresses, three per address, and use up the daily email cap. That blocks real sign-ins until the 24-hour window clears, and bounces hurt `dolphub.tech`'s sending reputation. The signup freeze stops links to new addresses. If it happens, add a per-IP limit or a challenge on the sign-in form.
