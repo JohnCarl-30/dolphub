@@ -29,6 +29,13 @@
       "when": 1792252853224,
       "tag": "0003_requester_hash",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792253738750,
+      "tag": "0004_opportunities",
+      "breakpoints": true
     }
   ]
 }

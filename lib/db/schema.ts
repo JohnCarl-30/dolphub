@@ -166,3 +166,36 @@ export const sessions = pgTable(
   },
   (t) => [index("sessions_user_id_idx").on(t.userId)],
 );
+
+/** Internships, events, competitions and programs. Admins post them, and each links out. */
+export const opportunities = pgTable(
+  "opportunities",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /** Stable public address, such as accenture-software-intern-k3f9. Never changes. */
+    slug: text("slug").notNull().unique(),
+    kind: text("kind").notNull(),
+    title: text("title").notNull(),
+    organization: text("organization").notNull(),
+    summary: text("summary").notNull(),
+    /** Where to apply or register. */
+    url: text("url").notNull(),
+    locationType: text("location_type").notNull().default("onsite"),
+    location: text("location"),
+    startsAt: timestamp("starts_at", { withTimezone: true }),
+    endsAt: timestamp("ends_at", { withTimezone: true }),
+    deadline: timestamp("deadline", { withTimezone: true }),
+    /** When it leaves the list. Worked out from the dates on every write. */
+    closesAt: timestamp("closes_at", { withTimezone: true }).notNull(),
+    isHidden: boolean("is_hidden").notNull().default(false),
+    hiddenReason: text("hidden_reason"),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    check("opportunities_kind", sql`${t.kind} in ('internship', 'event', 'competition', 'program')`),
+    check("opportunities_location_type", sql`${t.locationType} in ('onsite', 'online', 'hybrid')`),
+    index("opportunities_open_idx").on(t.isHidden, t.closesAt),
+  ],
+);
