@@ -3,6 +3,7 @@
  * Usage: npm run db:make-admin -- someone@pcu.edu.ph
  */
 import { eq } from "drizzle-orm";
+import { logError } from "../log";
 import { users } from "./schema";
 import { createNeonDb } from "./neon";
 
@@ -23,6 +24,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(error);
+  logError("Script", error);
   process.exit(1);
 });

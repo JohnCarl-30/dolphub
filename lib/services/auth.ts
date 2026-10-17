@@ -3,6 +3,7 @@ import { and, count, eq, gt, gte, isNull, lt } from "drizzle-orm";
 import { z } from "zod";
 import { loginTokens, sessions, users } from "../db/schema";
 import type { EmailSender } from "../email/types";
+import { logError } from "../log";
 import { nowOf, type ServiceContext } from "./context";
 import { ServiceError } from "./errors";
 import { assertCanRegister, findActiveUserByEmail, normalizeEmail, signInOrRegister } from "./signup";
@@ -122,7 +123,7 @@ export async function requestSignInLink(
     await sender.send({ to: email, ...signInEmail(link) });
   } catch (error) {
     await ctx.db.delete(loginTokens).where(eq(loginTokens.id, row!.id));
-    console.error("Sign-in email failed", error);
+    logError("Sign-in email", error);
     throw new ServiceError("UNAVAILABLE", "We could not send the email. Please try again in a few minutes.");
   }
   return { email };

@@ -3,6 +3,7 @@
  * Usage: npm run db:seed
  */
 import { createNeonDb } from "./neon";
+import { logError } from "../log";
 import { seedBaseData, TECH_COURSES } from "./seed-data";
 
 async function main() {
@@ -13,6 +14,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(error);
+  logError("Script", error);
   process.exit(1);
 });

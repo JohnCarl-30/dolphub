@@ -1,3 +1,4 @@
+import { logError } from "../log";
 import { ServiceError } from "../services/errors";
 
 /**
@@ -19,6 +20,6 @@ export function toActionError(error: unknown, context: string): ActionResult<nev
       ? { ok: false, error: error.message, field: error.field }
       : { ok: false, error: error.message };
   }
-  console.error(`${context} failed`, error);
+  logError(context, error);
   return { ok: false, error: "Something went wrong. Please try again." };
 }

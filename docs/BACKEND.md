@@ -134,6 +134,12 @@ Services throw `ServiceError` for expected problems. Its `message` is safe to sh
 
 Another user's project or image returns `NOT_FOUND`, not `FORBIDDEN`, so ids are never confirmed to strangers.
 
+### Logging
+
+Student email addresses must never reach the server logs. Log unexpected errors with `logError(context, error)` from `lib/log.ts`, never `console.error(error)`.
+
+`logError` keeps the error name, message, Postgres code and the start of the stack. It drops Drizzle's `params:` line, which holds query values such as the email, and masks any email address. That covers addresses an outside service like Resend echoes back. `toActionError` already uses it, so server actions are covered.
+
 ## Services
 
 ### Sign-in (`auth.ts` and `signup.ts`)

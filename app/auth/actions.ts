@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { clearSessionCookie, readSessionToken, setSessionCookie } from "@/lib/auth";
+import { logError } from "@/lib/log";
 import { consumeSignInLink, signOut } from "@/lib/services/auth";
 import { ServiceError } from "@/lib/services/errors";
 import { getAuthSettings, getServiceContext } from "@/lib/server";
@@ -16,7 +17,7 @@ export async function verifyAction(_prev: VerifyState, formData: FormData): Prom
     await setSessionCookie(session.sessionToken, session.expiresAt);
   } catch (error) {
     if (error instanceof ServiceError) return { error: error.message };
-    console.error("Sign-in failed", error);
+    logError("Sign-in", error);
     return { error: "Something went wrong. Please try again." };
   }
   redirect("/dashboard");
