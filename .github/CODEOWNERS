@@ -1,0 +1,39 @@
+# Who reviews what. GitHub asks these people to review any pull request
+# that touches their files. When several lines match a file, the LAST one wins,
+# so broad folders come first and exceptions after them.
+# Backend: @JohnCarl-30. Frontend: @fnzh-i. See docs/PLAN.md, Ownership.
+
+# Anything not listed below
+*                               @JohnCarl-30
+
+# Frontend: pages, layouts, components, styles, static files
+/app/                           @fnzh-i
+/components/                    @fnzh-i
+/public/                        @fnzh-i
+
+# Backend inside app/: server actions and API routes
+/app/**/actions.ts              @JohnCarl-30
+/app/api/                       @JohnCarl-30
+
+# Backend: services, database, email, storage, config
+/lib/                           @JohnCarl-30
+/drizzle/                       @JohnCarl-30
+/drizzle.config.ts              @JohnCarl-30
+/.env.example                   @JohnCarl-30
+/.github/                       @JohnCarl-30
+
+# Frontend mock data and its test live in lib/ but belong to the frontend
+/lib/mock-profiles.ts           @fnzh-i
+/lib/mock-profiles.test.ts      @fnzh-i
+
+# Docs
+/docs/                          @JohnCarl-30
+/docs/prototype-report.md       @fnzh-i
+/docs/reverse-engineering/      @fnzh-i
+
+# Shared files where both sides make changes, and where conflicts happen
+/app/layout.tsx                 @JohnCarl-30 @fnzh-i
+/next.config.ts                 @JohnCarl-30 @fnzh-i
+/package.json                   @JohnCarl-30 @fnzh-i
+/package-lock.json              @JohnCarl-30 @fnzh-i
+/docs/BACKEND.md                @JohnCarl-30 @fnzh-i
