@@ -27,17 +27,17 @@ describe("particle playback", () => {
   const visible = { ready: true, reducedMotion: false, hidden: false };
 
   it("waits for browser preferences before starting", () => {
-    expect(shouldPlayParticles({ ...visible, ready: false }, false)).toBe(false);
+    expect(shouldPlayParticles({ ...visible, ready: false })).toBe(false);
   });
 
-  it("runs only when visible, allowed, and resumed", () => {
-    expect(shouldPlayParticles(visible, false)).toBe(true);
+  it("runs only when visible, allowed, and outside showcase traversal", () => {
+    expect(shouldPlayParticles(visible)).toBe(true);
     expect(shouldPlayParticles(visible, true)).toBe(false);
-    expect(shouldPlayParticles({ ...visible, hidden: true }, false)).toBe(false);
-    expect(shouldPlayParticles({ ...visible, reducedMotion: true }, false)).toBe(false);
+    expect(shouldPlayParticles({ ...visible, hidden: true })).toBe(false);
+    expect(shouldPlayParticles({ ...visible, reducedMotion: true })).toBe(false);
   });
 
-  it("retains manual pause across tab and reduced-motion changes", () => {
+  it("keeps visibility and reduced-motion rules during traversal", () => {
     for (const hidden of [false, true]) {
       for (const reducedMotion of [false, true]) {
         expect(shouldPlayParticles({ ...visible, hidden, reducedMotion }, true)).toBe(false);
@@ -45,10 +45,9 @@ describe("particle playback", () => {
     }
   });
 
-  it("pauses autonomous movement in the showcase without overriding manual pause", () => {
-    expect(shouldPlayParticles(visible, false, true)).toBe(false);
-    expect(shouldPlayParticles(visible, false, false)).toBe(true);
-    expect(shouldPlayParticles(visible, true, false)).toBe(false);
-    expect(shouldPlayParticles({ ...visible, hidden: true }, false, false)).toBe(false);
+  it("resumes autonomous movement after leaving the showcase", () => {
+    expect(shouldPlayParticles(visible, true)).toBe(false);
+    expect(shouldPlayParticles(visible, false)).toBe(true);
+    expect(shouldPlayParticles({ ...visible, hidden: true }, false)).toBe(false);
   });
 });
