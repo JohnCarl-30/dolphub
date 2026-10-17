@@ -18,6 +18,79 @@ Never import `lib/server.ts` or `lib/services` from a client component. `lib/ser
 
 **After any write that returns a `handle`,** refresh that student's cached page, for example with `revalidatePath("/u/" + handle)`. Services stay free of Next.js, so they cannot do this themselves.
 
+## Dashboard: server actions for the frontend
+
+These are the contract between backend (JohnCarl-30) and frontend (fnzh-i). Backend owns `lib/` and the `actions.ts` files. Frontend owns pages and components under `app/`. Change an action's input or result only in a pull request both people see.
+
+### Loading the dashboard
+
+In a Server Component inside a `<Suspense>` boundary:
+
+```tsx
+import { getDashboard } from "@/lib/dashboard";
+
+async function Dashboard() {
+  const d = await getDashboard(); // redirects to /login when signed out
+  if (!d.profile) return <CreateProfileForm courses={d.courses} />;
+  // d.profile, d.projects (each with images), d.imageCount, d.imageLimit, d.email
+}
+```
+
+`d.profile.isHidden` is true when an admin has hidden the page. Show the student `d.profile.hiddenReason`.
+
+### Result shape
+
+Every action returns an `ActionResult` from `lib/actions/result.ts` and never throws for expected problems:
+
+```ts
+type ActionResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: string; field?: string };
+```
+
+`error` is safe to show. When `field` is set, show the message next to that input. Field names match the input names below.
+
+### Actions in `app/dashboard/actions.ts`
+
+| Action | Input | Returns on success |
+|---|---|---|
+| `checkHandleAction(handle)` | The handle being typed | `{ available }`. A reserved or badly formed handle returns an error instead |
+| `createProfileAction(input)` | `handle`, `displayName`, `courseId`, optional `tagline` and `messengerUrl` | `{ handle }` |
+| `updateProfileAction(input)` | Only the changed fields: `displayName`, `tagline`, `courseId`, `messengerUrl`, `coverImageId` | `{ handle }` |
+| `createProjectAction(input)` | `title`, optional `description`, `demoUrl`, `sourceUrl` | `{ projectId }` |
+| `updateProjectAction(projectId, input)` | Only the changed fields, plus `sortOrder` | `null` |
+| `deleteProjectAction(projectId)` | | `null` |
+| `deleteImageAction(imageId)` | | `null` |
+
+Rules the actions enforce, so the frontend doesn't have to:
+
+- **Signed out:** the action redirects to `/login`.
+- **Text limits:** name up to 60 characters, tagline 100, project title 80, description 1,000.
+- **Links:** project links must start with `https://`, and the Messenger link must be `https://m.me/...` or `https://www.messenger.com/...`. An empty string clears an optional field.
+- **Course:** `courseId` may be a number or the text from a `<select>`, such as `"3"`.
+- **Handle:** cannot change after creation.
+- **Refresh:** every successful write refreshes the student's public page and the home grid.
+
+### Using an action from a form
+
+```tsx
+"use client";
+import { useActionState } from "react";
+import { createProjectAction } from "@/app/dashboard/actions";
+
+const [state, submit, pending] = useActionState(
+  async (_prev: unknown, form: FormData) =>
+    createProjectAction({
+      title: String(form.get("title") ?? ""),
+      demoUrl: String(form.get("demoUrl") ?? ""),
+    }),
+  null,
+);
+// state?.ok === false -> show state.error, next to state.field when set
+```
+
+React clears a form after an action runs. To keep what the student typed after an error, set each input's `defaultValue` from the submitted values.
+
 ## Errors
 
 Services throw `ServiceError` for expected problems. Its `message` is safe to show users, and `field` names the form field when there is one. Anything else is a bug or an outage.
@@ -107,6 +180,7 @@ Every function takes the acting user's id and refuses non-admins. Every write is
 
 These are Next.js wiring, planned in the build week:
 
-- Server actions for the dashboard, and an upload route that calls `addProjectImage`
-- Page revalidation after writes
+- An upload route that calls `addProjectImage`
+- The public page `/u/<handle>` and home grid data, cached under `profileTag(handle)` and `GRID_TAG` from `lib/cache-tags.ts`, which the actions already expire
+- Admin actions for the admin page: stats, hide and unhide, and the signup freeze
 - A scheduled job that runs `sweepOrphanedImages` and `purgeExpiredAuthRecords` nightly

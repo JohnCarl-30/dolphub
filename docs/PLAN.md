@@ -11,7 +11,7 @@ Last updated: 2026-10-17. The decisions behind this plan are in [ARCHITECTURE.md
 | **Success** | 50 profiles with at least one project by mid-December 2026 |
 | **Soft launch** | Saturday 2026-10-24, to about 10 invited classmates |
 | **Public launch** | Saturday 2026-11-07 |
-| **Owner's focus** | Backend. Frontend has no owner yet |
+| **Team** | Backend: JohnCarl-30. Frontend: fnzh-i |
 | **Budget** | Free tiers only |
 
 ## Milestones
@@ -30,10 +30,12 @@ Last updated: 2026-10-17. The decisions behind this plan are in [ARCHITECTURE.md
 
 | Area | Owner | Covers |
 |---|---|---|
-| Backend | Project owner | Database, sign-in, upload pipeline, server actions and API routes, page revalidation, preview tag data, admin and moderation logic, MCP servers |
-| Frontend | **Unassigned** | Dashboard screens, public page and grid layout, browser image compression, phone testing |
+| Backend | JohnCarl-30 | Database, sign-in, upload pipeline, server actions and API routes, page revalidation, preview tag data, admin and moderation logic, MCP servers |
+| Frontend | fnzh-i | Dashboard screens, public page and grid layout, browser image compression, phone testing |
 
-Until someone owns the frontend, frontend tasks use a ready-made component kit and plain screens. Finding a frontend collaborator is a Phase 1 task. That person could also be the second account owner.
+**How the two sides meet.** Backend owns `lib/` and the `actions.ts` files. Frontend owns pages and components under `app/`. Server actions are the contract: each takes a fixed input and returns either success with data or an error with a message and field. They are listed in [BACKEND.md](./BACKEND.md). Work on separate branches, in small pull requests merged into `main` often.
+
+**Second account owner.** fnzh-i is the natural second owner on Vercel, Cloudflare, Neon, Resend and the dolphub.tech domain. Set that up before the public launch.
 
 **One rule for all backend code.** Put every read and write in plain service functions under `lib/services/`, such as `hideProfile` or `countActiveProfiles`. Server actions, API routes and the MCP servers then stay thin wrappers that call the same functions. This keeps the business logic in one place and is what makes Phase 4 cheap.
 
@@ -43,7 +45,7 @@ One task per day, sized for evenings during classes.
 
 | Day | Task | Area | Done when |
 |---|---|---|---|
-| Sat Oct 17 | Send a Resend test email to a PCU address. Create Vercel, Neon, R2 and Resend accounts. Scaffold Next.js with TypeScript and Tailwind, and deploy it. Ask around for a frontend collaborator | Backend | The deployed URL loads, and you know whether PCU mail lands in inbox or spam |
+| Sat Oct 17 | Send a Resend test email to a PCU address. Create Vercel, Neon, R2 and Resend accounts. Scaffold Next.js with TypeScript and Tailwind, and deploy it. | Backend | The deployed URL loads, and you know whether PCU mail lands in inbox or spam |
 | Sun Oct 18 | Database schema for users, courses, profiles, projects and images. Seed the tech course list and the reserved handle blocklist | Backend | Migrations run against Neon through the pooler |
 | Mon Oct 19 | Magic-link sign-in through Resend, limited to the PCU email domain. Stop non-tech students at the course step | Backend | A PCU address can sign in, and a non-PCU address cannot |
 | Tue Oct 20 | Dashboard, phone-first: pick a handle, then edit name, tagline, course and Messenger link | Frontend, with backend server actions | A signed-in student can save a profile from a phone |
@@ -52,7 +54,7 @@ One task per day, sized for evenings during classes.
 | Fri Oct 23 | Admin page with profile count, hide profile and freeze signups. "Report this page" link. Test on a budget Android phone on campus wifi | Backend, plus frontend for the admin screen | Hiding a page works from a phone, and a real 4 MB photo uploads |
 | Sat Oct 24 | **Soft launch** to about 10 classmates, invited by name | Both | Ten invites sent |
 
-**Progress, Oct 17:** the app is scaffolded, and the backend for Sunday's and Monday's tasks is done early. That covers the schema and migrations, the course seed, tested services for profiles, projects, image upload and admin, and working magic-link sign-in through Resend, tested end to end in a browser. What is left for the backend this week is the dashboard's server actions, the upload route, and page refreshes. See [BACKEND.md](./BACKEND.md).
+**Progress, Oct 17:** the app is scaffolded, and the backend for Sunday's and Monday's tasks is done early. That covers the schema and migrations, the course seed, tested services for profiles, projects, image upload and admin, and working magic-link sign-in through Resend, tested end to end in a browser. The dashboard's server actions and data loader are also done and browser-tested, so fnzh-i can build the Tuesday screens against them. What is left for the backend this week is the upload route, the public page data, and admin actions. See [BACKEND.md](./BACKEND.md).
 
 **Still blocking sign-in on the live site:** verify `dolphub.tech` in Resend, set the production environment variables on Vercel, and send one real link to a PCU inbox.
 
@@ -152,5 +154,4 @@ Tracked in detail in [ARCHITECTURE.md](./ARCHITECTURE.md#open-items-and-risks).
 1. Not yet sanctioned by PCU
 2. Email deliverability to PCU untested
 3. Unknown whether PCU mailboxes cover every student and survive graduation
-4. Only one person holds every account
-5. Frontend has no owner, because the project owner is focusing on backend
+4. Only one person holds every account. fnzh-i can be the second owner
