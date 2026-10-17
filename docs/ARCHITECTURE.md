@@ -48,6 +48,10 @@ The metric is one count query shown on the admin page. No tracking script, no co
 13. **Deletion removes everything.** Order of operations: mark deleted in Neon, delete R2 objects, purge the cache. A nightly sweep removes orphaned R2 keys. Reports survive with the profile reference nulled, so repeat offenders keep their history.
 14. **Internship posts.** Company, role, deadline and link only. Only the admin posts. They expire by query (`deadline >= today`), with no cron job.
 15. **The project owner focuses on backend, not frontend.** That covers the database, sign-in, the upload pipeline, server actions and API routes, page revalidation, and admin and moderation logic. Frontend work has no owner yet. That means the dashboard screens, the public page and grid layout, browser image compression, and phone testing.
+16. **One service layer.** All reads and writes live in plain functions under `lib/services/`. Server actions, API routes and MCP servers are thin wrappers over them, so logic is written once.
+17. **MCP servers, in two stages. Proposed, not yet confirmed.** Both use Vercel's `mcp-handler` in Next.js route handlers and call the service layer. Neither calls a model, so neither adds AI cost.
+    - **Admin MCP (by 2026-11-21):** private, bearer-token auth, used from Claude Code. Tools for stats, hiding pages, freezing signups, posting internships and deleting accounts. Every write is recorded in `admin_audit_log`. The phone kill switch stays on the admin web page, because claude.ai and the phone apps need OAuth.
+    - **Public directory MCP (January 2027):** read-only, rate-limited, opt-in profiles only. Tools to search students, get one student, and list internships. Student-written text is returned as length-capped data. It waits for PCU approval, 50 profiles, and the opt-in toggle.
 
 ## Data model (launch)
 
@@ -57,7 +61,7 @@ The metric is one count query shown on the admin page. No tracking script, no co
 - `projects`: id, profile_id, title, description, demo_url, source_url, sort_order
 - `images`: id, project_id, r2_key, width, height, bytes
 
-Added after launch: `profiles.recovery_email`, `reports`, `internships`.
+Added after launch: `profiles.recovery_email`, `profiles.in_directory` (opt-in for the public MCP, default false), `reports`, `internships`, `admin_audit_log` (actor, action, target, reason, created_at).
 
 ## Routes (launch)
 
@@ -68,6 +72,8 @@ Added after launch: `profiles.recovery_email`, `reports`, `internships`.
 | `/dashboard` | Owner edits profile and projects, phone-first |
 | `/api/upload` | Validates, re-encodes and stores an image in R2 |
 | `/admin` | Profile count metric, hide profile, freeze signups |
+
+Added later: `/api/mcp/admin` for the admin MCP server, and `/api/mcp` for the public directory MCP server.
 
 ## Launch cut list
 
@@ -92,3 +98,4 @@ Ordered by danger.
 5. **Phone upload untested.** Test compression with a real 4 MB photo on a budget Android phone on campus wifi. Test that a backgrounded tab shows a clear retry, not a silent empty slot.
 6. **Handle typos.** Consider allowing one handle change within 24 hours of signup.
 7. **Frontend has no owner.** The owner is focusing on backend. Find a frontend collaborator before the build week's screen tasks, or use a ready-made component kit and keep screens plain. A collaborator could also become the second account owner in item 4.
+8. **MCP package versions.** `mcp-handler` 2.x needs the v2 MCP SDK packages and Node 20 or newer, and 1.x pairs with `@modelcontextprotocol/sdk` 1.x. Check the README when building, and use SDK 1.26.0 or later on 1.x because of a known security issue in earlier versions.
