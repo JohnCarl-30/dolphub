@@ -4,9 +4,11 @@ import { courseById, type MockProfile } from "@/lib/mock-profiles";
 export function ProfileCard({
   profile,
   index,
+  preview = false,
 }: {
   profile: MockProfile;
   index: number;
+  preview?: boolean;
 }) {
   const course = courseById(profile.courseId);
   const number = String(index).padStart(3, "0");
@@ -14,7 +16,7 @@ export function ProfileCard({
   return (
     <Link
       href={`/u/${profile.handle}`}
-      className="group flex flex-col border border-ink/10 bg-paper outline-none transition-colors hover:border-ink focus-visible:ring-2 focus-visible:ring-ink"
+      className={`group flex h-full flex-col border border-ink/10 bg-paper outline-none transition-colors hover:border-ink focus-visible:ring-2 focus-visible:ring-ink ${preview ? "showcase-card" : ""}`}
     >
       <div className="flex items-center justify-between px-4 py-3 font-mono text-[11px] uppercase tracking-wide text-muted">
         <span>{number}</span>
@@ -29,6 +31,13 @@ export function ProfileCard({
           {course?.name}
         </p>
         <p className="text-sm leading-6 text-muted">{profile.tagline}</p>
+        {preview && profile.projects[0] ? (
+          <div className="border-t border-ink/10 pt-3">
+            <p className="font-mono text-[10px] uppercase tracking-wide text-muted">Featured project</p>
+            <h3 className="mt-1 text-lg font-medium tracking-tight">{profile.projects[0].title}</h3>
+            <p className="mt-1 text-sm leading-6 text-muted">{profile.projects[0].description}</p>
+          </div>
+        ) : null}
         <p className="mt-auto font-mono text-[11px] uppercase tracking-wide">
           /u/{profile.handle} →
         </p>

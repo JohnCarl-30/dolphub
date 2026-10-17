@@ -1,7 +1,6 @@
 "use client";
 
-import { CourseFilter } from "@/components/course-filter";
-import { FirstCard, ProfileCard } from "@/components/profile-card";
+import { StudentShowcase } from "@/components/student-showcase";
 import { useMockStore } from "@/components/mock-store";
 import { COURSES, listGridProfiles } from "@/lib/mock-profiles";
 import { shouldPlayParticles } from "@/lib/particles";
@@ -9,7 +8,7 @@ import { useMotionEnvironment } from "@/components/animations/use-motion-environ
 import { ParticleBoundary } from "@/components/particles/particle-boundary";
 import dynamic from "next/dynamic";
 import { motion, MotionConfig } from "motion/react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 const ParticleBackground = dynamic(
   () => import("@/components/particles/particle-background"),
@@ -27,7 +26,7 @@ const STEPS = [
   {
     index: "02",
     title: "Add at least one project",
-    copy: "A page stays off the grid until it has a project with a title.",
+    copy: "A page stays out of the showcase until it has a project with a title.",
   },
   {
     index: "03",
@@ -41,6 +40,9 @@ export function HomePage() {
   const [courseId, setCourseId] = useState<string | null>(null);
   const environment = useMotionEnvironment();
   const [paused, setPaused] = useState(false);
+  const [showcaseActive, setShowcaseActive] = useState(false);
+  const homepage = useRef<HTMLDivElement>(null);
+  const network = useRef<HTMLDivElement>(null);
   const [particleStatus, setParticleStatus] = useState<"loading" | "ready" | "failed">("loading");
   const onParticleStatus = useCallback((status: "ready" | "failed") => setParticleStatus(status), []);
   const onParticleError = useCallback(() => setParticleStatus("failed"), []);
@@ -61,17 +63,19 @@ export function HomePage() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="homepage relative isolate">
-        <div className="home-network pointer-events-none fixed inset-0 -z-10" aria-hidden="true">
-          {showParticles ? (
-            <ParticleBoundary onError={onParticleError}>
-              <ParticleBackground
-                playing={shouldPlayParticles(environment, paused)}
-                finePointer={environment.finePointer}
-                onStatus={onParticleStatus}
-              />
-            </ParticleBoundary>
-          ) : null}
+      <div ref={homepage} className="homepage relative isolate">
+        <div className="home-network-window pointer-events-none fixed inset-0 -z-10" aria-hidden="true">
+          <div ref={network} className="home-network">
+            {showParticles ? (
+              <ParticleBoundary onError={onParticleError}>
+                <ParticleBackground
+                  playing={shouldPlayParticles(environment, paused, showcaseActive)}
+                  finePointer={environment.finePointer}
+                  onStatus={onParticleStatus}
+                />
+              </ParticleBoundary>
+            ) : null}
+          </div>
         </div>
         <motion.section
           initial={false}
@@ -87,7 +91,7 @@ export function HomePage() {
           </h1>
           <p className="mt-6 max-w-xl text-base leading-7 text-muted">
             Dolphub is a public portfolio for IT, CS, and Computer Engineering
-            students. The grid only lists people who have published at least one
+            students. Explore people who have published at least one
             project.
           </p>
           <div className="mt-6 min-h-11" aria-live="polite">
@@ -108,27 +112,21 @@ export function HomePage() {
           </div>
         </motion.section>
 
-        <section className="mx-auto w-full max-w-6xl px-4 pb-10 sm:px-6">
-          <CourseFilter value={courseId} counts={counts} onChange={setCourseId} />
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {visible.length === 0 ? (
-              <FirstCard />
-            ) : (
-              visible.map((profile, index) => (
-                <ProfileCard key={profile.handle} profile={profile} index={index + 1} />
-              ))
-            )}
-          </div>
-        </section>
+        <StudentShowcase
+          profiles={visible} courseId={courseId} counts={counts} onCourseChange={setCourseId}
+          homepage={homepage} network={network} ready={environment.ready}
+          reducedMotion={environment.reducedMotion} hidden={environment.hidden}
+          paused={paused} onActive={setShowcaseActive}
+        />
 
-        <section className="border-y border-ink/10 bg-paper">
+        <section id="after-showcase" tabIndex={-1} aria-label="Community statistics" className="border-y border-ink/10 bg-paper">
           <div className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-8 sm:grid-cols-3 sm:px-6">
             <Stat label="Published pages" value={String(published.length)} />
             <Stat label="Courses on the filter" value={String(COURSES.length)} />
             <Stat
               label="Status"
               value="Mock"
-              hint="Edits in this tab update the grid"
+              hint="Edits in this tab update the showcase"
             />
           </div>
         </section>

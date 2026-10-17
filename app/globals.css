@@ -32,10 +32,17 @@ body {
 }
 
 /* Decorative fallback remains available before JS, on error, and with reduced motion. */
+.home-network-window {
+  overflow: clip;
+}
+
 .home-network {
+  position: absolute;
+  inset: -15%;
   background-image: radial-gradient(circle, var(--ink) 0.65px, transparent 0.85px);
   background-size: 48px 48px;
   mask-image: linear-gradient(to bottom, rgb(0 0 0 / 12%), transparent 90%);
+  will-change: transform;
 }
 
 .home-network:has(canvas) {
@@ -43,7 +50,108 @@ body {
   mask-image: none;
 }
 
+.showcase-frame {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.5rem;
+  padding-block: 1.5rem;
+}
+
+.showcase-controls {
+  display: grid;
+  flex: none;
+  gap: 0.5rem;
+}
+
+.showcase-controls [role="tab"] {
+  min-height: 2.75rem;
+}
+
+.showcase-track {
+  position: relative;
+  display: grid;
+  gap: 1rem;
+  max-width: 42rem;
+  margin-inline: auto;
+  padding: 4px;
+  list-style: none;
+}
+
+.showcase-card > div:nth-child(2) {
+  aspect-ratio: 16 / 5;
+  max-height: 8rem;
+}
+
+.showcase-progress {
+  display: none;
+  height: 2px;
+  overflow: clip;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.showcase:is([data-layout="scroll"], [data-layout="measuring"]) .showcase-frame {
+  height: 100svh;
+}
+
+.showcase[data-layout="scroll"] .showcase-frame {
+  position: sticky;
+  top: 0;
+}
+
+.showcase:is([data-layout="scroll"], [data-layout="measuring"], [data-layout="fits"]) .showcase-track {
+  display: flex;
+  width: max-content;
+  max-width: none;
+  margin-inline: 0;
+}
+
+.showcase:is([data-layout="scroll"], [data-layout="measuring"], [data-layout="fits"]) [data-showcase-card] {
+  flex: 0 0 min(88vw, 22rem);
+  width: min(88vw, 22rem);
+}
+
+.showcase:is([data-layout="scroll"], [data-layout="measuring"]) .showcase-viewport {
+  overflow: clip;
+  flex: none;
+}
+
+.showcase[data-layout="scroll"] .showcase-track {
+  will-change: transform;
+}
+
+.showcase:is([data-layout="scroll"], [data-layout="measuring"]) .showcase-progress {
+  display: block;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .showcase {
+    height: auto !important;
+  }
+
+  .showcase .showcase-frame {
+    position: static !important;
+    height: auto !important;
+  }
+
+  .showcase .showcase-track {
+    display: grid !important;
+    width: auto !important;
+    max-width: 42rem !important;
+    margin-inline: auto !important;
+  }
+
+  .showcase [data-showcase-card] {
+    width: auto !important;
+  }
+
+  .showcase .showcase-progress {
+    display: none !important;
+  }
+
+  .home-network {
+    will-change: auto;
+  }
   .home-network canvas {
     visibility: hidden;
   }

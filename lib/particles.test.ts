@@ -44,4 +44,11 @@ describe("particle playback", () => {
       }
     }
   });
+
+  it("pauses autonomous movement in the showcase without overriding manual pause", () => {
+    expect(shouldPlayParticles(visible, false, true)).toBe(false);
+    expect(shouldPlayParticles(visible, false, false)).toBe(true);
+    expect(shouldPlayParticles(visible, true, false)).toBe(false);
+    expect(shouldPlayParticles({ ...visible, hidden: true }, false, false)).toBe(false);
+  });
 });

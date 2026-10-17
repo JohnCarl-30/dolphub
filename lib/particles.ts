@@ -53,6 +53,7 @@ export interface MotionEnvironment {
 export function shouldPlayParticles(
   environment: MotionEnvironment,
   paused: boolean,
+  showcaseActive = false,
 ): boolean {
-  return environment.ready && !environment.reducedMotion && !environment.hidden && !paused;
+  return environment.ready && !environment.reducedMotion && !environment.hidden && !paused && !showcaseActive;
 }
