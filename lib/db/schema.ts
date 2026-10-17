@@ -57,6 +57,8 @@ export const profiles = pgTable(
       onDelete: "set null",
     }),
     isHidden: boolean("is_hidden").notNull().default(false),
+    /** The student's "show my page in search engines" setting. On by default. */
+    searchVisible: boolean("search_visible").notNull().default(true),
     hiddenReason: text("hidden_reason"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

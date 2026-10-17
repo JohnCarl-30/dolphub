@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import { PRIVATE_ROBOTS } from "@/lib/seo";
 import { LoginForm } from "./login-form";
 
-export const metadata: Metadata = { title: "Sign in · PCU Community" };
+export const metadata: Metadata = { title: "Sign in", robots: PRIVATE_ROBOTS };
 
 export default function LoginPage() {
   return (

@@ -1,5 +1,6 @@
 "use server";
 
+import { logError } from "@/lib/log";
 import { requestSignInLink } from "@/lib/services/auth";
 import { ServiceError } from "@/lib/services/errors";
 import { getAuthSettings, getEmailSender, getServiceContext } from "@/lib/server";
@@ -22,7 +23,7 @@ export async function requestLinkAction(_prev: LoginState, formData: FormData): 
   } catch (error) {
     // Returned so the form can show what was typed. React resets forms after an action.
     if (error instanceof ServiceError) return { status: "error", message: error.message, email };
-    console.error("Sign-in link request failed", error);
+    logError("Sign-in link request", error);
     return { status: "error", message: "Something went wrong. Please try again.", email };
   }
 }

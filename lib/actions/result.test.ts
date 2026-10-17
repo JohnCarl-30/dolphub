@@ -25,7 +25,10 @@ describe("action results", () => {
       ok: false,
       error: "Something went wrong. Please try again.",
     });
-    expect(log).toHaveBeenCalledWith("Save profile failed", expect.any(Error));
+    expect(log).toHaveBeenCalledWith(
+      "Save profile failed",
+      expect.objectContaining({ name: "Error", message: "connection refused at 10.0.0.5" }),
+    );
     log.mockRestore();
   });
 });

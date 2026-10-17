@@ -40,6 +40,18 @@ describe("profiles", () => {
     expect(ok.messengerUrl).toBe("https://m.me/juan");
   });
 
+  it("shows pages in search engines by default, and lets the student opt out", async () => {
+    const u = await env.createUser();
+    const p = await createProfile(env.db, u.id, base(env));
+    expect(p.searchVisible).toBe(true);
+    expect((await getPublicProfile(env.ctx, "juan"))?.searchVisible).toBe(true);
+    await updateProfile(env.db, u.id, { searchVisible: false });
+    expect((await getPublicProfile(env.ctx, "juan"))?.searchVisible).toBe(false);
+    await expect(updateProfile(env.db, u.id, { searchVisible: "no" } as never)).rejects.toMatchObject({
+      code: "VALIDATION",
+    });
+  });
+
   it("does not allow changing the handle", async () => {
     const u = await env.createUser();
     await createProfile(env.db, u.id, base(env));

@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import { PRIVATE_ROBOTS } from "@/lib/seo";
 import { VerifyForm } from "./verify-form";
 
 export const metadata: Metadata = {
-  title: "Sign in · PCU Community",
+  title: "Sign in",
   // The URL holds the sign-in token, so never send it to another site.
   referrer: "no-referrer",
-  robots: { index: false },
+  robots: PRIVATE_ROBOTS,
 };
 
 export default function VerifyPage(props: PageProps<"/auth/verify">) {

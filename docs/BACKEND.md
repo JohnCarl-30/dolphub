@@ -38,6 +38,8 @@ async function Dashboard() {
 
 `d.profile.isHidden` is true when an admin has hidden the page. Show the student `d.profile.hiddenReason`.
 
+`d.profile.searchVisible` is the student's "show my page in search engines" setting, on by default. Give it a toggle that calls `updateProfileAction({ searchVisible })`, and explain at signup that pages are public and searchable unless turned off.
+
 ### Result shape
 
 Every action returns an `ActionResult` from `lib/actions/result.ts` and never throws for expected problems:
@@ -56,7 +58,7 @@ type ActionResult<T> =
 |---|---|---|
 | `checkHandleAction(handle)` | The handle being typed | `{ available }`. A reserved or badly formed handle returns an error instead |
 | `createProfileAction(input)` | `handle`, `displayName`, `courseId`, optional `tagline` and `messengerUrl` | `{ handle }` |
-| `updateProfileAction(input)` | Only the changed fields: `displayName`, `tagline`, `courseId`, `messengerUrl`, `coverImageId` | `{ handle }` |
+| `updateProfileAction(input)` | Only the changed fields: `displayName`, `tagline`, `courseId`, `messengerUrl`, `coverImageId`, `searchVisible` | `{ handle }` |
 | `createProjectAction(input)` | `title`, optional `description`, `demoUrl`, `sourceUrl` | `{ projectId }` |
 | `updateProjectAction(projectId, input)` | Only the changed fields, plus `sortOrder` | `null` |
 | `deleteProjectAction(projectId)` | | `null` |
@@ -91,6 +93,31 @@ const [state, submit, pending] = useActionState(
 
 React clears a form after an action runs. To keep what the student typed after an error, set each input's `defaultValue` from the submitted values.
 
+## Search and link previews
+
+Metadata, link preview images, structured data and the sitemap live in backend-owned files. Pages only call them.
+
+| File | Holds |
+|---|---|
+| `lib/seo.ts` | Site name and colors, titles, descriptions, the "may this page be indexed" rule, and JSON-LD builders. Pure functions with tests |
+| `lib/seo-data.ts` | The one place metadata gets profile data. It reads the sample data today |
+| `lib/share-card.tsx` | The 1200x630 preview card design |
+| `app/robots.ts`, `app/sitemap.ts`, `app/manifest.ts` | Crawler rules, sitemap, web manifest |
+| `app/opengraph-image.tsx`, `app/u/[handle]/opengraph-image.tsx` | Site preview and per-student preview |
+| `app/icon.tsx`, `app/apple-icon.tsx` | Browser tab and home screen icons |
+
+Indexing rules:
+
+- **Home** is indexed.
+- **Student pages** are indexed only when the data is real and the student left `searchVisible` on. Sample pages and unknown handles get `noindex`.
+- **Login, verify and dashboard** always get `noindex`. `robots.txt` blocks `/dashboard`, `/auth/` and `/api/`, but not `/login` or `/u/`, so crawlers can still see their `noindex`.
+
+When student pages switch from sample data to the database, change only `lib/seo-data.ts`. Its comment lists the steps. Then also:
+
+- **Return a real 404.** Have the profile page call `notFound()` for unknown handles.
+- **Guard the build.** Make sure `generateStaticParams` and the lookup don't need the database at build time, because CI builds without environment variables.
+- **Add cover photos to previews.** Cover photos are WebP, which the preview generator can't draw, so convert them to PNG with sharp first.
+
 ## Errors
 
 Services throw `ServiceError` for expected problems. Its `message` is safe to show users, and `field` names the form field when there is one. Anything else is a bug or an outage.
@@ -106,6 +133,12 @@ Services throw `ServiceError` for expected problems. Its `message` is safe to sh
 | `UNAVAILABLE` | An outside service failed, such as Resend | 503 |
 
 Another user's project or image returns `NOT_FOUND`, not `FORBIDDEN`, so ids are never confirmed to strangers.
+
+### Logging
+
+Student email addresses must never reach the server logs. Log unexpected errors with `logError(context, error)` from `lib/log.ts`, never `console.error(error)`.
+
+`logError` keeps the error name, message, Postgres code and the start of the stack. It drops Drizzle's `params:` line, which holds query values such as the email, and masks any email address. That covers addresses an outside service like Resend echoes back. `toActionError` already uses it, so server actions are covered.
 
 ## Services
 
