@@ -11,7 +11,7 @@ updates:
       npm-minor-and-patch:
         update-types: [minor, patch]
     ignore:
-      # Matches Vercel's Node 22 runtime. Raise together with the runtime.
+      # Node types should follow the Node version Vercel runs, so majors are raised by hand.
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
       # Major compiler and linter upgrades are done by hand, after checking Next.js support.
