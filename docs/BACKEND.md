@@ -10,7 +10,7 @@ From server code only, such as a server action or a route handler:
 import { getServiceContext } from "@/lib/server";
 import { createProject } from "@/lib/services";
 
-const ctx = getServiceContext();
+const ctx = await getServiceContext();
 const { project, handle } = await createProject(ctx.db, userId, { title: "My app" });
 ```
 
@@ -30,17 +30,35 @@ Services throw `ServiceError` for expected problems. Its `message` is safe to sh
 | `CONFLICT` | Handle taken, or profile already exists | 409 |
 | `LIMIT_REACHED` | 10-image cap reached | 409 |
 | `SIGNUPS_FROZEN` | Admin has paused new signups | 503 |
+| `UNAVAILABLE` | An outside service failed, such as Resend | 503 |
 
 Another user's project or image returns `NOT_FOUND`, not `FORBIDDEN`, so ids are never confirmed to strangers.
 
 ## Services
 
-### Sign-in (`signup.ts`)
+### Sign-in (`auth.ts` and `signup.ts`)
+
+Students sign in with a one-time link emailed through Resend. The link opens a page with a "Continue" button, and only the button uses the link. Mail scanners that open links in advance therefore cannot use it up.
 
 | Function | Does |
 |---|---|
+| `requestSignInLink(ctx, sender, settings, email)` | Emails a link to `APP_URL/auth/verify`. Existing users can always ask. New addresses must pass the domain check and open signups. Limits: 3 links per address per 15 minutes, and `DAILY_EMAIL_CAP` per 24 hours |
+| `consumeSignInLink(ctx, settings, token)` | Uses the link once, creates the account if needed, and returns a 30-day session token |
+| `getSessionUser(ctx, token)` | The user behind a session token, or null if expired or the account is being deleted |
+| `signOut(ctx, token)` | Ends that session |
+| `purgeExpiredAuthRecords(ctx)` | Nightly job. Removes old links and expired sessions |
 | `isAllowedSignupEmail(email, domains)` | Exact domain match against `PCU_EMAIL_DOMAINS` |
-| `signInOrRegister(db, email, domains)` | Existing users always get in. New users need a PCU address and open signups. Call it from the sign-in callback |
+| `signInOrRegister(db, email, domains)` | Used by `consumeSignInLink`. Existing users always get in. New users need a PCU address and open signups |
+
+Links and session tokens are stored only as SHA-256 hashes.
+
+In pages and actions, use the helpers in `lib/auth.ts`:
+
+| Helper | Does |
+|---|---|
+| `getCurrentUser()` | The signed-in user or null. Use it inside a `<Suspense>` boundary |
+| `requireUser()` | The signed-in user, or a redirect to `/login`. Call it in every protected page and server action |
+| `setSessionCookie` and `clearSessionCookie` | Only from server actions or route handlers |
 
 ### Profiles (`profiles.ts`)
 
@@ -89,7 +107,6 @@ Every function takes the acting user's id and refuses non-admins. Every write is
 
 These are Next.js wiring, planned in the build week:
 
-- Magic-link sign-in with Resend, calling `signInOrRegister`
 - Server actions for the dashboard, and an upload route that calls `addProjectImage`
 - Page revalidation after writes
-- A scheduled job that runs `sweepOrphanedImages` nightly
+- A scheduled job that runs `sweepOrphanedImages` and `purgeExpiredAuthRecords` nightly
