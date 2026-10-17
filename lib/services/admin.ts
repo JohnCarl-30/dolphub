@@ -1,10 +1,12 @@
 import { and, count, desc, eq, exists, gte, inArray, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { Db } from "../db";
-import { adminAuditLog, profiles, projects, users } from "../db/schema";
+import { profiles, projects, users } from "../db/schema";
+import { audit, requireAdmin } from "./access";
 import { nowOf, type ServiceContext } from "./context";
 import { ServiceError } from "./errors";
 import { listProfileImageKeys } from "./images";
+import { countOpenOpportunities, type OpportunityKind } from "./opportunities";
 import { getSignupsFrozen, writeSignupsFrozen } from "./settings";
 import * as v from "./validation";
 
@@ -12,24 +14,6 @@ import * as v from "./validation";
 export const PROFILE_TARGET = 50;
 
 const reasonSchema = z.string().trim().min(1, "Give a reason").max(300, "Reason must be at most 300 characters");
-
-async function requireAdmin(db: Db, actorUserId: string): Promise<void> {
-  const parsed = z.uuid().safeParse(actorUserId);
-  const [actor] = parsed.success
-    ? await db
-        .select({ id: users.id })
-        .from(users)
-        .where(and(eq(users.id, parsed.data), eq(users.isAdmin, true), isNull(users.deletedAt)))
-    : [];
-  if (!actor) throw new ServiceError("FORBIDDEN", "Admins only");
-}
-
-async function audit(
-  db: Db,
-  entry: { actorUserId: string | null; action: string; target: string; reason?: string | null },
-) {
-  await db.insert(adminAuditLog).values({ ...entry, reason: entry.reason ?? null });
-}
 
 async function findProfileByHandle(db: Db, handle: string) {
   const [profile] = await db
@@ -48,6 +32,8 @@ export interface Stats {
   signupsLast7Days: number;
   hiddenProfiles: number;
   signupsFrozen: boolean;
+  /** Open, visible opportunities per kind. The launch gate needs 10 across 3 kinds. */
+  openOpportunities: Record<OpportunityKind, number>;
 }
 
 export async function getStats(ctx: ServiceContext, actorUserId: string): Promise<Stats> {
@@ -57,7 +43,7 @@ export async function getStats(ctx: ServiceContext, actorUserId: string): Promis
     ctx.db.select({ one: sql`1` }).from(projects).where(eq(projects.profileId, profiles.id)),
   );
 
-  const [[active], [userCount], [recent], [hidden], frozen] = await Promise.all([
+  const [[active], [userCount], [recent], [hidden], frozen, openOpportunities] = await Promise.all([
     ctx.db
       .select({ n: count() })
       .from(profiles)
@@ -70,6 +56,7 @@ export async function getStats(ctx: ServiceContext, actorUserId: string): Promis
       .where(and(isNull(users.deletedAt), gte(users.createdAt, weekAgo))),
     ctx.db.select({ n: count() }).from(profiles).where(eq(profiles.isHidden, true)),
     getSignupsFrozen(ctx.db),
+    countOpenOpportunities(ctx),
   ]);
 
   return {
@@ -79,6 +66,7 @@ export async function getStats(ctx: ServiceContext, actorUserId: string): Promis
     signupsLast7Days: Number(recent!.n),
     hiddenProfiles: Number(hidden!.n),
     signupsFrozen: frozen,
+    openOpportunities,
   };
 }
 

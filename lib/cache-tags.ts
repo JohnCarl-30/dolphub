@@ -7,3 +7,6 @@ export const GRID_TAG = "grid";
 export function profileTag(handle: string): string {
   return `profile:${handle.toLowerCase()}`;
 }
+
+/** Every opportunity list and page. Admin writes expire it. */
+export const OPPORTUNITIES_TAG = "opportunities";

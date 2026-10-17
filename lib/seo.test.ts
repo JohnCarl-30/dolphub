@@ -3,6 +3,10 @@ import {
   DEFAULT_SITE_URL,
   isIndexable,
   missingProfileMetadata,
+  opportunityJsonLd,
+  opportunityMetadata,
+  opportunitySitemapEntries,
+  type SeoOpportunity,
   profileDescription,
   profileMetadata,
   profilePageJsonLd,
@@ -92,5 +96,73 @@ describe("JSON-LD", () => {
     const out = serializeJsonLd(profilePageJsonLd(profile({ tagline: "</script><script>alert(1)</script>" }), "https://x"));
     expect(out).not.toContain("<");
     expect(JSON.parse(out).mainEntity.description).toContain("</script>");
+  });
+});
+
+describe("opportunity SEO", () => {
+  const now = new Date("2026-10-26T02:00:00Z");
+  const base: SeoOpportunity = {
+    slug: "accenture-software-intern-k3f9",
+    kind: "internship",
+    title: "Software Intern",
+    organization: "Accenture",
+    summary: "Three-month internship for IT and CS students.",
+    url: "https://careers.example.com/intern",
+    locationType: "onsite",
+    location: "Ortigas, Pasig",
+    startsAt: null,
+    endsAt: null,
+    closesAt: new Date("2026-11-15T15:59:59.999Z"),
+    createdAt: new Date("2026-10-20T00:00:00Z"),
+    updatedAt: new Date("2026-10-21T00:00:00Z"),
+  };
+
+  it("indexes open posts and hides closed ones from search", () => {
+    const open = opportunityMetadata(base, false, now);
+    expect(open.title).toBe("Software Intern · Accenture");
+    expect(open.description).toBe(
+      "Internship at Accenture. Closes Nov 15. Three-month internship for IT and CS students.",
+    );
+    expect(open.alternates?.canonical).toBe("/opportunities/accenture-software-intern-k3f9");
+    expect(open.robots).toBeUndefined();
+    expect(open.openGraph).toMatchObject({ siteName: "Dolphub" });
+    expect(opportunityMetadata(base, true, now).robots).toEqual({ index: false, follow: false });
+    expect(opportunityMetadata(base, true, now).description).toContain("Closed.");
+  });
+
+  it("describes internships as job postings", () => {
+    expect(opportunityJsonLd(base, "https://dolphub.tech", false)).toMatchObject({
+      "@type": "JobPosting",
+      employmentType: "INTERN",
+      validThrough: "2026-11-15T15:59:59.999Z",
+      hiringOrganization: { name: "Accenture" },
+      jobLocation: { address: { streetAddress: "Ortigas, Pasig", addressCountry: "PH" } },
+    });
+    expect(opportunityJsonLd({ ...base, locationType: "online" }, "https://dolphub.tech", false)).toMatchObject({
+      jobLocationType: "TELECOMMUTE",
+    });
+  });
+
+  it("describes events with a start time as events, and skips the rest", () => {
+    const event = { ...base, kind: "event" as const, startsAt: new Date("2026-10-30T06:00:00Z"), locationType: "hybrid" as const };
+    const ld = opportunityJsonLd(event, "https://dolphub.tech", false)!;
+    expect(ld).toMatchObject({ "@type": "Event", startDate: "2026-10-30T06:00:00.000Z" });
+    expect(ld.eventAttendanceMode).toBe("https://schema.org/MixedEventAttendanceMode");
+    expect(ld.location).toHaveLength(2);
+    expect(opportunityJsonLd({ ...base, kind: "competition" }, "https://dolphub.tech", false)).toBeNull();
+    expect(opportunityJsonLd({ ...base, kind: "program" }, "https://dolphub.tech", false)).toBeNull();
+    expect(opportunityJsonLd(base, "https://dolphub.tech", true)).toBeNull();
+  });
+
+  it("lists the page and open posts in the sitemap", () => {
+    expect(opportunitySitemapEntries("https://dolphub.tech", [base])).toEqual([
+      { url: "https://dolphub.tech/opportunities", changeFrequency: "daily", priority: 0.9 },
+      {
+        url: "https://dolphub.tech/opportunities/accenture-software-intern-k3f9",
+        lastModified: "2026-10-21T00:00:00.000Z",
+        changeFrequency: "weekly",
+        priority: 0.6,
+      },
+    ]);
   });
 });

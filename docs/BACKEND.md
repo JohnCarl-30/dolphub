@@ -93,6 +93,90 @@ const [state, submit, pending] = useActionState(
 
 React clears a form after an action runs. To keep what the student typed after an error, set each input's `defaultValue` from the submitted values.
 
+## Opportunities
+
+The plan is in [OPPORTUNITIES.md](./OPPORTUNITIES.md). Admins post, students follow the link out.
+
+### Loading
+
+From a Server Component inside a `<Suspense>` boundary:
+
+```tsx
+import { notFound } from "next/navigation";
+import { getOpenOpportunities, getOpportunityPage } from "@/lib/opportunities";
+
+const posts = await getOpenOpportunities(kind); // kind from the tab or ?kind=, or nothing for all
+const post = await getOpportunityPage(slug); // null when missing or hidden: call notFound()
+```
+
+| Loader | Returns |
+|---|---|
+| `getOpenOpportunities(kind?)` | Open posts, soonest closing first. Unknown kinds mean all |
+| `getOpportunityPage(slug)` | One post plus `isClosed`. Closed posts are still returned, so show "This opportunity has closed" |
+| `getAdminOpportunities()` | Every post including hidden and closed, with `id`, `isHidden`, `hiddenReason`, `isClosed`. Admins only |
+
+Both public loaders wait for the request and then read a cached copy, so pages never touch the database at build time. A post leaves the list the moment it closes.
+
+Each post (`PublicOpportunity` in `lib/services/opportunities.ts`) has these fields:
+
+- `slug`, `kind`, `title`, `organization`, `summary`
+- `url`, which is where to apply or register
+- `locationType` and `location`
+- `startsAt`, `endsAt`, `deadline` and `closesAt`, as `Date` objects
+- `createdAt` and `updatedAt`
+
+`kind` is `internship`, `event`, `competition` or `program`, and `KIND_LABELS` has the display names. `locationType` is `onsite`, `online` or `hybrid`.
+
+### Showing dates
+
+Use `lib/opportunity-time.ts` so every date shows in Philippine time, whatever the server's time zone:
+
+| Function | Example |
+|---|---|
+| `closingLabel(closesAt)` | "Closes today", "Closes tomorrow", "Closes in 3 days", "Closes Nov 20", "Closed" |
+| `formatManilaDate(date)` | "Oct 30", or "Jan 5, 2027" in another year |
+| `formatManilaTime(date)` | "2:00 PM" |
+
+### Search and sharing for the pages
+
+```tsx
+import { getOpportunityPage } from "@/lib/opportunities";
+import { JsonLd } from "@/lib/json-ld";
+import { missingOpportunityMetadata, opportunityJsonLd, opportunityMetadata, siteUrl } from "@/lib/seo";
+
+export async function generateMetadata({ params }) {
+  const post = await getOpportunityPage((await params).slug);
+  return post ? opportunityMetadata(post, post.isClosed) : missingOpportunityMetadata();
+}
+// In the page body: const ld = opportunityJsonLd(post, siteUrl(), post.isClosed); if (ld) <JsonLd data={ld} />
+```
+
+- **List page:** use `opportunitiesListMetadata()`.
+- **Preview image:** each post gets one automatically, from `app/opportunities/[slug]/opengraph-image.tsx`.
+- **Sitemap:** when the pages ship, set `OPPORTUNITY_PAGES_LIVE` to `true` in `lib/seo.ts`. That adds the list page and every open post.
+
+### Admin actions in `app/admin/opportunities/actions.ts`
+
+| Action | Input | Returns on success |
+|---|---|---|
+| `createOpportunityAction(input)` | `kind`, `title`, `organization`, `summary`, `url`, optional `locationType` (default `onsite`), `location`, `startsAt`, `endsAt`, `deadline` | `{ id, slug }` |
+| `updateOpportunityAction(id, input)` | Only the changed fields. An empty date clears it | `{ slug }` |
+| `setOpportunityHiddenAction(id, hidden, reason?)` | A reason is required to hide | `{ slug }` |
+| `deleteOpportunityAction(id, confirm)` | `confirm` must be `true`. Prefer hiding | `{ slug }` |
+
+Rules the actions enforce:
+
+- **Admins only.** Everyone else gets "Admins only".
+- **Date formats.** `"2026-10-30"` means 11:59 pm that day, and `"2026-10-30T14:00"`, which is what a `datetime-local` input sends, means 2 pm, both in Philippine time.
+- **Dates each kind needs.** Internships and programs need a `deadline`. Events need `startsAt`. Competitions need a `deadline` or `startsAt`.
+- **Date order.** `endsAt` needs `startsAt` and must come after it.
+- **No closed posts.** A new post can't already be closed.
+- **Text and links.** Title up to 120 characters, organization 80, summary 500, place 120. The link must start with `https://`.
+- **Slugs never change.** Shared links keep working after edits.
+- **Audit log and refresh.** Every write is recorded in the audit log and refreshes the public lists.
+
+Admin stats (`getStats`) now include `openOpportunities` per kind, for the launch gate of 10 across 3 kinds.
+
 ## Search and link previews
 
 Metadata, link preview images, structured data and the sitemap live in backend-owned files. Pages only call them.

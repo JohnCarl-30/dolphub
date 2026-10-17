@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { formatManilaDate } from "./opportunity-time";
 
 /*
  * Search and sharing metadata for Dolphub. Pure functions with no Next.js
@@ -140,4 +141,166 @@ export function profilePageJsonLd(profile: SeoProfile, origin: string): JsonLd {
 /** JSON for a script tag. Escapes "<" so student-written text cannot close the tag. */
 export function serializeJsonLd(data: JsonLd): string {
   return JSON.stringify(data).replace(/</g, "\\u003c");
+}
+
+// ---------------------------------------------------------------------------
+// Opportunities
+
+/**
+ * Turn on when the /opportunities pages are live, so the sitemap lists them.
+ * Until then the sitemap would point search engines at pages that 404.
+ */
+export const OPPORTUNITY_PAGES_LIVE = false;
+
+/** What metadata needs about an opportunity. Matches PublicOpportunity from lib/services. */
+export interface SeoOpportunity {
+  slug: string;
+  kind: "internship" | "event" | "competition" | "program";
+  title: string;
+  organization: string;
+  summary: string;
+  url: string;
+  locationType: "onsite" | "online" | "hybrid";
+  location: string | null;
+  startsAt: Date | null;
+  endsAt: Date | null;
+  closesAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const KIND_NAMES: Record<SeoOpportunity["kind"], string> = {
+  internship: "Internship",
+  event: "Event",
+  competition: "Competition",
+  program: "Program",
+};
+
+export const OPPORTUNITIES_PATH = "/opportunities";
+
+export function opportunityPath(slug: string): string {
+  return `${OPPORTUNITIES_PATH}/${slug}`;
+}
+
+export const OPPORTUNITIES_DESCRIPTION =
+  "Open internships, events, competitions and programs for PCU IT, Computer Science and Computer Engineering students.";
+
+/** For the /opportunities list page. */
+export function opportunitiesListMetadata(): Metadata {
+  return {
+    title: "Opportunities",
+    description: OPPORTUNITIES_DESCRIPTION,
+    alternates: { canonical: OPPORTUNITIES_PATH },
+    openGraph: { ...OG_DEFAULTS, title: "Opportunities", description: OPPORTUNITIES_DESCRIPTION, url: OPPORTUNITIES_PATH },
+    twitter: { card: "summary_large_image", title: "Opportunities", description: OPPORTUNITIES_DESCRIPTION },
+  };
+}
+
+/** "Internship at Accenture. Closes Nov 15. Three-month internship for…", at most 160 characters. */
+export function opportunityDescription(o: SeoOpportunity, isClosed: boolean, now: Date = new Date()): string {
+  const when = isClosed ? "Closed." : `Closes ${formatManilaDate(o.closesAt, now)}.`;
+  return truncate(`${KIND_NAMES[o.kind]} at ${o.organization}. ${when} ${o.summary.trim()}`, 160);
+}
+
+/** Open posts are indexed. Closed ones stay reachable for old links, but get noindex. */
+export function opportunityMetadata(o: SeoOpportunity, isClosed: boolean, now: Date = new Date()): Metadata {
+  const title = `${o.title} · ${o.organization}`;
+  const description = opportunityDescription(o, isClosed, now);
+  const url = opportunityPath(o.slug);
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    ...(isClosed ? { robots: PRIVATE_ROBOTS } : {}),
+    openGraph: { ...OG_DEFAULTS, title, description, url },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
+
+export function missingOpportunityMetadata(): Metadata {
+  return { title: "Opportunity not found", robots: PRIVATE_ROBOTS };
+}
+
+function place(o: SeoOpportunity): JsonLd {
+  return {
+    "@type": "Place",
+    name: o.location ?? o.organization,
+    address: {
+      "@type": "PostalAddress",
+      ...(o.location ? { streetAddress: o.location } : {}),
+      addressCountry: "PH",
+    },
+  };
+}
+
+/**
+ * Structured data so Google can show the post as a job or event result.
+ * Internships become JobPosting. Events, and competitions with a start time,
+ * become Event. Programs and closed posts get none.
+ */
+export function opportunityJsonLd(o: SeoOpportunity, origin: string, isClosed: boolean): JsonLd | null {
+  if (isClosed) return null;
+  const pageUrl = `${origin}${opportunityPath(o.slug)}`;
+  const organization = { "@type": "Organization", name: o.organization };
+
+  if (o.kind === "internship") {
+    return {
+      "@context": "https://schema.org",
+      "@type": "JobPosting",
+      title: o.title,
+      description: o.summary,
+      datePosted: o.createdAt.toISOString(),
+      validThrough: o.closesAt.toISOString(),
+      employmentType: "INTERN",
+      hiringOrganization: organization,
+      directApply: false,
+      url: pageUrl,
+      ...(o.locationType === "online"
+        ? {
+            jobLocationType: "TELECOMMUTE",
+            applicantLocationRequirements: { "@type": "Country", name: "Philippines" },
+          }
+        : { jobLocation: place(o) }),
+    };
+  }
+
+  if ((o.kind === "event" || o.kind === "competition") && o.startsAt) {
+    const online = { "@type": "VirtualLocation", url: o.url };
+    return {
+      "@context": "https://schema.org",
+      "@type": "Event",
+      name: o.title,
+      description: o.summary,
+      startDate: o.startsAt.toISOString(),
+      ...(o.endsAt ? { endDate: o.endsAt.toISOString() } : {}),
+      eventStatus: "https://schema.org/EventScheduled",
+      eventAttendanceMode:
+        o.locationType === "online"
+          ? "https://schema.org/OnlineEventAttendanceMode"
+          : o.locationType === "hybrid"
+            ? "https://schema.org/MixedEventAttendanceMode"
+            : "https://schema.org/OfflineEventAttendanceMode",
+      location: o.locationType === "online" ? online : o.locationType === "hybrid" ? [place(o), online] : place(o),
+      organizer: organization,
+      url: pageUrl,
+    };
+  }
+
+  return null;
+}
+
+/** Sitemap entries: the list page, plus every open post. */
+export function opportunitySitemapEntries(
+  origin: string,
+  open: Pick<SeoOpportunity, "slug" | "updatedAt">[],
+): { url: string; lastModified?: string; changeFrequency: "daily" | "weekly"; priority: number }[] {
+  return [
+    { url: `${origin}${OPPORTUNITIES_PATH}`, changeFrequency: "daily", priority: 0.9 },
+    ...open.map((o) => ({
+      url: `${origin}${opportunityPath(o.slug)}`,
+      lastModified: o.updatedAt.toISOString(),
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    })),
+  ];
 }

@@ -11,6 +11,8 @@ export * from "./signup";
 export * from "./profiles";
 export * from "./projects";
 export * from "./images";
+export * from "./access";
 export * from "./admin";
+export * from "./opportunities";
 export * from "./auth";
 export * from "./dashboard";
