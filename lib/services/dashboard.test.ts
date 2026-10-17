@@ -32,7 +32,7 @@ describe("getOwnDashboard", () => {
     await hideProfile(env.ctx, admin.id, "ana", "Under review");
 
     const d = await getOwnDashboard(env.ctx, u.id);
-    expect(d.profile).toMatchObject({ handle: "ana", isHidden: true, hiddenReason: "Under review" });
+    expect(d.profile).toMatchObject({ handle: "ana", isHidden: true, hiddenReason: "Under review", searchVisible: true });
     expect(d.projects.map((p) => p.title)).toEqual(["First", "Second"]);
     expect(d.projects[0]!.images).toHaveLength(1);
     expect(d.projects[0]!.images[0]!.url).toMatch(/^https:\/\/images\.test\/profiles\//);

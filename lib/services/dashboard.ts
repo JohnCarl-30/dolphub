@@ -26,6 +26,8 @@ export interface Dashboard {
     /** When true, show the owner a notice. Visitors cannot see the page. */
     isHidden: boolean;
     hiddenReason: string | null;
+    /** The "show my page in search engines" setting. */
+    searchVisible: boolean;
   } | null;
   projects: DashboardProject[];
   imageCount: number;
@@ -64,6 +66,7 @@ export async function getOwnDashboard(ctx: ServiceContext, userId: string): Prom
       coverImageId: profile.coverImageId,
       isHidden: profile.isHidden,
       hiddenReason: profile.hiddenReason,
+      searchVisible: profile.searchVisible,
     },
     projects: projectRows.map((p) => ({
       id: p.id,

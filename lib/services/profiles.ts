@@ -24,6 +24,7 @@ const updateSchema = z
     tagline: v.tagline,
     messengerUrl: v.optional(v.messengerUrl),
     coverImageId: z.uuid().nullable(),
+    searchVisible: z.boolean(),
   })
   .partial()
   .strict();
@@ -163,6 +164,8 @@ export interface PublicProfile {
   messengerUrl: string | null;
   coverImage: PublicImage | null;
   projects: PublicProject[];
+  /** False when the student opted out of search engines. Pages then get noindex. */
+  searchVisible: boolean;
   /** Use as a version stamp on preview image URLs. */
   updatedAt: Date;
 }
@@ -225,6 +228,7 @@ export async function getPublicProfile(
     messengerUrl: profile.messengerUrl,
     coverImage,
     projects: publicProjects,
+    searchVisible: profile.searchVisible,
     updatedAt: profile.updatedAt,
   };
 }

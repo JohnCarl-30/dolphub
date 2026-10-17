@@ -1,0 +1,1 @@
+ALTER TABLE "profiles" ADD COLUMN "search_visible" boolean DEFAULT true NOT NULL;
