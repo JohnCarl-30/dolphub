@@ -57,6 +57,7 @@ The metric is one count query shown on the admin page. No tracking script, no co
 19. **Signup domains are configuration.** `PCU_EMAIL_DOMAINS` lists the allowed email domains, matched exactly. The real PCU student email domain still needs confirming.
 20. **Custom magic-link sign-in instead of Auth.js.** The emailed link opens a page with a button, and only the button press uses the link. University mail scanners often open links before the student does, which would use up a link that signs in on open. Links last 15 minutes and work once. Sessions last 30 days in an httpOnly `__Host-session` cookie. Only hashes of links and session tokens are stored.
 21. **Local development needs no accounts.** `DATABASE_URL=pglite:<folder>` runs Postgres inside Node, and without `RESEND_API_KEY` sign-in links print to the terminal. Production refuses to start without Neon, Resend, R2 and an https `APP_URL`.
+22. **Search indexing.** The home page is indexed. Student pages are indexed by default once they show real data, and each student can turn that off with a "show my page in search engines" setting stored in `profiles.search_visible`. Sample profiles are never indexed. Every page gets its own canonical link, and student pages get a generated 1200x630 link preview with their name, course and tagline. Search logic lives in `lib/seo.ts` and `lib/seo-data.ts`.
 
 ## Data model (launch)
 
@@ -64,7 +65,7 @@ Defined in `lib/db/schema.ts`.
 
 - `users`: id, email (lowercase, unique), is_admin, created_at, deleted_at
 - `courses`: id, name, active (tech list, admin-maintained)
-- `profiles`: id, user_id (one per user), handle (unique, lowercase, permanent), display_name, tagline (up to 100 chars), course_id, messenger_url, cover_image_id (nullable), is_hidden, hidden_reason, created_at, updated_at
+- `profiles`: id, user_id (one per user), handle (unique, lowercase, permanent), display_name, tagline (up to 100 chars), course_id, messenger_url, cover_image_id (nullable), is_hidden, hidden_reason, search_visible (default true), created_at, updated_at
 - `projects`: id, profile_id, title, description, demo_url, source_url, sort_order, created_at, updated_at
 - `images`: id, project_id, profile_id (for the per-student cap), r2_key, width, height, bytes, sort_order, created_at
 - `app_settings`: one row holding signups_frozen
