@@ -4,7 +4,7 @@ Last updated: 2026-10-17. Produced from a design review ("grill me") session bef
 
 ## What it is
 
-A showcase site where PCU **tech students** each get a public portfolio page at `/u/<handle>` showing their projects, with a Messenger link for contact. Later, the owner posts tech internship openings.
+A showcase site where PCU **tech students** each get a public portfolio page at `/u/<handle>` showing their projects, with a Messenger link for contact. Admins also post opportunities: internships, events, competitions and programs.
 
 Not a marketplace. No payments happen on the platform, and students pay nothing.
 
@@ -34,7 +34,7 @@ The metric is one count query shown on the admin page. No tracking script, no co
 
 ## Decisions
 
-1. **Showcase before opportunities.** Profiles ship first. Internship posts come later.
+1. **Showcase before opportunities.** Profiles ship first, at the soft launch. Opportunities follow before the public launch.
 2. **One link per student, no subdomains.** Each page lives at `/u/<handle>`, and that link is what students share in bios, resumes and chats. There are no subdomains and no fees.
 3. **Tech students only.** Signup is gated by PCU email domain. Course comes from a fixed tech-only list the owner maintains. Non-tech students are stopped at the course step with a "not supported yet" message.
 4. **Pages stay after graduation.** A recovery email will be added before the first graduating class. It is not needed at launch.
@@ -47,11 +47,11 @@ The metric is one count query shown on the admin page. No tracking script, no co
 11. **Handles are permanent.** A blocklist reserves names like `admin`, `api`, `login` and `pcu`. Typo fixes are done by the admin on request.
 12. **Moderation.** The admin can hide any profile and freeze signups from a phone. Later, a report button auto-hides a profile after 3 distinct reporters and notifies the owner.
 13. **Deletion removes everything.** Order of operations: mark deleted in Neon, delete R2 objects, purge the cache. A nightly sweep removes orphaned R2 keys. Reports survive with the profile reference nulled, so repeat offenders keep their history.
-14. **Internship posts.** Company, role, deadline and link only. Only the admin posts. They expire by query (`deadline >= today`), with no cron job.
+14. **Opportunities.** Internships and OJT, events, competitions and programs, each with a link to apply or register. Only admins post. A post leaves the list when it closes: at its deadline, or else its end time, or else its start time, in Philippine time. Dolphub stores nothing about which students opened or applied to a post. Full plan in [OPPORTUNITIES.md](./OPPORTUNITIES.md).
 15. **Backend and frontend are split by owner.** JohnCarl-30 owns the backend: the database, sign-in, the upload pipeline, server actions and API routes, page refreshes, and admin and moderation logic, in `lib/` and the `actions.ts` files. fnzh-i owns the frontend: pages and components under `app/`, including the dashboard screens, the public page and grid layout, browser image compression, and phone testing. Server actions with typed results are the contract between them.
 16. **One service layer.** All reads and writes live in plain functions under `lib/services/`. Server actions, API routes and MCP servers are thin wrappers over them, so logic is written once.
 17. **MCP servers, in two stages. Proposed, not yet confirmed.** Both use Vercel's `mcp-handler` in Next.js route handlers and call the service layer. Neither calls a model, so neither adds AI cost.
-    - **Admin MCP (by 2026-11-21):** private, bearer-token auth, used from Claude Code. Tools for stats, hiding pages, freezing signups, posting internships and deleting accounts. Every write is recorded in `admin_audit_log`. The phone kill switch stays on the admin web page, because claude.ai and the phone apps need OAuth.
+    - **Admin MCP (by 2026-11-21):** private, bearer-token auth, used from Claude Code. Tools for stats, hiding pages, freezing signups, posting opportunities and deleting accounts. Every write is recorded in `admin_audit_log`. The phone kill switch stays on the admin web page, because claude.ai and the phone apps need OAuth.
     - **Public directory MCP (January 2027):** read-only, rate-limited, opt-in profiles only. Tools to search students, get one student, and list internships. Student-written text is returned as length-capped data. It waits for PCU approval, 50 profiles, and the opt-in toggle.
 18. **Drizzle ORM with Neon's HTTP driver.** Schema lives in `lib/db/schema.ts`, and migrations are generated into `drizzle/`. Tests run the real migrations against PGlite, an in-memory Postgres, so they need no accounts or network.
 19. **Signup domains are configuration.** `PCU_EMAIL_DOMAINS` lists the allowed email domains, matched exactly. The real PCU student email domain still needs confirming.
@@ -73,7 +73,9 @@ Defined in `lib/db/schema.ts`.
 - `login_tokens`: email, token_hash, expires_at, used_at, created_at
 - `sessions`: user_id, token_hash, expires_at, created_at
 
-Added after launch: `profiles.recovery_email`, `profiles.in_directory` (opt-in for the public MCP, default false), `reports`, `internships`.
+Added before the public launch: `opportunities` (see OPPORTUNITIES.md).
+
+Added after launch: `profiles.recovery_email`, `profiles.in_directory` (opt-in for the public MCP, default false), `reports`.
 
 ## Routes (launch)
 
@@ -99,7 +101,6 @@ Added later: `/api/mcp/admin` for the admin MCP server, and `/api/mcp` for the p
 - Report button and auto-hide. Replaced by a "report this page" link to the admin.
 - Self-serve account deletion. Done by hand on request, within days.
 - Recovery email.
-- Internship posts.
 
 ## Open items and risks
 

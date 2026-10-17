@@ -20,8 +20,9 @@ Last updated: 2026-10-17. The decisions behind this plan are in [ARCHITECTURE.md
 |---|---|---|
 | Sat 2026-10-17 | Accounts and scaffold | App deploys to Vercel, and a test email reaches a PCU inbox |
 | Sat 2026-10-24 | Soft launch | About 10 invited classmates can sign in and publish a page |
+| Tue 2026-11-03 | Opportunities ready | At least 10 open posts across 3 kinds, see [OPPORTUNITIES.md](./OPPORTUNITIES.md) |
 | Sat 2026-11-07 | Public launch | Every item in the launch gate is checked |
-| Sat 2026-11-21 | Admin MCP server | The owner can check stats, hide a page and post internships from Claude |
+| Sat 2026-11-21 | Admin MCP server | The owner can check stats, hide a page and post opportunities from Claude |
 | Sat 2026-11-28 | Midpoint check | At least 15 profiles with a project, or the plan changes |
 | Mid-December 2026 | Semester target | 50 profiles with a project |
 | January 2027 | Public directory MCP | Opted-in profiles are searchable from AI assistants |
@@ -62,6 +63,8 @@ One task per day, sized for evenings during classes.
 
 ## Phase 2: Soft launch to public launch (Oct 24 to Nov 6)
 
+- **Build opportunities.** Internships, events, competitions and programs, posted by admins and linking out. The plan and schedule are in [OPPORTUNITIES.md](./OPPORTUNITIES.md).
+
 - **Fix what testers hit.** Watch the first 10 students sign up and upload. Fix every blocker they report.
 - **Talk to PCU.** Meet student affairs or a faculty adviser about using the PCU name. Do this before any public post.
 - **Remove the single point of failure.** Add a second owner on Vercel, Cloudflare, Neon, Resend and the domain. Write a one-page runbook in this repo.
@@ -77,6 +80,7 @@ All must be true before Nov 7:
 - [ ] Admin hide switch and signup freeze work from a phone
 - [ ] PCU has been told about the project, and has not objected
 - [ ] A second person can deploy and use the hide switch
+- [ ] At least 10 open opportunities across at least 3 kinds, every link checked
 
 ## Phase 3: Public launch and growth (Nov 7 to mid-December)
 
@@ -102,14 +106,14 @@ There are two servers, built in this order. Both are Next.js route handlers usin
 | `list_profiles` | Recent, hidden, or reported profiles | No |
 | `hide_profile` / `unhide_profile` | Hides or restores a page, with a reason | Yes |
 | `set_signups_frozen` | Freezes or unfreezes new signups | Yes |
-| `post_internship` / `remove_internship` | Company, role, deadline and link | Yes |
+| `post_opportunity` / `remove_opportunity` | Internships, events, competitions and programs | Yes |
 | `delete_account` | Handles a deletion request: database row, R2 images, cached page | Yes, needs `confirm: true` |
 
 **Rules:**
 
 - **Auth by secret token.** The route rejects any request without the admin bearer token, stored as a Vercel environment variable. Claude Code connects to it with that header. claude.ai and the phone apps need OAuth, which is more work, so the phone kill switch stays on the admin web page.
 - **Every write is logged.** Each write tool records who, what, when and why in an `admin_audit_log` table.
-- **Internship posts become backend-only.** With `post_internship`, the only screen internships need is the public list.
+- **Posting from Claude.** `post_opportunity` lets you add an opportunity without opening the admin page.
 
 ### 4b. Public directory MCP server (January 2027)
 
@@ -119,7 +123,7 @@ There are two servers, built in this order. Both are Next.js route handlers usin
 |---|---|
 | `search_students` | Handles, names, taglines and page links, filtered by course or keyword |
 | `get_student` | One public profile with its projects and their demo and source links |
-| `list_internships` | Open tech internship postings |
+| `list_opportunities` | Open internships, events, competitions and programs |
 
 **Rules:**
 
@@ -137,7 +141,6 @@ Built in this order once the public launch is stable:
 1. Course search on the home grid
 2. Report button that auto-hides a page after 3 distinct reporters and notifies the owner
 3. Self-serve account deletion, reusing the `delete_account` service
-4. Public internship list page, fed by `post_internship`
 5. Recovery email, needed before the first graduating class
 
 ## Not doing
