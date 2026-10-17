@@ -1,17 +1,29 @@
-# Weekly pull requests for outdated or vulnerable dependencies.
-# Security updates also need "Dependabot security updates" turned on in the repository settings.
+# Monthly, grouped dependency update pull requests.
+# Security fixes come separately through "Dependabot security updates" in repository settings.
 version: 2
 updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: weekly
-    open-pull-requests-limit: 5
+      interval: monthly
+    open-pull-requests-limit: 3
     groups:
-      minor-and-patch:
+      npm-minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # Matches Vercel's Node 22 runtime. Raise together with the runtime.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # Major compiler and linter upgrades are done by hand, after checking Next.js support.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+    groups:
+      github-actions:
+        patterns: ["*"]
