@@ -30,3 +30,25 @@ body {
   outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
+
+/* Decorative fallback remains available before JS, on error, and with reduced motion. */
+.home-network {
+  background-image: radial-gradient(circle, var(--ink) 0.65px, transparent 0.85px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, rgb(0 0 0 / 12%), transparent 90%);
+}
+
+.home-network:has(canvas) {
+  background-image: none;
+  mask-image: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-network canvas {
+    visibility: hidden;
+  }
+
+  .homepage [style*="transform"] {
+    transform: none !important;
+  }
+}
