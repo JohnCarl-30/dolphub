@@ -32,7 +32,7 @@ export const SITE = {
   description:
     "Dolphub gives every PCU IT, Computer Science and Computer Engineering student one link to show their projects.",
   locale: "en_PH",
-  colors: { background: "#ffffff", ink: "#0e1012", muted: "#60636a", paper: "#f5f5f3", accent: "#047857" },
+  colors: { background: "#ffffff", ink: "#0e1012", muted: "#60636a", paper: "#f5f5f3" },
 } as const;
 
 /** Repeat these in every page's openGraph: Next merges metadata shallowly, so a page's openGraph replaces the root one. */

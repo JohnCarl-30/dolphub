@@ -13,7 +13,7 @@ export function VerifyForm({ token }: { token: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="press h-12 border border-ink bg-ink font-mono text-[11px] uppercase tracking-wide text-white outline-none hover:border-accent hover:bg-accent focus-visible:ring-2 focus-visible:ring-ink disabled:opacity-60"
+        className="press h-12 border border-ink bg-ink font-mono text-[11px] uppercase tracking-wide text-white outline-none hover:border-ink/85 hover:bg-ink/85 focus-visible:ring-2 focus-visible:ring-ink disabled:opacity-60"
       >
         {pending ? "Signing in…" : "Continue to PCU Community"}
       </button>

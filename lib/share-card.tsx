@@ -67,7 +67,7 @@ export function ShareCard({
         ) : null}
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        <div style={{ fontSize: 28, color: colors.accent, fontWeight: 600 }}>{eyebrow}</div>
+        <div style={{ fontSize: 28, color: colors.ink, fontWeight: 600 }}>{eyebrow}</div>
         <div style={{ fontSize: title.length > 24 ? 64 : 80, fontWeight: 700, lineHeight: 1.05 }}>{title}</div>
         <div style={{ fontSize: 34, color: colors.muted, lineHeight: 1.3 }}>{subtitle}</div>
       </div>

@@ -63,11 +63,11 @@ export function StudentShowcase({ profiles, courseId, counts, onCourseChange, ho
             </p>
             <div className="flex flex-wrap items-center gap-4">
               {ready && !reducedMotion && layout !== "short" ? (
-                <button type="button" onPointerDown={captureAnchor} onClick={toggle} aria-pressed={preference === "list"} className="press min-h-11 underline underline-offset-4 hover:text-accent focus-visible:ring-2 focus-visible:ring-ink">
+                <button type="button" onPointerDown={captureAnchor} onClick={toggle} aria-pressed={preference === "list"} className="press min-h-11 underline underline-offset-4 hover:text-muted focus-visible:ring-2 focus-visible:ring-ink">
                   {preference === "list" ? "Use scroll view" : "Use list view"}
                 </button>
               ) : null}
-              <a href="#after-showcase" className="inline-flex min-h-11 items-center underline underline-offset-4 transition-colors hover:text-accent focus-visible:ring-2 focus-visible:ring-ink" onClick={(event) => {
+              <a href="#after-showcase" className="inline-flex min-h-11 items-center underline underline-offset-4 transition-colors hover:text-muted focus-visible:ring-2 focus-visible:ring-ink" onClick={(event) => {
                 const target = document.getElementById("after-showcase");
                 if (!target) return;
                 event.preventDefault();
@@ -77,7 +77,7 @@ export function StudentShowcase({ profiles, courseId, counts, onCourseChange, ho
             </div>
           </div>
           <div ref={progress} className="showcase-progress" role="progressbar" aria-label="Student showcase progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={0}>
-            <div ref={fill} className="h-full origin-left bg-accent" />
+            <div ref={fill} className="h-full origin-left bg-ink" />
           </div>
         </div>
         <div ref={viewport} className="showcase-viewport">
