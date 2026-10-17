@@ -63,11 +63,11 @@ export function StudentShowcase({ profiles, courseId, counts, onCourseChange, ho
             </p>
             <div className="flex flex-wrap items-center gap-4">
               {ready && !reducedMotion && layout !== "short" ? (
-                <button type="button" onPointerDown={captureAnchor} onClick={toggle} aria-pressed={preference === "list"} className="min-h-11 underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-ink">
+                <button type="button" onPointerDown={captureAnchor} onClick={toggle} aria-pressed={preference === "list"} className="press min-h-11 underline underline-offset-4 hover:text-accent focus-visible:ring-2 focus-visible:ring-ink">
                   {preference === "list" ? "Use scroll view" : "Use list view"}
                 </button>
               ) : null}
-              <a href="#after-showcase" className="inline-flex min-h-11 items-center underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-ink" onClick={(event) => {
+              <a href="#after-showcase" className="inline-flex min-h-11 items-center underline underline-offset-4 transition-colors hover:text-accent focus-visible:ring-2 focus-visible:ring-ink" onClick={(event) => {
                 const target = document.getElementById("after-showcase");
                 if (!target) return;
                 event.preventDefault();
@@ -82,8 +82,14 @@ export function StudentShowcase({ profiles, courseId, counts, onCourseChange, ho
         </div>
         <div ref={viewport} className="showcase-viewport">
           <ol ref={track} className="showcase-track" onFocusCapture={(event) => revealFocused(event.target)}>
-            {profiles.length === 0 ? <li><FirstCard /></li> : profiles.map((profile, index) => (
-              <li key={profile.handle} data-showcase-card={profile.handle}>
+            {profiles.length === 0 ? <li key={`${courseId}-empty`} className="rise"><FirstCard /></li> : profiles.map((profile, index) => (
+              // Keyed by filter so a new result set rises in again, staggered.
+              <li
+                key={`${courseId}-${profile.handle}`}
+                data-showcase-card={profile.handle}
+                className="rise"
+                style={{ "--i": Math.min(index, 8) } as React.CSSProperties}
+              >
                 <ProfileCard profile={profile} index={index + 1} preview />
               </li>
             ))}

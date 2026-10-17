@@ -7,16 +7,12 @@ import { shouldPlayParticles } from "@/lib/particles";
 import { useMotionEnvironment } from "@/components/animations/use-motion-environment";
 import { ParticleBoundary } from "@/components/particles/particle-boundary";
 import dynamic from "next/dynamic";
-import { motion, MotionConfig } from "motion/react";
 import { useCallback, useMemo, useRef, useState } from "react";
 
 const ParticleBackground = dynamic(
   () => import("@/components/particles/particle-background"),
   { ssr: false },
 );
-const HERO_ENTRANCE = { opacity: [0, 1], y: [16, 0] };
-const HERO_STATIC = { opacity: 1, y: 0 };
-
 const STEPS = [
   {
     index: "01",
@@ -63,8 +59,7 @@ export function HomePage() {
   }, [profiles]);
 
   return (
-    <MotionConfig reducedMotion="user">
-      <div ref={homepage} className="homepage relative isolate">
+    <div ref={homepage} className="homepage relative isolate">
         <div className="home-network-window pointer-events-none fixed inset-0 -z-10" aria-hidden="true">
           <div ref={network} className="home-network">
             {showParticles ? (
@@ -78,24 +73,26 @@ export function HomePage() {
             ) : null}
           </div>
         </div>
-        <motion.section
-          initial={false}
-          animate={environment.ready && !environment.reducedMotion ? HERO_ENTRANCE : HERO_STATIC}
-          transition={{ duration: 0.55, ease: "easeOut" }}
-          className="mx-auto w-full max-w-6xl px-4 pb-8 pt-10 sm:px-6 sm:pt-14"
-        >
-          <p className="font-mono text-[11px] uppercase tracking-wide text-muted">
+        {/* The entrance is CSS so it runs off the main thread while the particle chunk loads. */}
+        <section data-hero className="mx-auto w-full max-w-6xl px-4 pb-8 pt-10 sm:px-6 sm:pt-14">
+          <p className="rise font-mono text-[11px] uppercase tracking-wide text-muted">
             /students
           </p>
-          <h1 className="mt-3 max-w-3xl text-5xl font-medium tracking-tight sm:text-7xl">
+          <h1
+            className="rise mt-3 max-w-3xl text-5xl font-medium tracking-tight sm:text-7xl"
+            style={{ "--i": 1 } as React.CSSProperties}
+          >
             PCU tech pages, one link each.
           </h1>
-          <p className="mt-6 max-w-xl text-base leading-7 text-muted">
+          <p
+            className="rise mt-6 max-w-xl text-base leading-7 text-muted"
+            style={{ "--i": 2 } as React.CSSProperties}
+          >
             Dolphub is a public portfolio for IT, CS, and Computer Engineering
             students. Explore people who have published at least one
             project.
           </p>
-        </motion.section>
+        </section>
 
         <StudentShowcase
           profiles={visible} courseId={courseId} counts={counts} onCourseChange={setCourseId}
@@ -135,8 +132,7 @@ export function HomePage() {
             ))}
           </ol>
         </section>
-      </div>
-    </MotionConfig>
+    </div>
   );
 }
 
