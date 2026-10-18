@@ -2,6 +2,22 @@ import { expect, test } from "@playwright/test";
 import { expectNoHorizontalOverflow, expectVisibleFocusRing } from "./helpers";
 
 test.describe("home", () => {
+  test("moves directly from the showcase to the publishing steps", async ({ page }) => {
+    await page.goto("/");
+
+    await expect(page.getByRole("region", { name: "Community statistics" })).toHaveCount(0);
+    await expect(page.getByText("Published pages", { exact: true })).toHaveCount(0);
+    await expect(page.getByText("Courses on the filter", { exact: true })).toHaveCount(0);
+
+    const skip = page.getByRole("link", { name: "Skip showcase ↓" });
+    await expect(skip).toHaveAttribute("href", "#after-showcase");
+    await skip.click();
+
+    const publishing = page.getByRole("region", { name: "Publishing steps" });
+    await expect(publishing).toBeFocused();
+    await expect(publishing.getByRole("heading", { name: "How a page gets published" })).toBeVisible();
+  });
+
   test("filters are toggle buttons and the current nav link is marked", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("tab")).toHaveCount(0);
