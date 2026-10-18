@@ -76,6 +76,8 @@ Each post page carries a "Report a problem with this post" email link, for broke
 
 ## Frontend work (fnzh-i)
 
+**Status, Oct 18:** steps 1 and 2 are done, with browser tests in `e2e/opportunities.spec.ts`. The sitemap now lists the pages. The home strip links to the full list but still shows sample posts.
+
 1. The `/opportunities` list with kind tabs, cards, closing badges and an empty state such as "No open internships right now".
 2. The `/opportunities/<slug>` detail page, including the closed state.
 3. The "Upcoming" strip on the home page.
