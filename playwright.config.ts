@@ -2,7 +2,8 @@ import { defineConfig, devices } from "@playwright/test";
 
 const PORT = Number(process.env.E2E_PORT ?? 3100);
 const baseURL = `http://127.0.0.1:${PORT}`;
-const testEnvironment = `E2E_TEST=1 DATABASE_URL=pglite:./.data/e2e-pglite APP_URL=${baseURL} PCU_EMAIL_DOMAINS=pcu.edu.ph`;
+// Empty Google values keep a developer's .env.local keys out of the tests: Next never overrides a variable that is already set.
+const testEnvironment = `E2E_TEST=1 DATABASE_URL=pglite:./.data/e2e-pglite APP_URL=${baseURL} PCU_EMAIL_DOMAINS=pcu.edu.ph GOOGLE_CLIENT_ID= GOOGLE_CLIENT_SECRET=`;
 
 export default defineConfig({
   testDir: "./e2e",

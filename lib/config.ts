@@ -41,6 +41,9 @@ const envSchema = z
     SIGNIN_LINKS_PER_NETWORK_PER_HOUR: z.coerce.number().int().positive().default(30),
     /** Key for hashing requester networks. Falls back to one derived from DATABASE_URL. */
     RATE_LIMIT_SECRET: optional.pipe(z.string().min(16, "use at least 16 characters").optional()),
+    /** Google OAuth client for "Continue with Google". Optional: email links work without it. */
+    GOOGLE_CLIENT_ID: optional,
+    GOOGLE_CLIENT_SECRET: optional,
     R2_ACCOUNT_ID: optional,
     R2_ACCESS_KEY_ID: optional,
     R2_SECRET_ACCESS_KEY: optional,
@@ -58,6 +61,10 @@ const envSchema = z
     const setCount = r2.filter((k) => env[k]).length;
     if (setCount > 0 && setCount < r2.length) {
       for (const k of r2) if (!env[k]) ctx.addIssue({ code: "custom", path: [k], message: "set all R2 variables or none" });
+    }
+    if (!env.GOOGLE_CLIENT_ID !== !env.GOOGLE_CLIENT_SECRET) {
+      for (const k of ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"] as const)
+        if (!env[k]) ctx.addIssue({ code: "custom", path: [k], message: "set both Google variables or neither" });
     }
     if (env.NODE_ENV === "production" && env.E2E_TEST !== "1") {
       if (!env.RESEND_API_KEY) ctx.addIssue({ code: "custom", path: ["RESEND_API_KEY"], message: "required in production" });
