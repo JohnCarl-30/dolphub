@@ -5,7 +5,8 @@ import { SiteMenu } from "./site-menu";
 
 const NAV = [
   { href: "/", index: "00", label: "Home" },
-  { href: "/dashboard", index: "01", label: "Profile" },
+  { href: "/dashboard", index: "01", label: "Dashboard" },
+  { href: "/profile", index: "02", label: "Profile" },
 ];
 
 export function SiteHeader() {

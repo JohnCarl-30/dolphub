@@ -1,5 +1,20 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
+const E2E_SESSION_TOKEN = "dolphub-e2e-session-token";
+const E2E_PORT = Number(process.env.E2E_PORT ?? 3100);
+
+export async function authenticate(page: Page) {
+  await page.context().addCookies([
+    {
+      name: "session",
+      value: E2E_SESSION_TOKEN,
+      url: `http://127.0.0.1:${E2E_PORT}`,
+      httpOnly: true,
+      sameSite: "Lax",
+    },
+  ]);
+}
+
 /** Computed transform scale of an element, 1 when it has none. */
 export async function scaleOf(locator: Locator): Promise<number> {
   return locator.evaluate((element) => {

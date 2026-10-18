@@ -2,6 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 const PORT = Number(process.env.E2E_PORT ?? 3100);
 const baseURL = `http://127.0.0.1:${PORT}`;
+const testEnvironment = `E2E_TEST=1 DATABASE_URL=pglite:./.data/e2e-pglite APP_URL=${baseURL} PCU_EMAIL_DOMAINS=pcu.edu.ph`;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -21,7 +22,9 @@ export default defineConfig({
   webServer: {
     // Always the built app. The dev server compiles routes on first visit, so
     // clicks can land before hydration and the test reads the wrong state.
-    command: process.env.CI ? `npm run start -- -p ${PORT}` : `npm run build && npm run start -- -p ${PORT}`,
+    command: process.env.CI
+      ? `${testEnvironment} npm run test:e2e:seed && ${testEnvironment} npm run start -- -p ${PORT}`
+      : `${testEnvironment} npm run test:e2e:seed && npm run build && ${testEnvironment} npm run start -- -p ${PORT}`,
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 240_000,

@@ -38,6 +38,17 @@ describe("loadConfig", () => {
     expect(ok.R2_PUBLIC_BASE_URL).toBe("https://images.dolphub.tech");
   });
 
+  it("allows the explicit browser-test environment to use local services", () => {
+    const testConfig = loadConfig({
+      ...dev,
+      NODE_ENV: "production",
+      E2E_TEST: "1",
+      APP_URL: "http://127.0.0.1:3100",
+    });
+    expect(testConfig.E2E_TEST).toBe("1");
+    expect(testConfig.DATABASE_URL).toBe("pglite:./.data/pglite");
+  });
+
   it("rejects a partial R2 setup and never prints values", () => {
     expect(() => loadConfig({ ...dev, R2_BUCKET: "only-this" })).toThrow(/R2_ACCOUNT_ID/);
     expect(() => loadConfig({ ...dev, DATABASE_URL: "mysql://secret-value" })).toThrow(
