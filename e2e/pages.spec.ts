@@ -276,11 +276,9 @@ test.describe("profile editor", () => {
   });
 });
 
-test("protected routes redirect signed-out visitors to login", async ({ page }) => {
-  for (const path of ["/dashboard", "/profile"]) {
-    await page.goto(path);
-    await expect(page).toHaveURL(/\/login$/);
-  }
+test("the profile editor redirects signed-out visitors to login", async ({ page }) => {
+  await page.goto("/profile");
+  await expect(page).toHaveURL(/\/login$/);
 });
 
 test.describe("login", () => {

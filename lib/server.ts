@@ -7,6 +7,7 @@ import { ConsoleEmailSender } from "./email/dev";
 import { ResendEmailSender } from "./email/resend";
 import type { EmailSender } from "./email/types";
 import type { AuthSettings } from "./services/auth";
+import type { GoogleSettings } from "./services/google";
 import type { ServiceContext } from "./services/context";
 import { MemoryStorage } from "./storage/memory";
 import { R2Storage } from "./storage/r2";
@@ -75,3 +76,16 @@ export function getAuthSettings(): AuthSettings {
       createHash("sha256").update(`dolphub-rate-limit:${c.DATABASE_URL}`).digest("hex"),
   };
 }
+
+/** Settings for "Continue with Google", or null when the OAuth client is not configured. */
+export function getGoogleSettings(): GoogleSettings | null {
+  const c = getConfig();
+  if (!c.GOOGLE_CLIENT_ID || !c.GOOGLE_CLIENT_SECRET) return null;
+  return {
+    clientId: c.GOOGLE_CLIENT_ID,
+    clientSecret: c.GOOGLE_CLIENT_SECRET,
+    redirectUri: `${c.APP_URL}/auth/google/callback`,
+    allowedDomains: c.PCU_EMAIL_DOMAINS,
+  };
+}
+

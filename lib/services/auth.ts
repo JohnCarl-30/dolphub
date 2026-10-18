@@ -205,7 +205,7 @@ export async function consumeSignInLink(
   ctx: ServiceContext,
   settings: Pick<AuthSettings, "allowedDomains">,
   token: string,
-): Promise<{ sessionToken: string; expiresAt: Date; user: SessionUser }> {
+): Promise<NewSession> {
   const now = nowOf(ctx);
   const [link] = token
     ? await ctx.db
@@ -229,6 +229,18 @@ export async function consumeSignInLink(
   }
 
   const user = await signInOrRegister(ctx.db, link.email, settings.allowedDomains);
+  return startSession(ctx, user);
+}
+
+export interface NewSession {
+  sessionToken: string;
+  expiresAt: Date;
+  user: SessionUser;
+}
+
+/** Starts a 30-day session for a user who has proved they own their address. Only the token hash is stored. */
+export async function startSession(ctx: ServiceContext, user: SessionUser): Promise<NewSession> {
+  const now = nowOf(ctx);
   const sessionToken = newToken();
   const expiresAt = new Date(now.getTime() + AUTH_LIMITS.sessionTtlMs);
   await ctx.db.insert(sessions).values({

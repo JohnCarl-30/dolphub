@@ -6,6 +6,10 @@ import { COURSES, listGridProfiles } from "@/lib/mock-profiles";
 import { shouldPlayParticles } from "@/lib/particles";
 import { useMotionEnvironment } from "@/components/animations/use-motion-environment";
 import { ParticleBoundary } from "@/components/particles/particle-boundary";
+import { FocusBand } from "@/components/home/focus-band";
+import { NewsletterSignup } from "@/components/home/newsletter-signup";
+import { UpcomingStrip } from "@/components/home/upcoming-strip";
+import { useMockHome } from "@/components/home/use-mock-home";
 import dynamic from "next/dynamic";
 import { useCallback, useMemo, useRef, useState } from "react";
 
@@ -35,6 +39,7 @@ export function HomePage() {
   const { profiles } = useMockStore();
   const [courseId, setCourseId] = useState<string | null>(null);
   const environment = useMotionEnvironment();
+  const home = useMockHome();
   const [showcaseActive, setShowcaseActive] = useState(false);
   const homepage = useRef<HTMLDivElement>(null);
   const network = useRef<HTMLDivElement>(null);
@@ -93,6 +98,8 @@ export function HomePage() {
           </p>
         </section>
 
+        {home?.focus ? <FocusBand post={home.focus} now={home.now} /> : null}
+
         <StudentShowcase
           profiles={visible} courseId={courseId} counts={counts} onCourseChange={setCourseId}
           homepage={homepage} network={network} ready={environment.ready}
@@ -124,6 +131,9 @@ export function HomePage() {
             ))}
           </ol>
         </section>
+
+        <UpcomingStrip posts={home?.upcoming ?? null} now={home?.now ?? null} />
+        <NewsletterSignup />
     </div>
   );
 }

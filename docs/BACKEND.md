@@ -236,6 +236,9 @@ Students sign in with a one-time link emailed through Resend. The link opens a p
 |---|---|
 | `requestSignInLink(ctx, sender, settings, email, clientIp?)` | Emails a link to `APP_URL/auth/verify`. Existing users can always ask. New addresses must pass the domain check and open signups. Limits: 3 links per address per 15 minutes, `SIGNIN_LINKS_PER_NETWORK_PER_HOUR` per network, and `DAILY_EMAIL_CAP` per 24 hours. Networks are stored only as a keyed hash |
 | `consumeSignInLink(ctx, settings, token)` | Uses the link once, creates the account if needed, and returns a 30-day session token |
+| `startGoogleSignIn(settings)` | Builds Google's consent URL with PKCE, a state value and a nonce, and returns them for a 10-minute cookie. `GET /auth/google` sets that cookie and redirects |
+| `finishGoogleSignIn(ctx, settings, { code, state, attempt })` | `GET /auth/google/callback`. Checks the state, trades the code for an ID token, checks its issuer, audience, expiry, nonce and verified email, then signs in or registers under the same domain and frozen-signup rules as email links. Failures return to `/dashboard?signin=<reason>` |
+| `startSession(ctx, user)` | Starts a 30-day session. Used by both sign-in methods |
 | `getSessionUser(ctx, token)` | The user behind a session token, or null if expired or the account is being deleted |
 | `signOut(ctx, token)` | Ends that session |
 | `purgeExpiredAuthRecords(ctx)` | Nightly job. Removes old links and expired sessions |
