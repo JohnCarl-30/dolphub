@@ -13,6 +13,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     : [];
   return [
     { url: `${origin}/`, changeFrequency: "daily", priority: 1 },
+    { url: `${origin}/privacy`, changeFrequency: "monthly", priority: 0.3 },
+    { url: `${origin}/terms`, changeFrequency: "monthly", priority: 0.3 },
+    { url: `${origin}/support`, changeFrequency: "monthly", priority: 0.4 },
     ...profiles.map((p) => ({
       url: `${origin}/u/${p.handle}`,
       ...(p.updatedAt ? { lastModified: p.updatedAt } : {}),

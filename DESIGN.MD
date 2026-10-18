@@ -1,6 +1,6 @@
 # Dolphub design
 
-This is the design source of truth for Dolphub. Use it when building or reviewing the homepage, public profiles at `/u/<handle>`, dashboard, sign-in and verification screens, shared chrome, and frontend tokens. It contains the visual foundation and Dolphub-specific adaptations in one place.
+This is the design source of truth for Dolphub. Use it when building or reviewing the homepage, public profiles at `/u/<handle>`, dashboard, sign-in and verification screens, privacy, terms and support pages, shared chrome, and frontend tokens. It contains the visual foundation and Dolphub-specific adaptations in one place.
 
 The audience is PCU students in IT, CS, and Computer Engineering. Keep the interface direct: discover students, inspect their projects, publish a portfolio, and share one public link.
 
@@ -44,10 +44,19 @@ Reuse the tokens in [app/globals.css](app/globals.css). Do not introduce a secon
 
 - Use the header, main, and footer from [components/site-shell.tsx](components/site-shell.tsx).
 - Use `max-w-6xl` for the homepage and shared chrome, `max-w-3xl` for public profile content, and `max-w-md` for dashboard and authentication forms. Use `px-4`, increasing to `sm:px-6` on public pages where appropriate.
-- Keep header links numbered: `[ 00 ] Students` and `[ 01 ] Dashboard`. Preserve the compact mono footer and hairline shell borders.
+- Keep header links numbered: `[ 00 ] Home` for `/` and `[ 01 ] Profile` for the current-user editor at `/dashboard`. Show both beside the menu button from the `sm` breakpoint up; place them inside the burger menu on smaller screens.
+- The burger menu is always available. It contains `[ 02 ] Privacy & Security`, `[ 03 ] Terms`, and `[ 04 ] Support`, closes on selection, outside interaction, or Escape, and returns focus to its trigger after Escape.
+- Preserve the compact mono footer and hairline shell borders. Use `Dolphub · Built for PCU tech students` and `© 2026 Dolphub contributors · MIT License` as the production footer copy, followed by Privacy & Security, Terms, and Support links.
 - Use slash section labels such as `/students`, `/u/{handle}`, `/publish`, `/dashboard`, and `/login`.
-- Follow the student showcase with a quiet community statistics row, then a short numbered publishing sequence: sign in, add a project, and share `/u/your-handle`.
+- Follow the student showcase directly with a short numbered publishing sequence: sign in, add a project, and share `/u/your-handle`.
 - Keep dashboard forms phone-first. Existing image uploads remain labeled slots until an image workflow is implemented.
+
+### Informational pages
+
+- Privacy, terms, and support use a shared `max-w-3xl` long-form layout with a slash label, one page heading, a concise introduction, a fixed last-updated line, and clearly named sections.
+- Keep paragraphs readable with the standard body size and generous line height. Use bullets for requirements, rights, troubleshooting, and data categories.
+- Use underlined ink links inside long-form copy. The maintainer email actions use the standard solid-ink button treatment.
+- Legal and security copy must describe implemented behavior without promising perfect availability or security. Review policy drafts before a public launch.
 
 ### Student cards and filters
 
@@ -69,7 +78,7 @@ Keep the current behavior in [components/student-showcase.tsx](components/studen
 - Offer list and scroll views, remembering the choice for the session when storage is available. Retain the selected or focused card when changing views.
 - Use the list for reduced motion, an explicit list preference, or insufficient viewport height. When cards fit horizontally, use natural flow without pinning or added scroll height. Phone width alone does not force list mode.
 - Preserve course counts and filtering. Filtering keeps focus on its control; an empty result keeps the empty-state card.
-- Tab and Shift+Tab reveal focused cards immediately. “Skip showcase” moves focus and scroll position directly to the following statistics section. Normal vertical scrolling continues after the final card.
+- Tab and Shift+Tab reveal focused cards immediately. “Skip showcase” moves focus and scroll position directly to the following publishing section. Normal vertical scrolling continues after the final card.
 - Show an ink progress bar during pinned traversal with an accessible progress value. Recalculate layout after viewport, content, or font changes.
 
 ## Motion and accessibility
