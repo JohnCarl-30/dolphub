@@ -27,6 +27,7 @@ export async function scaleOf(locator: Locator): Promise<number> {
 
 /** Holds the pointer down on an element so :active styles apply, then releases. */
 export async function whilePressed<T>(page: Page, locator: Locator, run: () => Promise<T>): Promise<T> {
+  await locator.scrollIntoViewIfNeeded();
   const box = await locator.boundingBox();
   if (!box) throw new Error("Element has no box");
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
