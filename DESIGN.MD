@@ -44,7 +44,8 @@ Reuse the tokens in [app/globals.css](app/globals.css). Do not introduce a secon
 
 - Use the header, main, and footer from [components/site-shell.tsx](components/site-shell.tsx).
 - Use `max-w-6xl` for the homepage and shared chrome, `max-w-3xl` for public profile content, and `max-w-md` for dashboard and authentication forms. Use `px-4`, increasing to `sm:px-6` on public pages where appropriate.
-- Keep header links numbered: `[ 00 ] Students` and `[ 01 ] Dashboard`. Preserve the compact mono footer and hairline shell borders.
+- Keep header links numbered: `[ 00 ] Home` for `/` and `[ 01 ] Profile` for the current-user editor at `/dashboard`.
+- Preserve the compact mono footer and hairline shell borders. Use `Dolphub · Built for PCU tech students` and `© 2026 Dolphub contributors · MIT License` as the production footer copy.
 - Use slash section labels such as `/students`, `/u/{handle}`, `/publish`, `/dashboard`, and `/login`.
 - Follow the student showcase with a quiet community statistics row, then a short numbered publishing sequence: sign in, add a project, and share `/u/your-handle`.
 - Keep dashboard forms phone-first. Existing image uploads remain labeled slots until an image workflow is implemented.

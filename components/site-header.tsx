@@ -3,8 +3,8 @@ import Image from "next/image";
 import { NavLink } from "./nav-link";
 
 const NAV = [
-  { href: "/", index: "00", label: "Students" },
-  { href: "/dashboard", index: "01", label: "Dashboard" },
+  { href: "/", index: "00", label: "Home" },
+  { href: "/dashboard", index: "01", label: "Profile" },
 ];
 
 export function SiteHeader() {

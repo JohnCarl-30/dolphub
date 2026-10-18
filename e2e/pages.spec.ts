@@ -14,8 +14,17 @@ test.describe("home", () => {
     await expect(all).toHaveAttribute("aria-pressed", "false");
     const expected = Number(/\[(\d+)\]/.exec((await cs.textContent()) ?? "")?.[1]);
     await expect(page.locator("[data-showcase-card]")).toHaveCount(expected);
-    await expect(page.getByRole("link", { name: "[ 00 ] Students" })).toHaveAttribute("aria-current", "page");
-    await expect(page.getByRole("link", { name: "[ 01 ] Dashboard" })).not.toHaveAttribute("aria-current", "page");
+    const home = page.getByRole("link", { name: "[ 00 ] Home" });
+    const profile = page.getByRole("link", { name: "[ 01 ] Profile" });
+    await expect(home).toHaveAttribute("href", "/");
+    await expect(home).toHaveAttribute("aria-current", "page");
+    await expect(profile).toHaveAttribute("href", "/dashboard");
+    await expect(profile).not.toHaveAttribute("aria-current", "page");
+    await expect(page.getByText("Dolphub · Built for PCU tech students", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText("© 2026 Dolphub contributors · MIT License", { exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText(/Mock pages|No sign-in|Edits stay in this tab/i)).toHaveCount(0);
   });
 });
 
@@ -48,6 +57,18 @@ test.describe("profile", () => {
 });
 
 test.describe("dashboard", () => {
+  test("marks Profile as the current navigation link", async ({ page }) => {
+    await page.goto("/dashboard");
+    await expect(page.getByRole("link", { name: "[ 00 ] Home" })).not.toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    await expect(page.getByRole("link", { name: "[ 01 ] Profile" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  });
+
   test("a save announces a status and a bad GitHub value raises an alert", async ({ page }) => {
     await page.goto("/dashboard");
     const github = page.getByRole("textbox", { name: "GitHub", exact: true });
