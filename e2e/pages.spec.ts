@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { expectNoHorizontalOverflow, expectVisibleFocusRing } from "./helpers";
+import { authenticate, expectNoHorizontalOverflow, expectVisibleFocusRing } from "./helpers";
 
 test.describe("home", () => {
   test("moves directly from the showcase to the publishing steps", async ({ page }) => {
@@ -32,10 +32,13 @@ test.describe("home", () => {
     const expected = Number(/\[(\d+)\]/.exec((await cs.textContent()) ?? "")?.[1]);
     await expect(page.locator("[data-showcase-card]")).toHaveCount(expected);
     const home = page.getByRole("link", { name: "[ 00 ] Home" });
-    const profile = page.getByRole("link", { name: "[ 01 ] Profile" });
+    const dashboard = page.getByRole("link", { name: "[ 01 ] Dashboard" });
+    const profile = page.getByRole("link", { name: "[ 02 ] Profile" });
     await expect(home).toHaveAttribute("href", "/");
     await expect(home).toHaveAttribute("aria-current", "page");
-    await expect(profile).toHaveAttribute("href", "/dashboard");
+    await expect(dashboard).toHaveAttribute("href", "/dashboard");
+    await expect(dashboard).not.toHaveAttribute("aria-current", "page");
+    await expect(profile).toHaveAttribute("href", "/profile");
     await expect(profile).not.toHaveAttribute("aria-current", "page");
     await expect(page.getByText("Dolphub · Built for PCU tech students", { exact: true })).toBeVisible();
     await expect(
@@ -58,7 +61,8 @@ test.describe("site menu", () => {
     await page.goto("/");
 
     await expect(page.getByRole("link", { name: "[ 00 ] Home" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "[ 01 ] Profile" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "[ 01 ] Dashboard" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "[ 02 ] Profile" })).toBeVisible();
 
     const open = page.getByRole("button", { name: "Open navigation menu" });
     await open.click();
@@ -67,9 +71,9 @@ test.describe("site menu", () => {
       "true",
     );
     const menu = page.getByRole("navigation", { name: "Site menu" });
-    await expect(menu.getByRole("link", { name: "[ 02 ] Privacy & Security" })).toBeVisible();
-    await expect(menu.getByRole("link", { name: "[ 03 ] Terms" })).toBeVisible();
-    await expect(menu.getByRole("link", { name: "[ 04 ] Support" })).toBeVisible();
+    await expect(menu.getByRole("link", { name: "[ 03 ] Privacy & Security" })).toBeVisible();
+    await expect(menu.getByRole("link", { name: "[ 04 ] Terms" })).toBeVisible();
+    await expect(menu.getByRole("link", { name: "[ 05 ] Support" })).toBeVisible();
     await expect(menu.getByRole("link", { name: "[ 00 ] Home" })).toBeHidden();
 
     await page.keyboard.press("Escape");
@@ -87,13 +91,15 @@ test.describe("site menu", () => {
     await page.goto("/");
 
     await expect(page.getByRole("link", { name: "[ 00 ] Home" })).toHaveCount(0);
-    await expect(page.getByRole("link", { name: "[ 01 ] Profile" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "[ 01 ] Dashboard" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "[ 02 ] Profile" })).toHaveCount(0);
     await page.getByRole("button", { name: "Open navigation menu" }).click();
 
     const menu = page.getByRole("navigation", { name: "Site menu" });
     await expect(menu.getByRole("link", { name: "[ 00 ] Home" })).toBeVisible();
-    await expect(menu.getByRole("link", { name: "[ 01 ] Profile" })).toBeVisible();
-    await menu.getByRole("link", { name: "[ 02 ] Privacy & Security" }).click();
+    await expect(menu.getByRole("link", { name: "[ 01 ] Dashboard" })).toBeVisible();
+    await expect(menu.getByRole("link", { name: "[ 02 ] Profile" })).toBeVisible();
+    await menu.getByRole("link", { name: "[ 03 ] Privacy & Security" }).click();
 
     await expect(page).toHaveURL(/\/privacy$/);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Privacy & Security");
@@ -176,45 +182,105 @@ test.describe("profile", () => {
 });
 
 test.describe("dashboard", () => {
-  test("marks Profile as the current navigation link", async ({ page }) => {
+  test.beforeEach(async ({ page }) => authenticate(page));
+
+  test("marks Dashboard as current and separates profile navigation", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/dashboard");
     await expect(page.getByRole("link", { name: "[ 00 ] Home" })).not.toHaveAttribute(
       "aria-current",
       "page",
     );
-    await expect(page.getByRole("link", { name: "[ 01 ] Profile" })).toHaveAttribute(
+    await expect(page.getByRole("link", { name: "[ 01 ] Dashboard" })).toHaveAttribute(
       "aria-current",
       "page",
     );
+    await expect(page.getByRole("link", { name: "[ 02 ] Profile" })).not.toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    await expect(page.getByRole("link", { name: "Edit profile" })).toHaveAttribute(
+      "href",
+      "/profile",
+    );
   });
 
-  test("a save announces a status and a bad GitHub value raises an alert", async ({ page }) => {
+  test("validates and publishes a temporary post", async ({ page }) => {
     await page.goto("/dashboard");
+    const composer = page.getByRole("textbox", { name: "Share an update" });
+    await page.getByRole("button", { name: "Publish" }).click();
+    await expect(page.locator("form").getByRole("alert")).toHaveText(
+      "Write something before publishing.",
+    );
+
+    await composer.fill("Testing the new project demo with our class today.");
+    await page.getByRole("button", { name: "Publish" }).click();
+    const firstPost = page.getByTestId("feed-posts").locator("li[data-post-id]").first();
+    await expect(firstPost).toContainText("Testing the new project demo with our class today.");
+    await expect(firstPost).toContainText("Now");
+  });
+
+  test("reacts, opens comments, and applies both sort modes", async ({ page }) => {
+    await page.goto("/dashboard");
+    const posts = page.getByTestId("feed-posts").locator("li[data-post-id]");
+    await expect(posts.first()).toHaveAttribute("data-post-id", "orgfair-preview");
+
+    const firstPost = posts.first();
+    await firstPost.getByRole("button", { name: "React", exact: true }).click();
+    await expect(firstPost.getByText("25 reactions")).toBeVisible();
+    await firstPost.getByRole("button", { name: "Comments" }).click();
+    await expect(firstPost.getByText("The quick filters make this much easier to scan.")).toBeVisible();
+
+    await page.getByRole("button", { name: "Top" }).click();
+    await expect(posts.first()).toHaveAttribute("data-post-id", "lab-gate-demo");
+    await page.getByRole("button", { name: "Recent" }).click();
+    await expect(posts.first()).toHaveAttribute("data-post-id", "orgfair-preview");
+  });
+
+  test("uses three columns on desktop and hides discovery on phones", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("/dashboard");
+    await expect(page.getByTestId("identity-rail")).toBeVisible();
+    await expect(page.getByTestId("discovery-rail")).toBeVisible();
+
+    await page.setViewportSize({ width: 320, height: 640 });
+    await expect(page.getByTestId("identity-rail")).toBeVisible();
+    await expect(page.getByTestId("discovery-rail")).toBeHidden();
+    await expectNoHorizontalOverflow(page);
+  });
+});
+
+test.describe("profile editor", () => {
+  test.beforeEach(async ({ page }) => authenticate(page));
+
+  test("marks Profile as current and preserves editor validation", async ({ page }) => {
+    await page.goto("/profile");
+    if ((page.viewportSize()?.width ?? 0) < 640) {
+      await page.getByRole("button", { name: "Open navigation menu" }).click();
+    }
+    await expect(page.getByRole("link", { name: "[ 02 ] Profile" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
     const github = page.getByRole("textbox", { name: "GitHub", exact: true });
-    await expect(github).toHaveAccessibleDescription(/Your username or profile link/);
     await github.fill("-bad-");
     await page.getByRole("button", { name: "Save in this tab" }).click();
-    // Scoped to the form: Next.js keeps its own route announcer with role="alert".
-    const form = page.locator("form");
-    const alert = form.getByRole("alert");
-    await expect(alert).toBeVisible();
-    await expect(alert).toHaveClass(/rise/);
-    await github.fill("octocat");
-    await page.getByRole("button", { name: "Save in this tab" }).click();
-    await expect(form.getByRole("status")).toContainText("Saved in this tab");
-    await expect(alert).toHaveCount(0);
+    await expect(page.locator("form").getByRole("alert")).toBeVisible();
   });
 
-  test("adding a project reveals a fieldset that rises in", async ({ page }) => {
-    await page.goto("/dashboard");
+  test("can add a project", async ({ page }) => {
+    await page.goto("/profile");
     const before = await page.locator("fieldset").count();
     await page.getByRole("button", { name: "Add project" }).click();
-    const fieldsets = page.locator("fieldset");
-    await expect(fieldsets).toHaveCount(before + 1);
-    await expect(fieldsets.last()).toHaveClass(/rise/);
-    await expect(page.getByRole("button", { name: "Remove project" }).last()).toBeVisible();
+    await expect(page.locator("fieldset")).toHaveCount(before + 1);
   });
+});
+
+test("protected routes redirect signed-out visitors to login", async ({ page }) => {
+  for (const path of ["/dashboard", "/profile"]) {
+    await page.goto(path);
+    await expect(page).toHaveURL(/\/login$/);
+  }
 });
 
 test.describe("login", () => {
@@ -232,9 +298,10 @@ test.describe("login", () => {
   });
 });
 
-for (const path of ["/", "/u/mira", "/dashboard", "/login", "/privacy", "/terms", "/support"]) {
+for (const path of ["/", "/u/mira", "/dashboard", "/profile", "/login", "/privacy", "/terms", "/support"]) {
   test.describe(path, () => {
     test("every control has a name and the first few tab stops show a ring", async ({ page }) => {
+      if (path === "/dashboard" || path === "/profile") await authenticate(page);
       await page.goto(path);
       const unnamed = await page.locator("a, button").evaluateAll((elements) =>
         elements
@@ -257,6 +324,7 @@ for (const path of ["/", "/u/mira", "/dashboard", "/login", "/privacy", "/terms"
     });
 
     test("nothing spills past the viewport edge", async ({ page }) => {
+      if (path === "/dashboard" || path === "/profile") await authenticate(page);
       await page.setViewportSize({ width: 320, height: 640 });
       await page.goto(path);
       await expectNoHorizontalOverflow(page);

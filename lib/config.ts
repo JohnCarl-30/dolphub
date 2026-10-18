@@ -9,6 +9,8 @@ const optional = z
 const envSchema = z
   .object({
     NODE_ENV: z.string().optional(),
+    /** Enables isolated local browser-test infrastructure. Never set in a deployment. */
+    E2E_TEST: z.enum(["1"]).optional(),
     /** Neon connection string, or pglite:<folder> for local development. */
     DATABASE_URL: z
       .string()
@@ -57,7 +59,7 @@ const envSchema = z
     if (setCount > 0 && setCount < r2.length) {
       for (const k of r2) if (!env[k]) ctx.addIssue({ code: "custom", path: [k], message: "set all R2 variables or none" });
     }
-    if (env.NODE_ENV === "production") {
+    if (env.NODE_ENV === "production" && env.E2E_TEST !== "1") {
       if (!env.RESEND_API_KEY) ctx.addIssue({ code: "custom", path: ["RESEND_API_KEY"], message: "required in production" });
       if (setCount === 0) for (const k of r2) ctx.addIssue({ code: "custom", path: [k], message: "required in production" });
       if (env.DATABASE_URL.startsWith("pglite:")) ctx.addIssue({ code: "custom", path: ["DATABASE_URL"], message: "pglite is for development only" });

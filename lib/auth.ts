@@ -6,7 +6,7 @@ import { cache } from "react";
 import { getSessionUser, type SessionUser } from "./services/auth";
 import { getServiceContext } from "./server";
 
-const isProduction = process.env.NODE_ENV === "production";
+const isProduction = process.env.NODE_ENV === "production" && process.env.E2E_TEST !== "1";
 
 /**
  * __Host- cookies must be Secure, have Path=/ and no Domain, so no subdomain

@@ -5,13 +5,14 @@ import { NavLink } from "./nav-link";
 
 const PRIMARY_LINKS = [
   { href: "/", index: "00", label: "Home" },
-  { href: "/dashboard", index: "01", label: "Profile" },
+  { href: "/dashboard", index: "01", label: "Dashboard" },
+  { href: "/profile", index: "02", label: "Profile" },
 ];
 
 const INFO_LINKS = [
-  { href: "/privacy", index: "02", label: "Privacy & Security" },
-  { href: "/terms", index: "03", label: "Terms" },
-  { href: "/support", index: "04", label: "Support" },
+  { href: "/privacy", index: "03", label: "Privacy & Security" },
+  { href: "/terms", index: "04", label: "Terms" },
+  { href: "/support", index: "05", label: "Support" },
 ];
 
 const linkClass =

@@ -196,7 +196,7 @@ Indexing rules:
 
 - **Home** is indexed.
 - **Student pages** are indexed only when the data is real and the student left `searchVisible` on. Sample pages and unknown handles get `noindex`.
-- **Login, verify and dashboard** always get `noindex`. `robots.txt` blocks `/dashboard`, `/auth/` and `/api/`, but not `/login` or `/u/`, so crawlers can still see their `noindex`.
+- **Login, verify, dashboard and profile editor** always get `noindex`. `robots.txt` blocks `/dashboard`, `/profile`, `/auth/` and `/api/`, but not `/login` or `/u/`, so crawlers can still see their `noindex`.
 
 When student pages switch from sample data to the database, change only `lib/seo-data.ts`. Its comment lists the steps. Then also:
 

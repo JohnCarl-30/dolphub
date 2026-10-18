@@ -85,7 +85,8 @@ Added after launch: `profiles.recovery_email`, `profiles.in_directory` (opt-in f
 | `/u/[handle]` | Public profile page, ISR, preview tags |
 | `/login` | Email form that sends a sign-in link |
 | `/auth/verify` | Where the emailed link lands. A button finishes sign-in |
-| `/dashboard` | Owner edits profile and projects, phone-first. Signed-in only |
+| `/dashboard` | Authenticated community feed with session-only post interactions |
+| `/profile` | Owner edits profile and projects, phone-first. Signed-in only |
 | `/api/upload` | Validates, re-encodes and stores an image in R2 |
 | `/admin` | Profile count metric, hide profile, freeze signups |
 

@@ -7,7 +7,11 @@ import { siteUrl } from "@/lib/seo";
  */
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: { userAgent: "*", allow: "/", disallow: ["/dashboard", "/auth/", "/api/"] },
+    rules: {
+      userAgent: "*",
+      allow: "/",
+      disallow: ["/dashboard", "/profile", "/auth/", "/api/"],
+    },
     sitemap: `${siteUrl()}/sitemap.xml`,
   };
 }
