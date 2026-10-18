@@ -150,7 +150,7 @@ export function serializeJsonLd(data: JsonLd): string {
  * Turn on when the /opportunities pages are live, so the sitemap lists them.
  * Until then the sitemap would point search engines at pages that 404.
  */
-export const OPPORTUNITY_PAGES_LIVE = false;
+export const OPPORTUNITY_PAGES_LIVE = true;
 
 /** What metadata needs about an opportunity. Matches PublicOpportunity from lib/services. */
 export interface SeoOpportunity {

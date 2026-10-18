@@ -1,12 +1,8 @@
 import type { PublicOpportunity } from "@/lib/services/opportunities";
 import { closingLabel, formatManilaDate, formatManilaTime } from "@/lib/opportunity-time";
 import { actionLabel, KIND_NAMES } from "@/lib/mock-home";
-
-const PLACE: Record<PublicOpportunity["locationType"], string> = {
-  onsite: "On site",
-  online: "Online",
-  hybrid: "Hybrid",
-};
+import { whereLabel } from "@/lib/opportunity-display";
+import Link from "next/link";
 
 /** The next three open posts, soonest closing first. `posts` is null while the clock loads. */
 export function UpcomingStrip({ posts, now }: { posts: PublicOpportunity[] | null; now: Date | null }) {
@@ -39,6 +35,12 @@ export function UpcomingStrip({ posts, now }: { posts: PublicOpportunity[] | nul
           </ol>
         )}
       </div>
+      <Link
+        href="/opportunities"
+        className="mt-6 inline-block font-mono text-[11px] uppercase tracking-wide text-ink underline decoration-ink/30 underline-offset-4 transition-colors hover:decoration-ink focus-visible:ring-2 focus-visible:ring-ink"
+      >
+        See all opportunities <span aria-hidden="true">→</span>
+      </Link>
     </section>
   );
 }
@@ -46,7 +48,7 @@ export function UpcomingStrip({ posts, now }: { posts: PublicOpportunity[] | nul
 function UpcomingCard({ post, now }: { post: PublicOpportunity; now: Date }) {
   const date = post.startsAt ?? post.deadline;
   const time = post.startsAt ? `, ${formatManilaTime(post.startsAt)}` : "";
-  const where = post.location ? `${PLACE[post.locationType]}, ${post.location}` : PLACE[post.locationType];
+  const where = whereLabel(post);
 
   return (
     <a
