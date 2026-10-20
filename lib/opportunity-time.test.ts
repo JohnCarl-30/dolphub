@@ -5,7 +5,9 @@ import {
   endOfManilaDay,
   formatManilaDate,
   formatManilaTime,
+  isEndOfManilaDay,
   parseManilaDateTime,
+  toManilaInput,
 } from "./opportunity-time";
 
 describe("parseManilaDateTime", () => {
@@ -68,5 +70,24 @@ describe("labels", () => {
     expect(formatManilaDate(new Date("2026-10-30T16:30:00Z"), now)).toBe("Oct 31");
     expect(formatManilaDate(new Date("2027-01-05T00:00:00Z"), now)).toBe("Jan 5, 2027");
     expect(formatManilaTime(new Date("2026-10-30T06:00:00Z"))).toBe("2:00 PM");
+  });
+});
+
+describe("toManilaInput", () => {
+  it("writes an instant as Philippine wall-clock time for a datetime-local input", () => {
+    expect(toManilaInput(new Date("2026-10-30T06:00:00Z"))).toBe("2026-10-30T14:00");
+    expect(toManilaInput(new Date("2026-10-30T16:30:00Z"))).toBe("2026-10-31T00:30");
+  });
+
+  it("round-trips through parseManilaDateTime", () => {
+    const date = parseManilaDateTime("2026-11-02T09:15")!;
+    expect(toManilaInput(date)).toBe("2026-11-02T09:15");
+  });
+});
+
+describe("isEndOfManilaDay", () => {
+  it("spots dates entered without a time", () => {
+    expect(isEndOfManilaDay(parseManilaDateTime("2026-10-30")!)).toBe(true);
+    expect(isEndOfManilaDay(parseManilaDateTime("2026-10-30T14:00")!)).toBe(false);
   });
 });

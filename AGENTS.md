@@ -16,7 +16,7 @@ Public portfolio pages for PCU tech students at `/u/<handle>`. Read `docs/ARCHIT
 
 `/`, `/u/[handle]` and the `/dashboard` feed read and write the session store in `components/mock-store.tsx`, seeded from `lib/mock-profiles.ts`, not the database. The home page's focus band, upcoming posts and newsletter come from `lib/mock-home.ts`; add `?mock=empty` or `?mock=calm` to see other states. When a page needs a validation rule, import it from `lib/services/validation.ts` so the mock and the server agree.
 
-Sign-in is real. Signed out, `/dashboard` shows a landing with "Continue with Google" (`/auth/google`, handled by `lib/google-routes.ts` and `lib/services/google.ts`) and a link to the PCU email link at `/login`. Google needs `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, with `APP_URL/auth/google/callback` registered as a redirect URI; without them the button returns with "not available". Browser tests sign in with `authenticate` from `e2e/helpers.ts`, which uses the session that `e2e/seed-auth.ts` stores.
+Sign-in is real. Signed out, `/dashboard` shows a landing with "Continue with Google" (`/auth/google`, handled by `lib/google-routes.ts` and `lib/services/google.ts`) and a link to the PCU email link at `/login`. Google needs `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, with `APP_URL/auth/google/callback` registered as a redirect URI; without them the button returns with "not available". Browser tests sign in with `authenticate` from `e2e/helpers.ts`, which uses the session that `e2e/seed-auth.ts` stores; `authenticate(page, "admin")` signs in as the seeded admin for `/admin`.
 
 ## Design system
 

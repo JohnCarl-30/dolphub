@@ -3,9 +3,7 @@
  * server imports, so client components such as the home strip can use them too.
  */
 import type { LocationType, PublicOpportunity } from "./services/opportunities";
-import { formatManilaDate, formatManilaTime } from "./opportunity-time";
-
-const MANILA_OFFSET_MS = 8 * 60 * 60 * 1000;
+import { formatManilaDate, formatManilaTime, isEndOfManilaDay } from "./opportunity-time";
 
 export const PLACE_LABELS: Record<LocationType, string> = {
   onsite: "On site",
@@ -22,7 +20,5 @@ export function whereLabel(post: Pick<PublicOpportunity, "locationType" | "locat
 /** "Oct 30, 2:00 PM", or "Oct 30" when the time is the end of the day, as date-only input stores it. */
 export function dateTimeLabel(date: Date, now: Date = new Date()): string {
   const day = formatManilaDate(date, now);
-  const manila = new Date(date.getTime() + MANILA_OFFSET_MS);
-  const endOfDay = manila.getUTCHours() === 23 && manila.getUTCMinutes() === 59;
-  return endOfDay ? day : `${day}, ${formatManilaTime(date)}`;
+  return isEndOfManilaDay(date) ? day : `${day}, ${formatManilaTime(date)}`;
 }

@@ -68,6 +68,17 @@ export function closesAtFor(dates: {
   return null;
 }
 
+/** True for 11:59 pm Philippine time, which is how a date entered without a time is stored. */
+export function isEndOfManilaDay(date: Date): boolean {
+  const shifted = new Date(date.getTime() + MANILA_OFFSET_MS);
+  return shifted.getUTCHours() === 23 && shifted.getUTCMinutes() === 59;
+}
+
+/** "2026-10-30T14:00" in Philippine time, for a datetime-local input. The reverse of parseManilaDateTime. */
+export function toManilaInput(date: Date): string {
+  return new Date(date.getTime() + MANILA_OFFSET_MS).toISOString().slice(0, 16);
+}
+
 function manilaDayNumber(date: Date): number {
   return Math.floor((date.getTime() + MANILA_OFFSET_MS) / DAY_MS);
 }
