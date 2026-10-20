@@ -18,7 +18,9 @@ import {
   type ProjectFields,
 } from "@/lib/profile-form";
 import type { Dashboard } from "@/lib/services/dashboard";
+import type { PublicImage } from "@/lib/services/profiles";
 import { Field, FormMessages, focusField, inputClass, submitClass } from "./fields";
+import { ProjectPhotos } from "./project-photos";
 
 type Profile = NonNullable<Dashboard["profile"]>;
 type ProjectText = "title" | "description" | "demoUrl" | "sourceUrl";
@@ -33,7 +35,7 @@ function projectInputId(key: string, field: string) {
 
 /** Edits the signed-in student's own page. Every save goes to the database and refreshes the public page. */
 export function ProfileEditor({ dashboard }: { dashboard: Dashboard & { profile: Profile } }) {
-  const { profile, courses } = dashboard;
+  const { profile, courses, imageLimit } = dashboard;
   // What the server has, updated step by step as saves succeed, so a retry after an error never repeats a step.
   const [saved, setSaved] = useState(() => ({
     fields: profileFields(profile),
@@ -41,6 +43,11 @@ export function ProfileEditor({ dashboard }: { dashboard: Dashboard & { profile:
   }));
   const [fields, setFields] = useState<ProfileFields>(saved.fields);
   const [projects, setProjects] = useState<ProjectFields[]>(saved.projects);
+  // Photos save on their own, as soon as they're added or removed. Keyed by project id.
+  const [photos, setPhotos] = useState<Record<string, PublicImage[]>>(() =>
+    Object.fromEntries(dashboard.projects.map((p) => [p.id, p.images])),
+  );
+  const photoCount = Object.values(photos).reduce((sum, list) => sum + list.length, 0);
   const [error, setError] = useState<{ message: string; field?: string } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -87,6 +94,8 @@ export function ProfileEditor({ dashboard }: { dashboard: Dashboard & { profile:
         const result = await deleteProjectAction(id);
         if (!result.ok) return fail(result.error);
         setSaved((prev) => ({ ...prev, projects: prev.projects.filter((p) => p.id !== id) }));
+        // The server deleted the project's photos with it.
+        setPhotos((prev) => Object.fromEntries(Object.entries(prev).filter(([projectId]) => projectId !== id)));
       }
       for (const { key, id, input } of plan.update) {
         const result = await updateProjectAction(id, input);
@@ -243,11 +252,6 @@ export function ProfileEditor({ dashboard }: { dashboard: Dashboard & { profile:
           </p>
         </div>
 
-        <div className="border border-dashed border-ink/20 bg-paper px-4 py-6 text-center">
-          <p className="font-mono text-[11px] uppercase tracking-wide text-muted">Photos</p>
-          <p className="mt-2 text-sm text-muted">Photo upload is coming soon.</p>
-        </div>
-
         <div className="grid gap-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-medium tracking-tight">Projects</h2>
@@ -259,6 +263,10 @@ export function ProfileEditor({ dashboard }: { dashboard: Dashboard & { profile:
               Add project
             </button>
           </div>
+          <p className="text-xs leading-5 text-muted">
+            Photos: {photoCount} of {imageLimit} used, across all projects. Photos save as soon as you add or
+            remove them.
+          </p>
           {projects.length === 0 ? (
             <p className="text-sm leading-6 text-muted">
               Add a project to appear in the home page showcase.
@@ -309,6 +317,22 @@ export function ProfileEditor({ dashboard }: { dashboard: Dashboard & { profile:
                   onChange={(event) => setProject(project.key, "sourceUrl", event.target.value)}
                   className={inputClass}
                   autoCapitalize="none"
+                />
+                <ProjectPhotos
+                  projectId={project.id}
+                  n={n}
+                  title={project.title}
+                  images={(project.id && photos[project.id]) || []}
+                  atLimit={photoCount >= imageLimit}
+                  onAdded={(image) =>
+                    setPhotos((prev) => ({ ...prev, [project.id!]: [...(prev[project.id!] ?? []), image] }))
+                  }
+                  onRemoved={(imageId) =>
+                    setPhotos((prev) => ({
+                      ...prev,
+                      [project.id!]: (prev[project.id!] ?? []).filter((image) => image.id !== imageId),
+                    }))
+                  }
                 />
                 <button
                   type="button"
