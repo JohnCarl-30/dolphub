@@ -16,7 +16,6 @@ export default async function Image({ params }: { params: Promise<{ handle: stri
         eyebrow={profile.courseName}
         title={clip(profile.displayName, 40)}
         subtitle={clip(profile.tagline || `See ${profile.displayName}'s projects.`, 110)}
-        badge={profile.source === "mock" ? "Sample page" : undefined}
       />
     ) : (
       <ShareCard eyebrow="Dolphub" title="Page not found" subtitle="This student page doesn't exist yet." />

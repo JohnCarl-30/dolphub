@@ -1,13 +1,19 @@
 import type { Metadata } from "next";
 import { JsonLd } from "@/lib/json-ld";
-import { INITIAL_PROFILES } from "@/lib/mock-profiles";
+import { notFound } from "next/navigation";
+import { getProfilePage } from "@/lib/profiles";
 import { isIndexable, missingProfileMetadata, profileMetadata, profilePageJsonLd, siteUrl } from "@/lib/seo";
 import { getSeoProfile } from "@/lib/seo-data";
 import { Suspense } from "react";
 import { ProfilePage } from "./profile-page";
 
+/**
+ * Cache Components needs one param at build time to prerender the page shell.
+ * Builds run without a database, so this is a placeholder: every real page,
+ * including this handle, is still read per request inside the Suspense boundary.
+ */
 export function generateStaticParams() {
-  return INITIAL_PROFILES.map((profile) => ({ handle: profile.handle }));
+  return [{ handle: "placeholder" }];
 }
 
 export async function generateMetadata({ params }: PageProps<"/u/[handle]">): Promise<Metadata> {
@@ -37,12 +43,14 @@ async function ResolvedProfile({
   params: PageProps<"/u/[handle]">["params"];
 }) {
   const { handle } = await params;
-  // Structured data only for pages search engines may index, never for sample students.
+  const profile = await getProfilePage(handle);
+  if (!profile) notFound();
+  // Structured data only for pages search engines may index.
   const seo = await getSeoProfile(handle);
   return (
     <>
       {seo && isIndexable(seo) ? <JsonLd data={profilePageJsonLd(seo, siteUrl())} /> : null}
-      <ProfilePage handle={handle} />
+      <ProfilePage profile={profile} />
     </>
   );
 }

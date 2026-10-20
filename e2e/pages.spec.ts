@@ -30,7 +30,7 @@ test.describe("home", () => {
     await expect(cs).toHaveAttribute("aria-pressed", "true");
     await expect(all).toHaveAttribute("aria-pressed", "false");
     const expected = Number(/\[(\d+)\]/.exec((await cs.textContent()) ?? "")?.[1]);
-    await expect(page.locator("[data-showcase-card]")).toHaveCount(expected);
+    await expect(page.locator("[data-showcase-card]:visible")).toHaveCount(expected);
     const home = page.getByRole("link", { name: "[ 00 ] Home" });
     const dashboard = page.getByRole("link", { name: "[ 01 ] Dashboard" });
     const profile = page.getByRole("link", { name: "[ 02 ] Profile" });
@@ -174,10 +174,34 @@ test.describe("profile", () => {
     expect(delays[1]).toBe("0.05s");
   });
 
+  test("a page without projects still opens, and stays off the home showcase", async ({ page }) => {
+    await page.goto("/u/lea");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Lea Mendoza");
+    await expect(page.getByRole("article").getByText("No projects on this page yet.")).toBeVisible();
+    await page.goto("/");
+    // :visible skips the hidden copy React keeps while streamed content swaps in.
+    await expect(page.locator('[data-showcase-card="mira"]:visible')).toHaveCount(1);
+    await expect(page.locator('[data-showcase-card="lea"]')).toHaveCount(0);
+  });
+
+  test("a showcase card opens that student's page", async ({ page }) => {
+    await page.goto("/");
+    const card = page.locator('[data-showcase-card="kenji"]').getByRole("link");
+    await expect(card).toHaveAttribute("href", "/u/kenji");
+    await expect(card).toContainText("Lab gate logger");
+    await card.click();
+    await expect(page).toHaveURL(/\/u\/kenji$/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Kenji Ramos");
+  });
+
   test("an unknown handle explains itself and offers a way back", async ({ page }) => {
     await page.goto("/u/nobody-here");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("No page for this handle.");
     await expect(page.getByRole("link", { name: "← Back to students" })).toHaveAttribute("href", "/");
+    // Streaming can leave more than one robots tag. Every one must say noindex.
+    const robots = await page.locator('meta[name="robots"]').evaluateAll((tags) => tags.map((tag) => tag.getAttribute("content")));
+    expect(robots.length).toBeGreaterThan(0);
+    for (const content of robots) expect(content).toMatch(/noindex/);
   });
 });
 
@@ -270,8 +294,11 @@ test.describe("profile editor", () => {
 
   test("can add a project", async ({ page }) => {
     await page.goto("/profile");
+    // Count only once the editor has loaded, or the count reads 0.
+    const add = page.getByRole("button", { name: "Add project" });
+    await expect(add).toBeVisible();
     const before = await page.locator("fieldset").count();
-    await page.getByRole("button", { name: "Add project" }).click();
+    await add.click();
     await expect(page.locator("fieldset")).toHaveCount(before + 1);
   });
 });

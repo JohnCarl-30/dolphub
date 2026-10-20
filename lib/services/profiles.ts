@@ -251,6 +251,8 @@ export interface GridCard {
   tagline: string;
   courseName: string;
   coverImageUrl: string | null;
+  /** The first project in the student's order, shown on the card. */
+  featuredProject: { title: string; description: string };
   createdAt: Date;
 }
 
@@ -306,7 +308,15 @@ export async function listGridProfiles(
       asc(images.createdAt),
     );
 
+  const projectRows = await ctx.db
+    .select({ profileId: projects.profileId, title: projects.title, description: projects.description })
+    .from(projects)
+    .where(inArray(projects.profileId, ids))
+    .orderBy(asc(projects.sortOrder), asc(projects.createdAt));
+
   return rows.map(({ profile, courseName }) => {
+    // Every grid profile has a project, because the query requires one.
+    const featured = projectRows.find((p) => p.profileId === profile.id)!;
     const mine = imageRows.filter((i) => i.profileId === profile.id);
     const cover = mine.find((i) => i.id === profile.coverImageId) ?? mine[0];
     return {
@@ -316,7 +326,20 @@ export async function listGridProfiles(
       tagline: profile.tagline,
       courseName,
       coverImageUrl: cover ? ctx.storage.publicUrl(cover.r2Key) : null,
+      featuredProject: { title: featured.title, description: featured.description },
       createdAt: profile.createdAt,
     };
   });
+}
+
+/** Pages search engines may list: visible, and the student left "show in search engines" on. */
+export async function listIndexableProfiles(
+  ctx: ServiceContext,
+): Promise<{ handle: string; updatedAt: Date }[]> {
+  return ctx.db
+    .select({ handle: profiles.handle, updatedAt: profiles.updatedAt })
+    .from(profiles)
+    .innerJoin(users, eq(users.id, profiles.userId))
+    .where(and(visible, eq(profiles.searchVisible, true)))
+    .orderBy(asc(profiles.handle));
 }

@@ -7,7 +7,7 @@ import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { schema } from "../lib/db";
 import { seedBaseData } from "../lib/db/seed-data";
-import { appSettings, courses, opportunities, profiles, sessions, users } from "../lib/db/schema";
+import { appSettings, courses, opportunities, profiles, projects, sessions, users } from "../lib/db/schema";
 import { closesAtFor } from "../lib/opportunity-time";
 
 export const E2E_SESSION_TOKEN = "dolphub-e2e-session-token";
@@ -39,6 +39,7 @@ async function main() {
 
   await seedOpportunities(db);
   await seedAdminTargets(db);
+  await seedStudents(db);
   await client.close();
 }
 
@@ -67,6 +68,94 @@ async function seedAdminTargets(db: E2eDb) {
     await db.insert(profiles).values(row).onConflictDoUpdate({ target: profiles.handle, set: row });
   }
   await db.update(appSettings).set({ signupsFrozen: false }).where(eq(appSettings.id, 1));
+}
+
+/**
+ * Published student pages for the home showcase and /u/<handle> tests, one per
+ * course and one with two projects. lea has no project, so the grid leaves her out.
+ */
+const STUDENTS = [
+  {
+    handle: "mira",
+    displayName: "Mira Santos",
+    tagline: "Campus apps for people who still use Messenger.",
+    course: "BS Information Technology",
+    messengerUrl: "https://m.me/mira.santos.pcu",
+    githubUsername: "mira-santos",
+    contactEmail: "mira.santos@example.com",
+    projects: [
+      { title: "OrgFair", description: "A phone-sized directory of PCU student orgs with meeting rooms and join links.", demoUrl: "https://example.com/orgfair", sourceUrl: "https://github.com/example/orgfair" },
+      { title: "Lost & Found locker", description: "Photo log of items left at the library desk, searchable by building.", demoUrl: null, sourceUrl: "https://github.com/example/locker" },
+    ],
+  },
+  {
+    handle: "kenji",
+    displayName: "Kenji Ramos",
+    tagline: "Embedded projects that still compile on a lab PC.",
+    course: "BS Computer Engineering",
+    messengerUrl: "https://m.me/kenji.ramos.pcu",
+    githubUsername: "kenji-ramos",
+    contactEmail: null,
+    projects: [
+      { title: "Lab gate logger", description: "RFID check-in for the CpE lab, with a public occupancy page.", demoUrl: "https://example.com/lab-gate", sourceUrl: "https://github.com/example/lab-gate" },
+    ],
+  },
+  {
+    handle: "aisha",
+    displayName: "Aisha Villanueva",
+    tagline: "Small tools for class groups that hate shared drives.",
+    course: "BS Computer Science",
+    messengerUrl: "https://m.me/aisha.villanueva.pcu",
+    githubUsername: null,
+    contactEmail: null,
+    projects: [
+      { title: "Section notes", description: "A write-once note wall for one CS section, with a public read page.", demoUrl: "https://example.com/section-notes", sourceUrl: null },
+    ],
+  },
+  {
+    handle: "paolo",
+    displayName: "Paolo Cruz",
+    tagline: "Maps and schedules, nothing fancier than a phone can load.",
+    course: "BS Information Technology",
+    messengerUrl: null,
+    githubUsername: null,
+    contactEmail: null,
+    projects: [
+      { title: "Jeep wait", description: "Crowd-reported wait times for the common jeepney stops near campus.", demoUrl: "https://example.com/jeep-wait", sourceUrl: "https://github.com/example/jeep-wait" },
+    ],
+  },
+  {
+    handle: "lea",
+    displayName: "Lea Mendoza",
+    tagline: "Still writing the first project.",
+    course: "BS Computer Science",
+    messengerUrl: "https://m.me/lea.mendoza.pcu",
+    githubUsername: null,
+    contactEmail: null,
+    projects: [],
+  },
+];
+
+async function seedStudents(db: E2eDb) {
+  const courseRows = await db.select({ id: courses.id, name: courses.name }).from(courses);
+  for (const { course, projects: list, ...student } of STUDENTS) {
+    const courseId = courseRows.find((c) => c.name === course)?.id;
+    if (!courseId) throw new Error(`Course not seeded: ${course}`);
+    const email = `${student.handle}-e2e@pcu.edu.ph`;
+    await db.insert(users).values({ email }).onConflictDoNothing({ target: users.email });
+    const [user] = await db.select({ id: users.id }).from(users).where(eq(users.email, email));
+    const row = { ...student, userId: user!.id, courseId, isHidden: false, hiddenReason: null };
+    const [profile] = await db
+      .insert(profiles)
+      .values(row)
+      .onConflictDoUpdate({ target: profiles.handle, set: row })
+      .returning({ id: profiles.id });
+    // Rewrite projects each run, so edits here show up and nothing doubles.
+    await db.delete(projects).where(eq(projects.profileId, profile!.id));
+    if (list.length > 0) {
+      await db.insert(projects).values(list.map((p, sortOrder) => ({ ...p, profileId: profile!.id, sortOrder })));
+    }
+  }
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;

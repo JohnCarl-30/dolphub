@@ -1,23 +1,25 @@
 "use client";
 
-import { COURSES } from "@/lib/mock-profiles";
+import type { ShowcaseCourse } from "@/lib/showcase-data";
 
 export function CourseFilter({
+  courses,
   value,
   counts,
   onChange,
 }: {
+  courses: ShowcaseCourse[];
   value: string | null;
   counts: Record<string, number>;
-  onChange: (courseId: string | null) => void;
+  onChange: (courseName: string | null) => void;
 }) {
   const allCount = Object.values(counts).reduce((sum, count) => sum + count, 0);
   const options = [
     { id: null, label: "All", count: allCount },
-    ...COURSES.map((course) => ({
-      id: course.id,
+    ...courses.map((course) => ({
+      id: course.name,
       label: course.label,
-      count: counts[course.id] ?? 0,
+      count: counts[course.name] ?? 0,
     })),
   ];
 

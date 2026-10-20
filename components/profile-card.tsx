@@ -1,16 +1,16 @@
 import Link from "next/link";
-import { courseById, type MockProfile } from "@/lib/mock-profiles";
+import { courseLabel } from "@/lib/course-labels";
+import type { ShowcaseCard } from "@/lib/showcase-data";
 
 export function ProfileCard({
   profile,
   index,
   preview = false,
 }: {
-  profile: MockProfile;
+  profile: ShowcaseCard;
   index: number;
   preview?: boolean;
 }) {
-  const course = courseById(profile.courseId);
   const number = String(index).padStart(3, "0");
 
   return (
@@ -20,22 +20,32 @@ export function ProfileCard({
     >
       <div className="flex items-center justify-between px-4 py-3 font-mono text-[11px] uppercase tracking-wide text-muted">
         <span>{number}</span>
-        <span>{course?.label}</span>
+        <span>{courseLabel(profile.courseName)}</span>
       </div>
-      <div className="flex aspect-[16/10] items-center justify-center border-y border-ink/10 bg-white text-muted">
-        <span className="font-mono text-[11px] uppercase tracking-wide">Image slot</span>
-      </div>
+      {profile.coverImageUrl ? (
+        <div className="aspect-[16/10] overflow-hidden border-y border-ink/10 bg-white">
+          {/* Uploads are already re-encoded WebP under 500 KB, so they skip the image optimizer. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={profile.coverImageUrl} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+        </div>
+      ) : (
+        <div className="flex aspect-[16/10] items-center justify-center border-y border-ink/10 bg-white text-muted">
+          <span className="font-mono text-[11px] uppercase tracking-wide">No image yet</span>
+        </div>
+      )}
       <div className="flex flex-1 flex-col gap-3 px-4 py-5">
         <h2 className="text-2xl font-medium tracking-tight">{profile.displayName}</h2>
         <p className="font-mono text-[11px] uppercase tracking-wide text-muted">
-          {course?.name}
+          {profile.courseName}
         </p>
         <p className="text-sm leading-6 text-muted">{profile.tagline}</p>
-        {preview && profile.projects[0] ? (
+        {preview ? (
           <div className="border-t border-ink/10 pt-3">
             <p className="font-mono text-[10px] uppercase tracking-wide text-muted">Featured project</p>
-            <h3 className="mt-1 text-lg font-medium tracking-tight">{profile.projects[0].title}</h3>
-            <p className="mt-1 text-sm leading-6 text-muted">{profile.projects[0].description}</p>
+            <h3 className="mt-1 text-lg font-medium tracking-tight">{profile.featuredProject.title}</h3>
+            {profile.featuredProject.description ? (
+              <p className="mt-1 text-sm leading-6 text-muted">{profile.featuredProject.description}</p>
+            ) : null}
           </div>
         ) : null}
         <p className="mt-auto font-mono text-[11px] uppercase tracking-wide transition-colors group-hover:text-muted">
