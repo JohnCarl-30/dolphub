@@ -288,8 +288,11 @@ test.describe("profile editor", () => {
     );
     const github = page.getByRole("textbox", { name: "GitHub", exact: true });
     await github.fill("-bad-");
-    await page.getByRole("button", { name: "Save in this tab" }).click();
-    await expect(page.locator("form").getByRole("alert")).toBeVisible();
+    await page.getByRole("button", { name: "Save changes" }).click();
+    // The server rejects it, and the editor points at the field.
+    await expect(page.locator("form").getByRole("alert")).toContainText("GitHub username");
+    await expect(github).toBeFocused();
+    await expect(github).toHaveAttribute("aria-invalid", "true");
   });
 
   test("can add a project", async ({ page }) => {

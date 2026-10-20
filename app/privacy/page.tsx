@@ -83,9 +83,9 @@ export default function PrivacyPage() {
       <InfoSection id="storage" title="Cookies and browser storage">
         <p>
           Signed-in accounts use one essential, HTTP-only session cookie. A session can last up to 30
-          days unless you sign out or it is revoked. The current showcase and editor also use browser
-          session storage for the selected showcase view and temporary mock edits; that storage is
-          limited to the browser tab&apos;s session.
+          days unless you sign out or it is revoked. The home showcase also uses browser session
+          storage to remember whether you chose the list or scroll view; that storage is limited to
+          the browser tab&apos;s session.
         </p>
       </InfoSection>
 

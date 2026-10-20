@@ -1,197 +1,155 @@
 "use client";
 
-import { useMockStore } from "@/components/mock-store";
+import Link from "next/link";
+import { useState, useTransition } from "react";
 import {
-  COURSES,
-  getPublicProfile,
-  type CourseId,
-  type MockProfile,
-} from "@/lib/mock-profiles";
-import { contactEmail, githubUsername } from "@/lib/services/validation";
-import { useEffect, useState } from "react";
+  createProjectAction,
+  deleteProjectAction,
+  updateProfileAction,
+  updateProjectAction,
+} from "@/app/dashboard/actions";
+import {
+  changedProfileFields,
+  hasChanges,
+  planProjectSaves,
+  profileFields,
+  projectFields,
+  type ProfileFields,
+  type ProjectFields,
+} from "@/lib/profile-form";
+import type { Dashboard } from "@/lib/services/dashboard";
+import { Field, FormMessages, focusField, inputClass, submitClass } from "./fields";
 
-type FormProject = {
-  id: string;
-  title: string;
-  description: string;
-  demoUrl: string;
-  sourceUrl: string;
-};
+type Profile = NonNullable<Dashboard["profile"]>;
+type ProjectText = "title" | "description" | "demoUrl" | "sourceUrl";
 
-type FormState = {
-  handle: string;
-  displayName: string;
-  tagline: string;
-  courseId: CourseId;
-  messengerUrl: string;
-  githubUsername: string;
-  contactEmail: string;
-  projects: FormProject[];
-};
-
-function emptyProject(): FormProject {
-  return {
-    id: `project-${crypto.randomUUID()}`,
-    title: "",
-    description: "",
-    demoUrl: "",
-    sourceUrl: "",
-  };
+function emptyProject(): ProjectFields {
+  return { key: `new-${crypto.randomUUID()}`, id: null, title: "", description: "", demoUrl: "", sourceUrl: "" };
 }
 
-function toForm(profile: MockProfile): FormState {
-  return {
-    handle: profile.handle,
-    displayName: profile.displayName,
-    tagline: profile.tagline,
-    courseId: profile.courseId,
-    messengerUrl: profile.messengerUrl ?? "",
-    githubUsername: profile.githubUsername ?? "",
-    contactEmail: profile.contactEmail ?? "",
-    projects: profile.projects.map((project) => ({
-      id: project.id,
-      title: project.title,
-      description: project.description,
-      demoUrl: project.demoUrl ?? "",
-      sourceUrl: project.sourceUrl ?? "",
-    })),
-  };
+function projectInputId(key: string, field: string) {
+  return `project-${key}-${field}`;
 }
 
-export function ProfileEditor() {
-  const { ready, profiles, editableHandle, saveEditable } = useMockStore();
-  const current = getPublicProfile(profiles, editableHandle);
-  const [form, setForm] = useState<FormState | null>(null);
+/** Edits the signed-in student's own page. Every save goes to the database and refreshes the public page. */
+export function ProfileEditor({ dashboard }: { dashboard: Dashboard & { profile: Profile } }) {
+  const { profile, courses } = dashboard;
+  // What the server has, updated step by step as saves succeed, so a retry after an error never repeats a step.
+  const [saved, setSaved] = useState(() => ({
+    fields: profileFields(profile),
+    projects: projectFields(dashboard.projects),
+  }));
+  const [fields, setFields] = useState<ProfileFields>(saved.fields);
+  const [projects, setProjects] = useState<ProjectFields[]>(saved.projects);
+  const [error, setError] = useState<{ message: string; field?: string } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
 
-  useEffect(() => {
-    if (!ready || !current) return;
-    // Fill the form once the mock store has loaded from the browser.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setForm(toForm(current));
-  }, [ready, current]);
-
-  if (!ready) {
-    return (
-      <section className="mx-auto w-full max-w-md px-4 py-16">
-        <h1 className="text-3xl font-medium tracking-tight">Loading editor…</h1>
-      </section>
-    );
+  function set<K extends keyof ProfileFields>(key: K, value: ProfileFields[K]) {
+    setFields((prev) => ({ ...prev, [key]: value }));
   }
 
-  if (!current || !form) {
-    return (
-      <section className="mx-auto w-full max-w-md px-4 py-16">
-        <h1 className="text-3xl font-medium tracking-tight">No sample student</h1>
-      </section>
-    );
+  function setProject(key: string, field: ProjectText, value: string) {
+    setProjects((prev) => prev.map((p) => (p.key === key ? { ...p, [field]: value } : p)));
   }
 
-  const draft = form;
-
-  function update<K extends keyof FormState>(key: K, value: FormState[K]) {
-    setForm((prev) => (prev ? { ...prev, [key]: value } : prev));
-  }
-
-  function updateProject(id: string, patch: Partial<FormProject>) {
-    setForm((prev) =>
-      prev
-        ? {
-            ...prev,
-            projects: prev.projects.map((project) =>
-              project.id === id ? { ...project, ...patch } : project,
-            ),
-          }
-        : prev,
-    );
+  function fail(message: string, field?: string) {
+    setError({ message, field });
+    if (field) focusField(field);
   }
 
   function onSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
     setNotice(null);
+    const draft = { fields, projects };
 
-    const handle = draft.handle.trim().toLowerCase();
-    if (!/^[a-z0-9-]{2,30}$/.test(handle)) {
-      setError("Handle must be 2–30 letters, numbers, or hyphens.");
-      return;
-    }
-    const taken = profiles.some(
-      (profile) => profile.handle === handle && profile.handle !== editableHandle,
-    );
-    if (taken) {
-      setError("That handle is already used in this mock.");
-      return;
-    }
-    if (!draft.displayName.trim()) {
-      setError("Name is required.");
-      return;
-    }
+    startTransition(async () => {
+      const changes = changedProfileFields(saved.fields, draft.fields);
+      const plan = planProjectSaves(saved.projects, draft.projects);
+      if (!hasChanges(changes, plan)) {
+        setNotice("Nothing to save.");
+        return;
+      }
 
-    // Same rules the server enforces, so the mock and the real form agree.
-    const github = githubUsername.safeParse(draft.githubUsername);
-    if (draft.githubUsername.trim() && !github.success) {
-      setError(github.error.issues[0]?.message ?? "Check your GitHub username.");
-      return;
-    }
-    const email = contactEmail.safeParse(draft.contactEmail);
-    if (draft.contactEmail.trim() && !email.success) {
-      setError(email.error.issues[0]?.message ?? "Check your contact email.");
-      return;
-    }
+      if (Object.keys(changes).length > 0) {
+        const result = await updateProfileAction(changes);
+        if (!result.ok) return fail(result.error, result.field);
+        setSaved((prev) => ({ ...prev, fields: draft.fields }));
+      }
 
-    const next: MockProfile = {
-      handle,
-      displayName: draft.displayName.trim(),
-      tagline: draft.tagline.trim().slice(0, 100),
-      courseId: draft.courseId,
-      messengerUrl: draft.messengerUrl.trim() || null,
-      githubUsername: github.success ? github.data : null,
-      contactEmail: email.success ? email.data : null,
-      projects: draft.projects
-        .filter((project) => project.title.trim())
-        .map((project) => ({
-          id: project.id,
-          title: project.title.trim(),
-          description: project.description.trim(),
-          demoUrl: project.demoUrl.trim() || null,
-          sourceUrl: project.sourceUrl.trim() || null,
-        })),
-    };
+      const label = (key: string) => {
+        const index = draft.projects.findIndex((p) => p.key === key);
+        return `Project ${String(index + 1).padStart(2, "0")}`;
+      };
 
-    saveEditable(next);
-    setForm(toForm(next));
-    setNotice("Saved in this tab. Open Students to see the grid update.");
+      for (const id of plan.remove) {
+        const result = await deleteProjectAction(id);
+        if (!result.ok) return fail(result.error);
+        setSaved((prev) => ({ ...prev, projects: prev.projects.filter((p) => p.id !== id) }));
+      }
+      for (const { key, id, input } of plan.update) {
+        const result = await updateProjectAction(id, input);
+        if (!result.ok) {
+          return fail(`${label(key)}: ${result.error}`, result.field ? projectInputId(key, result.field) : undefined);
+        }
+        const current = draft.projects.find((p) => p.key === key)!;
+        setSaved((prev) => ({ ...prev, projects: prev.projects.map((p) => (p.id === id ? current : p)) }));
+      }
+      for (const { key, input } of plan.create) {
+        const result = await createProjectAction(input);
+        if (!result.ok) {
+          return fail(`${label(key)}: ${result.error}`, result.field ? projectInputId(key, result.field) : undefined);
+        }
+        const created = { ...draft.projects.find((p) => p.key === key)!, id: result.data.projectId };
+        // Keep the key, so the inputs stay mounted and focus doesn't jump.
+        setProjects((prev) => prev.map((p) => (p.key === key ? { ...p, id: created.id } : p)));
+        setSaved((prev) => ({ ...prev, projects: [...prev.projects, created] }));
+      }
+
+      setNotice("Saved. Your public page shows the changes now.");
+    });
   }
+
+  const invalid = (id: string) => error?.field === id || undefined;
 
   return (
     <section className="mx-auto w-full max-w-md px-4 py-8 sm:py-12">
       <p className="font-mono text-[11px] uppercase tracking-wide text-muted">/profile</p>
       <h1 className="mt-3 text-4xl font-medium tracking-tight">Your page</h1>
       <p className="mt-3 text-sm leading-6 text-muted">
-        Phone-first editor for {current.displayName}. Nothing is written to the
-        database. Image upload is a placeholder.
+        Changes show on your public page as soon as you save.
       </p>
+      <Link
+        href={`/u/${profile.handle}`}
+        className="mt-4 inline-flex min-h-11 items-center font-mono text-[11px] uppercase tracking-wide underline underline-offset-4 outline-none hover:text-muted focus-visible:ring-2 focus-visible:ring-ink"
+      >
+        View /u/{profile.handle} →
+      </Link>
 
-      <form onSubmit={onSubmit} className="mt-8 grid gap-5">
-        <Field id="handle" label="Handle">
-          <input
-            id="handle"
-            name="handle"
-            value={form.handle}
-            onChange={(event) => update("handle", event.target.value)}
-            className={inputClass}
-            autoComplete="off"
-          />
-        </Field>
+      {profile.isHidden ? (
+        <div role="note" className="mt-6 border border-red-700/40 bg-white px-4 py-3 text-sm leading-6">
+          <p className="font-medium text-red-700">An admin took your page down.</p>
+          {profile.hiddenReason ? <p className="mt-1 text-muted">Reason: {profile.hiddenReason}</p> : null}
+          <p className="mt-1 text-muted">Visitors can&apos;t see it. Your edits still save.</p>
+        </div>
+      ) : null}
+
+      <form onSubmit={onSubmit} className="mt-8 grid gap-5" noValidate>
+        <div className="grid gap-2">
+          <p className="font-mono text-[11px] uppercase tracking-wide text-muted">Handle</p>
+          <p className="text-base">/u/{profile.handle}</p>
+          <p className="text-xs leading-5 text-muted">Handles never change, so links you shared keep working.</p>
+        </div>
         <Field id="displayName" label="Name">
           <input
             id="displayName"
             name="displayName"
-            value={form.displayName}
-            onChange={(event) => update("displayName", event.target.value)}
+            value={fields.displayName}
+            onChange={(event) => set("displayName", event.target.value)}
+            aria-invalid={invalid("displayName")}
             className={inputClass}
+            autoComplete="name"
           />
         </Field>
         <Field id="tagline" label="Tagline">
@@ -199,8 +157,9 @@ export function ProfileEditor() {
             id="tagline"
             name="tagline"
             maxLength={100}
-            value={form.tagline}
-            onChange={(event) => update("tagline", event.target.value)}
+            value={fields.tagline}
+            onChange={(event) => set("tagline", event.target.value)}
+            aria-invalid={invalid("tagline")}
             className={inputClass}
           />
         </Field>
@@ -208,11 +167,12 @@ export function ProfileEditor() {
           <select
             id="courseId"
             name="courseId"
-            value={form.courseId}
-            onChange={(event) => update("courseId", event.target.value as CourseId)}
+            value={fields.courseId}
+            onChange={(event) => set("courseId", event.target.value)}
+            aria-invalid={invalid("courseId")}
             className={inputClass}
           >
-            {COURSES.map((course) => (
+            {courses.map((course) => (
               <option key={course.id} value={course.id}>
                 {course.name}
               </option>
@@ -225,9 +185,11 @@ export function ProfileEditor() {
             name="messengerUrl"
             type="url"
             placeholder="https://m.me/you"
-            value={form.messengerUrl}
-            onChange={(event) => update("messengerUrl", event.target.value)}
+            value={fields.messengerUrl}
+            onChange={(event) => set("messengerUrl", event.target.value)}
+            aria-invalid={invalid("messengerUrl")}
             className={inputClass}
+            autoCapitalize="none"
           />
         </Field>
         <Field id="githubUsername" label="GitHub" hint="Your username or profile link. Shown on your page.">
@@ -235,9 +197,10 @@ export function ProfileEditor() {
             id="githubUsername"
             name="githubUsername"
             aria-describedby="githubUsername-hint"
+            aria-invalid={invalid("githubUsername")}
             placeholder="octocat"
-            value={form.githubUsername}
-            onChange={(event) => update("githubUsername", event.target.value)}
+            value={fields.githubUsername}
+            onChange={(event) => set("githubUsername", event.target.value)}
             className={inputClass}
             autoCapitalize="none"
             autoComplete="off"
@@ -253,21 +216,36 @@ export function ProfileEditor() {
             id="contactEmail"
             name="contactEmail"
             aria-describedby="contactEmail-hint"
+            aria-invalid={invalid("contactEmail")}
             type="email"
             placeholder="you@example.com"
-            value={form.contactEmail}
-            onChange={(event) => update("contactEmail", event.target.value)}
+            value={fields.contactEmail}
+            onChange={(event) => set("contactEmail", event.target.value)}
             className={inputClass}
             autoCapitalize="none"
             autoComplete="off"
           />
         </Field>
+        <div className="grid gap-2">
+          <label className="flex min-h-11 items-center gap-3 text-sm">
+            <input
+              type="checkbox"
+              name="searchVisible"
+              checked={fields.searchVisible}
+              onChange={(event) => set("searchVisible", event.target.checked)}
+              aria-describedby="searchVisible-hint"
+              className="size-5 accent-ink outline-none focus-visible:ring-2 focus-visible:ring-ink"
+            />
+            Show my page in search engines
+          </label>
+          <p id="searchVisible-hint" className="text-xs leading-5 text-muted">
+            Your page stays public either way. Turning this off asks Google and others not to list it.
+          </p>
+        </div>
 
         <div className="border border-dashed border-ink/20 bg-paper px-4 py-6 text-center">
-          <p className="font-mono text-[11px] uppercase tracking-wide text-muted">
-            Image slot
-          </p>
-          <p className="mt-2 text-sm text-muted">Upload is not in this mock.</p>
+          <p className="font-mono text-[11px] uppercase tracking-wide text-muted">Photos</p>
+          <p className="mt-2 text-sm text-muted">Photo upload is coming soon.</p>
         </div>
 
         <div className="grid gap-4">
@@ -275,106 +253,81 @@ export function ProfileEditor() {
             <h2 className="text-xl font-medium tracking-tight">Projects</h2>
             <button
               type="button"
-              onClick={() => update("projects", [...form.projects, emptyProject()])}
-              className="press font-mono text-[11px] uppercase tracking-wide outline-none hover:text-muted focus-visible:ring-2 focus-visible:ring-ink"
+              onClick={() => setProjects((prev) => [...prev, emptyProject()])}
+              className="press min-h-11 font-mono text-[11px] uppercase tracking-wide outline-none hover:text-muted focus-visible:ring-2 focus-visible:ring-ink"
             >
               Add project
             </button>
           </div>
-          {form.projects.map((project, index) => (
-            <fieldset key={project.id} className="rise grid gap-3 border border-ink/10 p-4">
-              <legend className="px-1 font-mono text-[11px] uppercase tracking-wide text-muted">
-                Project {String(index + 1).padStart(2, "0")}
-              </legend>
-              <input
-                aria-label={`Project ${index + 1} title`}
-                placeholder="Title"
-                value={project.title}
-                onChange={(event) => updateProject(project.id, { title: event.target.value })}
-                className={inputClass}
-              />
-              <textarea
-                aria-label={`Project ${index + 1} description`}
-                placeholder="One or two sentences"
-                value={project.description}
-                onChange={(event) =>
-                  updateProject(project.id, { description: event.target.value })
-                }
-                className={`${inputClass} min-h-24`}
-              />
-              <input
-                aria-label={`Project ${index + 1} demo link`}
-                placeholder="Demo https://"
-                value={project.demoUrl ?? ""}
-                onChange={(event) => updateProject(project.id, { demoUrl: event.target.value })}
-                className={inputClass}
-              />
-              <input
-                aria-label={`Project ${index + 1} source link`}
-                placeholder="Source https://"
-                value={project.sourceUrl ?? ""}
-                onChange={(event) =>
-                  updateProject(project.id, { sourceUrl: event.target.value })
-                }
-                className={inputClass}
-              />
-              <button
-                type="button"
-                onClick={() =>
-                  update(
-                    "projects",
-                    form.projects.filter((item) => item.id !== project.id),
-                  )
-                }
-                className="press justify-self-start font-mono text-[11px] uppercase tracking-wide text-muted outline-none hover:text-red-700 focus-visible:ring-2 focus-visible:ring-ink"
-              >
-                Remove project
-              </button>
-            </fieldset>
-          ))}
+          {projects.length === 0 ? (
+            <p className="text-sm leading-6 text-muted">
+              Add a project to appear in the home page showcase.
+            </p>
+          ) : null}
+          {projects.map((project, index) => {
+            const n = index + 1;
+            const id = (field: string) => projectInputId(project.key, field);
+            return (
+              <fieldset key={project.key} className="rise grid gap-3 border border-ink/10 p-4">
+                <legend className="px-1 font-mono text-[11px] uppercase tracking-wide text-muted">
+                  Project {String(n).padStart(2, "0")}
+                </legend>
+                <input
+                  id={id("title")}
+                  aria-label={`Project ${n} title`}
+                  aria-invalid={invalid(id("title"))}
+                  placeholder="Title"
+                  value={project.title}
+                  onChange={(event) => setProject(project.key, "title", event.target.value)}
+                  className={inputClass}
+                />
+                <textarea
+                  id={id("description")}
+                  aria-label={`Project ${n} description`}
+                  aria-invalid={invalid(id("description"))}
+                  placeholder="One or two sentences"
+                  value={project.description}
+                  onChange={(event) => setProject(project.key, "description", event.target.value)}
+                  className={`${inputClass} min-h-24`}
+                />
+                <input
+                  id={id("demoUrl")}
+                  aria-label={`Project ${n} demo link`}
+                  aria-invalid={invalid(id("demoUrl"))}
+                  placeholder="Demo https://"
+                  value={project.demoUrl}
+                  onChange={(event) => setProject(project.key, "demoUrl", event.target.value)}
+                  className={inputClass}
+                  autoCapitalize="none"
+                />
+                <input
+                  id={id("sourceUrl")}
+                  aria-label={`Project ${n} source link`}
+                  aria-invalid={invalid(id("sourceUrl"))}
+                  placeholder="Source https://"
+                  value={project.sourceUrl}
+                  onChange={(event) => setProject(project.key, "sourceUrl", event.target.value)}
+                  className={inputClass}
+                  autoCapitalize="none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setProjects((prev) => prev.filter((p) => p.key !== project.key))}
+                  className="press min-h-11 justify-self-start font-mono text-[11px] uppercase tracking-wide text-muted outline-none hover:text-red-700 focus-visible:ring-2 focus-visible:ring-ink"
+                >
+                  Remove project {n}
+                </button>
+              </fieldset>
+            );
+          })}
         </div>
 
-        {/* Keyed so a repeated message rises in again instead of silently staying put. */}
-        {error ? <p key={error} role="alert" className="rise text-sm text-red-700">{error}</p> : null}
-        {notice ? <p key={notice} role="status" className="rise text-sm text-ink">{notice}</p> : null}
+        <FormMessages error={error?.message ?? null} notice={notice} />
 
-        <button
-          type="submit"
-          className="press h-12 border border-ink bg-ink font-mono text-[11px] uppercase tracking-wide text-white outline-none hover:border-ink/85 hover:bg-ink/85 focus-visible:ring-2 focus-visible:ring-ink"
-        >
-          Save in this tab
+        <button type="submit" disabled={pending} className={submitClass}>
+          {pending ? "Saving…" : "Save changes"}
         </button>
       </form>
     </section>
   );
 }
-
-function Field({
-  id,
-  label,
-  hint,
-  children,
-}: {
-  id: string;
-  label: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  // The hint describes the field; it must not become part of its name.
-  return (
-    <div className="grid gap-2">
-      <label htmlFor={id} className="font-mono text-[11px] uppercase tracking-wide text-muted">
-        {label}
-      </label>
-      {children}
-      {hint ? (
-        <p id={`${id}-hint`} className="text-xs leading-5 text-muted">
-          {hint}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
-const inputClass =
-  "w-full border border-ink/15 bg-white px-3 py-2 text-base outline-none transition-colors hover:border-ink/40 focus-visible:border-ink focus-visible:ring-2 focus-visible:ring-ink";

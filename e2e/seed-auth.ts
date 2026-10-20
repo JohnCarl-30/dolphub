@@ -14,6 +14,8 @@ export const E2E_SESSION_TOKEN = "dolphub-e2e-session-token";
 export const E2E_USER_EMAIL = "feed-test@pcu.edu.ph";
 export const E2E_ADMIN_SESSION_TOKEN = "dolphub-e2e-admin-session-token";
 export const E2E_ADMIN_EMAIL = "admin-test@pcu.edu.ph";
+/** One account without a profile per Playwright project, for e2e/profile-editor.spec.ts. */
+export const E2E_NEWCOMER_PROJECTS = ["desktop", "phone"];
 
 async function main() {
   await mkdir(".data", { recursive: true });
@@ -40,6 +42,8 @@ async function main() {
   await seedOpportunities(db);
   await seedAdminTargets(db);
   await seedStudents(db);
+  await seedFeedStudentProfile(db, user.id);
+  await seedNewcomers(db);
   await client.close();
 }
 
@@ -155,6 +159,41 @@ async function seedStudents(db: E2eDb) {
     if (list.length > 0) {
       await db.insert(projects).values(list.map((p, sortOrder) => ({ ...p, profileId: profile!.id, sortOrder })));
     }
+  }
+}
+
+/** The feed-test student gets a page with no projects, so the dashboard and editor have a profile to show. */
+async function seedFeedStudentProfile(db: E2eDb, userId: string) {
+  const [course] = await db.select({ id: courses.id }).from(courses).where(eq(courses.name, "BS Information Technology"));
+  const row = {
+    userId,
+    handle: "feed-test",
+    displayName: "Feed Tester",
+    tagline: "Testing the dashboard.",
+    courseId: course!.id,
+    messengerUrl: null,
+    githubUsername: null,
+    contactEmail: null,
+    searchVisible: true,
+    isHidden: false,
+    hiddenReason: null,
+  };
+  const [profile] = await db
+    .insert(profiles)
+    .values(row)
+    .onConflictDoUpdate({ target: profiles.handle, set: row })
+    .returning({ id: profiles.id });
+  await db.delete(projects).where(eq(projects.profileId, profile!.id));
+}
+
+/** Signed-in accounts with no profile yet. Each run starts them over, so the create flow always runs. */
+async function seedNewcomers(db: E2eDb) {
+  for (const project of E2E_NEWCOMER_PROJECTS) {
+    const email = `newcomer-${project}@pcu.edu.ph`;
+    await db.insert(users).values({ email }).onConflictDoNothing({ target: users.email });
+    const [newcomer] = await db.select({ id: users.id }).from(users).where(eq(users.email, email));
+    await db.delete(profiles).where(eq(profiles.userId, newcomer!.id));
+    await storeSession(db, newcomer!.id, `dolphub-e2e-newcomer-${project}`);
   }
 }
 
