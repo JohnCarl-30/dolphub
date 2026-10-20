@@ -298,11 +298,20 @@ Every function takes the acting user's id and refuses non-admins. Every write is
 | `setSignupsFrozen(ctx, actorId, frozen, reason?)` | The signup kill switch. Existing users can still sign in |
 | `deleteAccount(ctx, { actorUserId, targetUserId, confirm: true })` | Users may delete themselves, and admins may delete anyone. Removes the profile, projects, images and R2 files |
 
+The admin page at `/admin` reads these through `lib/admin.ts`. `requireAdminPage()` sends signed-out visitors to `/login` and shows everyone else who is not an admin the ordinary 404. Its actions are in `app/admin/actions.ts`:
+
+| Action | Input | Returns on success |
+|---|---|---|
+| `hideProfileAction(handle, reason)` | A reason is required. Refreshes the page and the home grid | `{ handle }` |
+| `unhideProfileAction(handle)` | | `{ handle }` |
+| `setSignupsFrozenAction(frozen, reason?)` | The reason goes to the audit log | `{ frozen }` |
+
+Make someone an admin by setting `users.is_admin` to true in the database. There is no screen for it.
+
 ## Still to build
 
 These are Next.js wiring, planned in the build week:
 
 - An upload route that calls `addProjectImage`
 - The public page `/u/<handle>` and home grid data, cached under `profileTag(handle)` and `GRID_TAG` from `lib/cache-tags.ts`, which the actions already expire
-- Admin actions for the admin page: stats, hide and unhide, and the signup freeze
 - A scheduled job that runs `sweepOrphanedImages` and `purgeExpiredAuthRecords` nightly

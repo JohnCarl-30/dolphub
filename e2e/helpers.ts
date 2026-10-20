@@ -1,13 +1,15 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
 const E2E_SESSION_TOKEN = "dolphub-e2e-session-token";
+const E2E_ADMIN_SESSION_TOKEN = "dolphub-e2e-admin-session-token";
 const E2E_PORT = Number(process.env.E2E_PORT ?? 3100);
 
-export async function authenticate(page: Page) {
+/** Signs in as the seeded student, or as the seeded admin. Both come from e2e/seed-auth.ts. */
+export async function authenticate(page: Page, as: "student" | "admin" = "student") {
   await page.context().addCookies([
     {
       name: "session",
-      value: E2E_SESSION_TOKEN,
+      value: as === "admin" ? E2E_ADMIN_SESSION_TOKEN : E2E_SESSION_TOKEN,
       url: `http://127.0.0.1:${E2E_PORT}`,
       httpOnly: true,
       sameSite: "Lax",

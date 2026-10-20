@@ -76,7 +76,7 @@ Each post page carries a "Report a problem with this post" email link, for broke
 
 ## Frontend work (fnzh-i)
 
-**Status, Oct 18:** steps 1 and 2 are done, with browser tests in `e2e/opportunities.spec.ts`. The sitemap now lists the pages. The home strip links to the full list but still shows sample posts.
+**Status, Oct 20:** steps 1, 2 and 4 are done, with browser tests in `e2e/opportunities.spec.ts` and `e2e/admin.spec.ts`. The sitemap now lists the pages. The home strip links to the full list but still shows sample posts. Admins post, edit, hide and delete posts at `/admin/opportunities`.
 
 1. The `/opportunities` list with kind tabs, cards, closing badges and an empty state such as "No open internships right now".
 2. The `/opportunities/<slug>` detail page, including the closed state.
