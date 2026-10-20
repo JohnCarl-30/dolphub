@@ -186,7 +186,7 @@ Metadata, link preview images, structured data and the sitemap live in backend-o
 | File | Holds |
 |---|---|
 | `lib/seo.ts` | Site name and colors, titles, descriptions, the "may this page be indexed" rule, and JSON-LD builders. Pure functions with tests |
-| `lib/seo-data.ts` | The one place metadata gets profile data. It reads the sample data today |
+| `lib/seo-data.ts` | The one place metadata gets profile data. It reads the same cached copy as the page |
 | `lib/share-card.tsx` | The 1200x630 preview card design |
 | `app/robots.ts`, `app/sitemap.ts`, `app/manifest.ts` | Crawler rules, sitemap, web manifest |
 | `app/opengraph-image.tsx`, `app/u/[handle]/opengraph-image.tsx` | Site preview and per-student preview |
@@ -198,11 +198,7 @@ Indexing rules:
 - **Student pages** are indexed only when the data is real and the student left `searchVisible` on. Sample pages and unknown handles get `noindex`.
 - **Login, verify, dashboard and profile editor** always get `noindex`. `robots.txt` blocks `/dashboard`, `/profile`, `/auth/` and `/api/`, but not `/login` or `/u/`, so crawlers can still see their `noindex`.
 
-When student pages switch from sample data to the database, change only `lib/seo-data.ts`. Its comment lists the steps. Then also:
-
-- **Return a real 404.** Have the profile page call `notFound()` for unknown handles.
-- **Guard the build.** Make sure `generateStaticParams` and the lookup don't need the database at build time, because CI builds without environment variables.
-- **Add cover photos to previews.** Cover photos are WebP, which the preview generator can't draw, so convert them to PNG with sharp first.
+Student pages read the database. Cover photos still stay out of the preview card, because they are WebP, which the preview generator can't draw. Convert them to PNG with sharp first to add them.
 
 ## Errors
 
@@ -308,10 +304,29 @@ The admin page at `/admin` reads these through `lib/admin.ts`. `requireAdminPage
 
 Make someone an admin by setting `users.is_admin` to true in the database. There is no screen for it.
 
+## Student pages and the home showcase
+
+From a Server Component inside a `<Suspense>` boundary:
+
+```tsx
+import { notFound } from "next/navigation";
+import { getProfilePage, getShowcase } from "@/lib/profiles";
+
+const profile = await getProfilePage(handle); // null when missing or hidden: call notFound()
+const { cards, courses } = await getShowcase(); // or pass the promise to a client component and use() it
+```
+
+| Loader | Returns |
+|---|---|
+| `getProfilePage(handle)` | `PublicProfile` from `lib/services/profiles.ts`, cached under `profileTag(handle)` |
+| `getShowcase()` | Up to 100 grid cards, newest first, each with its first project, plus every active course with a short label for the filter. Cached under `GRID_TAG` |
+
+Both wait for the request and then read a cached copy, so builds never touch the database. Student saves and the admin hide switch expire the tags.
+
 ## Still to build
 
 These are Next.js wiring, planned in the build week:
 
 - An upload route that calls `addProjectImage`
-- The public page `/u/<handle>` and home grid data, cached under `profileTag(handle)` and `GRID_TAG` from `lib/cache-tags.ts`, which the actions already expire
+- The `/profile` editor and `/dashboard` on the dashboard actions, in place of the session mock store
 - A scheduled job that runs `sweepOrphanedImages` and `purgeExpiredAuthRecords` nightly

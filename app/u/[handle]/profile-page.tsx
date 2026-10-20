@@ -1,32 +1,7 @@
-"use client";
-
 import { ProjectList } from "@/components/project-list";
-import { useMockStore } from "@/components/mock-store";
-import { courseName, getPublicProfile, type MockProfile } from "@/lib/mock-profiles";
-import Link from "next/link";
+import type { PublicProfile } from "@/lib/services/profiles";
 
-export function ProfilePage({ handle }: { handle: string }) {
-  const { profiles } = useMockStore();
-  const profile = getPublicProfile(profiles, handle);
-
-  if (!profile) {
-    return (
-      <section className="mx-auto w-full max-w-3xl px-4 py-16 sm:px-6">
-        <p className="font-mono text-[11px] uppercase tracking-wide text-muted">/u/{handle}</p>
-        <h1 className="mt-3 text-4xl font-medium tracking-tight">No page for this handle.</h1>
-        <p className="mt-4 text-sm leading-6 text-muted">
-          That student is not in this mock, or the handle was changed in the dashboard.
-        </p>
-        <Link
-          href="/"
-          className="mt-8 inline-block font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:text-muted focus-visible:ring-2 focus-visible:ring-ink"
-        >
-          ← Back to students
-        </Link>
-      </section>
-    );
-  }
-
+export function ProfilePage({ profile }: { profile: PublicProfile }) {
   return (
     <article className="mx-auto w-full max-w-3xl px-4 py-12 sm:px-6">
       <p className="font-mono text-[11px] uppercase tracking-wide text-muted">
@@ -34,9 +9,11 @@ export function ProfilePage({ handle }: { handle: string }) {
       </p>
       <h1 className="mt-3 text-5xl font-medium tracking-tight">{profile.displayName}</h1>
       <p className="mt-2 font-mono text-[11px] uppercase tracking-wide text-muted">
-        {courseName(profile.courseId)}
+        {profile.courseName}
       </p>
-      <p className="mt-6 max-w-xl text-lg leading-8 text-muted">{profile.tagline}</p>
+      {profile.tagline ? (
+        <p className="mt-6 max-w-xl text-lg leading-8 text-muted">{profile.tagline}</p>
+      ) : null}
       <ContactLinks profile={profile} />
 
       <section className="mt-14">
@@ -55,10 +32,9 @@ const primaryLink =
 const secondaryLink =
   "press inline-flex min-h-11 items-center border border-ink px-4 py-2 font-mono text-[11px] uppercase tracking-wide outline-none hover:bg-paper focus-visible:ring-2 focus-visible:ring-ink";
 
-function ContactLinks({ profile }: { profile: MockProfile }) {
-  // Older saved mock data may not have the newer fields.
-  const github = profile.githubUsername ?? null;
-  const email = profile.contactEmail ?? null;
+function ContactLinks({ profile }: { profile: PublicProfile }) {
+  const github = profile.githubUsername;
+  const email = profile.contactEmail;
 
   if (!profile.messengerUrl && !github && !email) {
     return <p className="mt-8 text-sm text-muted">No contact links on this page.</p>;

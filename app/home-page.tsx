@@ -1,8 +1,7 @@
 "use client";
 
 import { StudentShowcase } from "@/components/student-showcase";
-import { useMockStore } from "@/components/mock-store";
-import { COURSES, listGridProfiles } from "@/lib/mock-profiles";
+import { cardsInCourse, type Showcase } from "@/lib/showcase-data";
 import { shouldPlayParticles } from "@/lib/particles";
 import { useMotionEnvironment } from "@/components/animations/use-motion-environment";
 import { ParticleBoundary } from "@/components/particles/particle-boundary";
@@ -11,7 +10,7 @@ import { NewsletterSignup } from "@/components/home/newsletter-signup";
 import { UpcomingStrip } from "@/components/home/upcoming-strip";
 import { useMockHome } from "@/components/home/use-mock-home";
 import dynamic from "next/dynamic";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { Suspense, use, useCallback, useMemo, useRef, useState, type RefObject } from "react";
 
 const ParticleBackground = dynamic(
   () => import("@/components/particles/particle-background"),
@@ -21,7 +20,7 @@ const STEPS = [
   {
     index: "01",
     title: "Sign in with a PCU address",
-    copy: "The live site will limit accounts to tech programs. This mock skips that step.",
+    copy: "Accounts are for PCU's IT, CS, and Computer Engineering students.",
   },
   {
     index: "02",
@@ -35,9 +34,7 @@ const STEPS = [
   },
 ];
 
-export function HomePage() {
-  const { profiles } = useMockStore();
-  const [courseId, setCourseId] = useState<string | null>(null);
+export function HomePage({ showcase }: { showcase: Promise<Showcase> }) {
   const environment = useMotionEnvironment();
   const home = useMockHome();
   const [showcaseActive, setShowcaseActive] = useState(false);
@@ -49,18 +46,6 @@ export function HomePage() {
   }, []);
   const onParticleError = useCallback(() => setParticleFailed(true), []);
   const showParticles = environment.ready && !environment.reducedMotion && !particleFailed;
-
-  const visible = useMemo(
-    () => listGridProfiles(profiles, courseId),
-    [courseId, profiles],
-  );
-  const counts = useMemo(() => {
-    const next: Record<string, number> = {};
-    for (const course of COURSES) {
-      next[course.id] = listGridProfiles(profiles, course.id).length;
-    }
-    return next;
-  }, [profiles]);
 
   return (
     <div ref={homepage} className="homepage relative isolate">
@@ -100,12 +85,14 @@ export function HomePage() {
 
         {home?.focus ? <FocusBand post={home.focus} now={home.now} /> : null}
 
-        <StudentShowcase
-          profiles={visible} courseId={courseId} counts={counts} onCourseChange={setCourseId}
-          homepage={homepage} network={network} ready={environment.ready}
-          reducedMotion={environment.reducedMotion} hidden={environment.hidden}
-          onActive={setShowcaseActive}
-        />
+        <Suspense fallback={<ShowcaseFallback />}>
+          <LoadedShowcase
+            showcase={showcase}
+            homepage={homepage} network={network} ready={environment.ready}
+            reducedMotion={environment.reducedMotion} hidden={environment.hidden}
+            onActive={setShowcaseActive}
+          />
+        </Suspense>
 
         <section
           id="after-showcase"
@@ -135,5 +122,38 @@ export function HomePage() {
         <UpcomingStrip posts={home?.upcoming ?? null} now={home?.now ?? null} />
         <NewsletterSignup />
     </div>
+  );
+}
+
+function LoadedShowcase({ showcase, ...motion }: {
+  showcase: Promise<Showcase>;
+  homepage: RefObject<HTMLDivElement | null>;
+  network: RefObject<HTMLDivElement | null>;
+  ready: boolean;
+  reducedMotion: boolean;
+  hidden: boolean;
+  onActive: (active: boolean) => void;
+}) {
+  const { cards, courses } = use(showcase);
+  const [courseName, setCourseName] = useState<string | null>(null);
+  const visible = useMemo(() => cardsInCourse(cards, courseName), [cards, courseName]);
+  const counts = useMemo(
+    () => Object.fromEntries(courses.map((course) => [course.name, cardsInCourse(cards, course.name).length])),
+    [cards, courses],
+  );
+
+  return (
+    <StudentShowcase
+      profiles={visible} courses={courses} courseId={courseName} counts={counts}
+      onCourseChange={setCourseName} {...motion}
+    />
+  );
+}
+
+function ShowcaseFallback() {
+  return (
+    <section className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
+      <p className="font-mono text-[11px] uppercase tracking-wide text-muted">Loading students…</p>
+    </section>
   );
 }

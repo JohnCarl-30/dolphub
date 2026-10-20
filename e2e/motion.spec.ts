@@ -67,7 +67,7 @@ test.describe("filter results", () => {
   test("a new result set rises in again with a per-card stagger", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: /^IT \[/ }).click();
-    const cards = page.locator("[data-showcase-card]");
+    const cards = page.locator("[data-showcase-card]:visible");
     const count = await cards.count();
     expect(count).toBeGreaterThan(0);
     const delays = await cards.evaluateAll((elements) =>
@@ -93,7 +93,7 @@ test.describe("reduced motion", () => {
     expect(animation.name).toBe("fade");
     expect(animation.delay).toBe("0s");
     await expect(page.getByText("List view · reduced motion")).toBeVisible();
-    await expect(page.locator(".showcase")).toHaveAttribute("data-layout", "list");
+    await expect(page.locator(".showcase:visible")).toHaveAttribute("data-layout", "list");
     await expect(page.locator(".home-network canvas")).toHaveCount(0);
   });
 

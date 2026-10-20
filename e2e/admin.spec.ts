@@ -49,6 +49,11 @@ test.describe("admin overview", () => {
 
   test("hides a student page with a reason, then restores it", async ({ page }, testInfo) => {
     const handle = `e2e-hide-${testInfo.project.name}`;
+    const heading = page.getByRole("heading", { level: 1 });
+    // Load the public page first, so the hide has a cached copy to expire.
+    await page.goto(`/u/${handle}`);
+    await expect(heading).toHaveText(`Hide test ${testInfo.project.name}`);
+
     await page.goto("/admin");
     const row = page.getByRole("article", { name: `/u/${handle}` });
     await row.getByRole("button", { name: `Hide /u/${handle}` }).click();
@@ -57,7 +62,10 @@ test.describe("admin overview", () => {
     await row.getByRole("button", { name: "Hide page" }).click();
     await expect(row.getByText("Reason: Test takedown")).toBeVisible();
     await expect(row.getByText("Hidden", { exact: true })).toBeVisible();
+    await page.goto(`/u/${handle}`);
+    await expect(heading).toHaveText("No page for this handle.");
 
+    await page.goto("/admin");
     await page.getByRole("navigation", { name: "Which pages" }).getByRole("link", { name: /^Hidden/ }).click();
     await expect(page).toHaveURL(/\?show=hidden$/);
     const hiddenRow = page.getByRole("article", { name: `/u/${handle}` });
@@ -66,6 +74,8 @@ test.describe("admin overview", () => {
 
     await page.goto("/admin");
     await expect(page.getByRole("article", { name: `/u/${handle}` }).getByText("Visible", { exact: true })).toBeVisible();
+    await page.goto(`/u/${handle}`);
+    await expect(heading).toHaveText(`Hide test ${testInfo.project.name}`);
   });
 
   test("pauses and resumes signups", async ({ page }, testInfo) => {

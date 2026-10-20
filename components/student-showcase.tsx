@@ -4,13 +4,14 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 import { CourseFilter } from "./course-filter";
 import { FirstCard, ProfileCard } from "./profile-card";
 import { useShowcaseScroll } from "./animations/use-showcase-scroll";
-import type { MockProfile } from "@/lib/mock-profiles";
+import type { ShowcaseCard, ShowcaseCourse } from "@/lib/showcase-data";
 import type { ShowcaseLayout } from "@/lib/showcase";
 
 const VIEW_KEY = "dolphub-showcase-view";
 
-export function StudentShowcase({ profiles, courseId, counts, onCourseChange, homepage, network, ready, reducedMotion, hidden, onActive }: {
-  profiles: MockProfile[];
+export function StudentShowcase({ profiles, courses, courseId, counts, onCourseChange, homepage, network, ready, reducedMotion, hidden, onActive }: {
+  profiles: ShowcaseCard[];
+  courses: ShowcaseCourse[];
   courseId: string | null;
   counts: Record<string, number>;
   onCourseChange: (course: string | null) => void;
@@ -56,7 +57,7 @@ export function StudentShowcase({ profiles, courseId, counts, onCourseChange, ho
     <section ref={section} aria-label="Student showcase" className="showcase mx-auto w-full max-w-6xl px-4 sm:px-6">
       <div ref={frame} className="showcase-frame">
         <div ref={controls} className="showcase-controls">
-          <CourseFilter value={courseId} counts={counts} onChange={(value) => { requestReset(); onCourseChange(value); }} />
+          <CourseFilter courses={courses} value={courseId} counts={counts} onChange={(value) => { requestReset(); onCourseChange(value); }} />
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 font-mono text-[11px] uppercase tracking-wide">
             <p className="text-muted" aria-live="polite">
               {ready && reducedMotion ? "List view · reduced motion" : layout === "short" ? "List view · more room to read" : layout === "scroll" ? "Scroll down to explore →" : "Explore student projects"}

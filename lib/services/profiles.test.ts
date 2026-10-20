@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createTestContext, type TestEnv } from "../test/helpers";
-import { createProfile, getPublicProfile, listGridProfiles, updateProfile } from "./profiles";
-import { createProject } from "./projects";
+import { createProfile, getPublicProfile, listGridProfiles, listIndexableProfiles, updateProfile } from "./profiles";
+import { createProject, updateProject } from "./projects";
 
 describe("profiles", () => {
   let env: TestEnv;
@@ -82,6 +82,7 @@ describe("profiles", () => {
     }
     const all = await listGridProfiles(env.ctx);
     expect(all.map((c) => c.handle)).toEqual(["cara", "ana"]);
+    expect(all[0]!.featuredProject).toEqual({ title: "cara app", description: "" });
 
     const firstPage = await listGridProfiles(env.ctx, { limit: 1 });
     const last = firstPage[0]!;
@@ -90,5 +91,29 @@ describe("profiles", () => {
       after: { createdAt: last.createdAt, id: last.id },
     });
     expect(next.map((c) => c.handle)).toEqual(["ana"]);
+  });
+
+  it("features each grid profile's first project in the student's order", async () => {
+    const u = await env.createUser();
+    await createProfile(env.db, u.id, base(env));
+    const first = await createProject(env.db, u.id, { title: "First", description: "Made first" });
+    const second = await createProject(env.db, u.id, { title: "Second", description: "Moved up" });
+    expect((await listGridProfiles(env.ctx))[0]!.featuredProject.title).toBe("First");
+
+    await updateProject(env.db, u.id, first.project.id, { sortOrder: 2 });
+    await updateProject(env.db, u.id, second.project.id, { sortOrder: 1 });
+    expect((await listGridProfiles(env.ctx))[0]!.featuredProject).toEqual({ title: "Second", description: "Moved up" });
+  });
+
+  it("lists only visible pages that allow search engines for the sitemap", async () => {
+    for (const handle of ["ana", "ben", "cara"]) {
+      const u = await env.createUser();
+      await createProfile(env.db, u.id, { ...base(env), handle });
+      if (handle === "ben") await updateProfile(env.db, u.id, { searchVisible: false });
+    }
+    await env.client.query("update profiles set is_hidden = true where handle = 'cara'");
+    const rows = await listIndexableProfiles(env.ctx);
+    expect(rows.map((r) => r.handle)).toEqual(["ana"]);
+    expect(rows[0]!.updatedAt).toBeInstanceOf(Date);
   });
 });

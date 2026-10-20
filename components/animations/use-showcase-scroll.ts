@@ -10,7 +10,7 @@ import {
   showcasePosition,
   type ShowcaseLayout,
 } from "@/lib/showcase";
-import type { MockProfile } from "@/lib/mock-profiles";
+import type { ShowcaseCard } from "@/lib/showcase-data";
 
 export type ShowcaseAnchor = { handle: string };
 
@@ -40,7 +40,7 @@ export function useShowcaseScroll({
   track: RefObject<HTMLOListElement | null>;
   progress: RefObject<HTMLDivElement | null>;
   fill: RefObject<HTMLDivElement | null>;
-  profiles: MockProfile[];
+  profiles: ShowcaseCard[];
   motionAllowed: boolean;
   listPreferred: boolean;
   hidden: boolean;
