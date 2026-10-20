@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { useMockStore } from "@/components/mock-store";
-import { courseById, getPublicProfile } from "@/lib/mock-profiles";
+import { courseLabel } from "@/lib/course-labels";
 
 type FeedAuthor = {
   name: string;
@@ -74,9 +73,15 @@ const opportunities = [
   { type: "Program", title: "Open-source mentoring", meta: "Four student slots" },
 ];
 
-export function DashboardPage({ email }: { email: string }) {
-  const { ready, profiles, editableHandle } = useMockStore();
-  const profile = getPublicProfile(profiles, editableHandle);
+/** The signed-in student's own page, or null before they create one. */
+export type DashboardMe = {
+  handle: string;
+  displayName: string;
+  tagline: string;
+  courseName: string;
+} | null;
+
+export function DashboardPage({ email, me }: { email: string; me: DashboardMe }) {
   const [posts, setPosts] = useState(SEED_POSTS);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -92,18 +97,11 @@ export function DashboardPage({ email }: { email: string }) {
     });
   }, [posts, sort]);
 
-  if (!ready || !profile) {
-    return (
-      <section className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
-        <h1 className="text-3xl font-medium tracking-tight">Loading feed…</h1>
-      </section>
-    );
-  }
-
-  const currentProfile = profile;
-  const course = courseById(currentProfile.courseId);
-  const initials = currentProfile.displayName
-    .split(/\s+/)
+  // Before a page exists, posts go out under the sign-in address's name part.
+  const name = me?.displayName ?? email.split("@")[0]!;
+  const initials = name
+    .split(/[\s._-]+/)
+    .filter(Boolean)
     .map((part) => part[0])
     .join("")
     .slice(0, 2)
@@ -122,8 +120,8 @@ export function DashboardPage({ email }: { email: string }) {
       {
         id: `post-${crypto.randomUUID()}`,
         author: {
-          name: currentProfile.displayName,
-          detail: course?.name ?? currentProfile.courseId,
+          name,
+          detail: me?.courseName ?? "PCU student",
           initials,
         },
         body,
@@ -173,21 +171,35 @@ export function DashboardPage({ email }: { email: string }) {
           <div className="flex items-center gap-3 p-4 lg:block">
             <Avatar initials={initials} className="size-12 lg:size-16" />
             <div className="min-w-0 lg:mt-4">
-              <h2 className="truncate text-lg font-medium tracking-tight">{currentProfile.displayName}</h2>
-              <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted">{currentProfile.tagline}</p>
-              <p className="mt-1 truncate font-mono text-[10px] uppercase tracking-wide text-muted">
-                {course?.label ?? currentProfile.courseId}
-              </p>
+              <h2 className="truncate text-lg font-medium tracking-tight">{name}</h2>
+              {me ? (
+                <>
+                  {me.tagline ? <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted">{me.tagline}</p> : null}
+                  <p className="mt-1 truncate font-mono text-[10px] uppercase tracking-wide text-muted">
+                    {courseLabel(me.courseName)}
+                  </p>
+                </>
+              ) : (
+                <p className="mt-1 text-xs leading-5 text-muted">You don&apos;t have a public page yet.</p>
+              )}
             </div>
           </div>
-          <div className="grid grid-cols-2 border-t border-ink/10 lg:grid-cols-1">
-            <Link href="/profile" className="press border-r border-ink/10 px-4 py-3 font-mono text-[11px] uppercase tracking-wide outline-none hover:bg-paper focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink lg:border-b lg:border-r-0">
-              Edit profile →
-            </Link>
-            <Link href={`/u/${currentProfile.handle}`} className="press px-4 py-3 font-mono text-[11px] uppercase tracking-wide text-muted outline-none hover:bg-paper hover:text-ink focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink">
-              View public page →
-            </Link>
-          </div>
+          {me ? (
+            <div className="grid grid-cols-2 border-t border-ink/10 lg:grid-cols-1">
+              <Link href="/profile" className="press border-r border-ink/10 px-4 py-3 font-mono text-[11px] uppercase tracking-wide outline-none hover:bg-paper focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink lg:border-b lg:border-r-0">
+                Edit profile →
+              </Link>
+              <Link href={`/u/${me.handle}`} className="press px-4 py-3 font-mono text-[11px] uppercase tracking-wide text-muted outline-none hover:bg-paper hover:text-ink focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink">
+                View public page →
+              </Link>
+            </div>
+          ) : (
+            <div className="border-t border-ink/10">
+              <Link href="/profile" className="press block px-4 py-3 font-mono text-[11px] uppercase tracking-wide outline-none hover:bg-paper focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink">
+                Create your page →
+              </Link>
+            </div>
+          )}
         </aside>
 
         <div className="min-w-0 space-y-4">

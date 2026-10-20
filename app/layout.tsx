@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Space_Grotesk } from "next/font/google";
 import { SiteShell } from "@/components/site-shell";
 import { OG_DEFAULTS, SITE, siteUrl } from "@/lib/seo";
-import { Providers } from "./providers";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -37,9 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${spaceGrotesk.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full font-sans">
-        <Providers>
-          <SiteShell>{children}</SiteShell>
-        </Providers>
+        <SiteShell>{children}</SiteShell>
       </body>
     </html>
   );

@@ -4,12 +4,18 @@ const E2E_SESSION_TOKEN = "dolphub-e2e-session-token";
 const E2E_ADMIN_SESSION_TOKEN = "dolphub-e2e-admin-session-token";
 const E2E_PORT = Number(process.env.E2E_PORT ?? 3100);
 
-/** Signs in as the seeded student, or as the seeded admin. Both come from e2e/seed-auth.ts. */
-export async function authenticate(page: Page, as: "student" | "admin" = "student") {
+/**
+ * Signs in as a seeded account from e2e/seed-auth.ts: the student (who has a
+ * page), the admin, or a newcomer with no page yet. Newcomers are per
+ * Playwright project, so pass the project name: "newcomer-desktop".
+ */
+export async function authenticate(page: Page, as: "student" | "admin" | `newcomer-${string}` = "student") {
+  const token =
+    as === "admin" ? E2E_ADMIN_SESSION_TOKEN : as === "student" ? E2E_SESSION_TOKEN : `dolphub-e2e-${as}`;
   await page.context().addCookies([
     {
       name: "session",
-      value: as === "admin" ? E2E_ADMIN_SESSION_TOKEN : E2E_SESSION_TOKEN,
+      value: token,
       url: `http://127.0.0.1:${E2E_PORT}`,
       httpOnly: true,
       sameSite: "Lax",

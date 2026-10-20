@@ -95,6 +95,10 @@ const [state, submit, pending] = useActionState(
 
 React clears a form after an action runs. To keep what the student typed after an error, set each input's `defaultValue` from the submitted values.
 
+### The editor at `/profile`
+
+`app/profile/page.tsx` loads `getDashboard()`. Without a profile it shows the create form, which checks the handle as the student types. With one it shows the editor. On save, `lib/profile-form.ts` works out which profile fields changed and which projects to create, update or delete, and the editor sends only those. It records each step that succeeds, so retrying after an error never creates a project twice.
+
 ## Opportunities
 
 The plan is in [OPPORTUNITIES.md](./OPPORTUNITIES.md). Admins post, students follow the link out.
@@ -328,5 +332,4 @@ Both wait for the request and then read a cached copy, so builds never touch the
 These are Next.js wiring, planned in the build week:
 
 - An upload route that calls `addProjectImage`
-- The `/profile` editor and `/dashboard` on the dashboard actions, in place of the session mock store
 - A scheduled job that runs `sweepOrphanedImages` and `purgeExpiredAuthRecords` nightly
