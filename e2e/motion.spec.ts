@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { scaleOf, whilePressed } from "./helpers";
 
 test.describe("motion tokens", () => {
@@ -178,19 +178,25 @@ test.describe("site-wide particle network", () => {
     expect(await handle!.evaluate((element) => element.isConnected && element === document.querySelector('[data-particle-host="true"] canvas'))).toBe(true);
   });
 
+  /**
+   * Headless Chromium keeps every tab visible, so switching tabs never fires
+   * visibilitychange. Report the tab as hidden or shown the way a browser does.
+   */
+  async function setTabHidden(page: Page, hidden: boolean) {
+    await page.evaluate((value) => {
+      Object.defineProperty(document, "hidden", { configurable: true, get: () => value });
+      Object.defineProperty(document, "visibilityState", { configurable: true, get: () => (value ? "hidden" : "visible") });
+      document.dispatchEvent(new Event("visibilitychange"));
+    }, hidden);
+  }
+
   test("pauses and resumes the persistent container when its tab is hidden", async ({ page }) => {
     await page.goto("/");
     const host = await particleHost(page);
     await expect.poll(() => snapshot(host)).not.toBeNull();
-    const other = await page.context().newPage();
-    try {
-      await other.goto("/privacy");
-      await other.bringToFront();
-      await expect.poll(() => snapshot(host)).toMatchObject({ pageHidden: true, animationStatus: false });
-      await page.bringToFront();
-      await expect.poll(() => snapshot(host)).toMatchObject({ pageHidden: false, animationStatus: true });
-    } finally {
-      await other.close();
-    }
+    await setTabHidden(page, true);
+    await expect.poll(() => snapshot(host)).toMatchObject({ pageHidden: true, animationStatus: false });
+    await setTabHidden(page, false);
+    await expect.poll(() => snapshot(host)).toMatchObject({ pageHidden: false, animationStatus: true });
   });
 });
