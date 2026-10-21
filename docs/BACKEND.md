@@ -99,6 +99,16 @@ React clears a form after an action runs. To keep what the student typed after a
 
 `app/profile/page.tsx` loads `getDashboard()`. Without a profile it shows the create form, which checks the handle as the student types. With one it shows the editor. On save, `lib/profile-form.ts` works out which profile fields changed and which projects to create, update or delete, and the editor sends only those. It records each step that succeeds, so retrying after an error never creates a project twice.
 
+Photos don't wait for "Save changes". `app/profile/project-photos.tsx` uploads a photo the moment it is chosen and removes one with `deleteImageAction`. A project needs saving before it can take photos, because the upload names the project id.
+
+### Photo upload at `/api/upload`
+
+Server actions accept 1 MB bodies, so photos go through a route instead. Send a multipart form with `projectId` and `image`. The answer has the same shape as an action result, `{ ok: true, data: { image } }` or `{ ok: false, error, field? }`, with the status from the error table below. The route also refuses requests whose `Origin` isn't `APP_URL` (403), signed-out visitors (401) and bodies over 4 MB (413). It expires the student's page and the home grid, so the photo shows on the next visit.
+
+Call it through `uploadPhoto` and `preparePhoto` in `lib/photo-upload.ts`. `preparePhoto` sends JPEG, PNG and WebP files under 3.5 MB as they are. Anything larger, or in another format such as HEIC, is redrawn as a JPEG no wider than 2400 px, with the camera's rotation applied. The route's logic lives in `lib/upload-route.ts`, so tests can run it with a fake context.
+
+Without R2 settings, photos are kept in server memory and served from `/dev-images/<key>`. They vanish when the server restarts. With R2 set, that route answers 404.
+
 ## Opportunities
 
 The plan is in [OPPORTUNITIES.md](./OPPORTUNITIES.md). Admins post, students follow the link out.
@@ -283,7 +293,7 @@ In pages and actions, use the helpers in `lib/auth.ts`:
 | `deleteImage(ctx, userId, imageId)` | Removes the row, then the R2 file |
 | `sweepOrphanedImages(ctx)` | Nightly job. Deletes R2 files with no row that are over an hour old |
 
-Browsers should still compress photos before upload. Vercel rejects request bodies over 4.5 MB, and phone photos are often bigger.
+Browsers compress photos before upload, through `preparePhoto`. Vercel rejects request bodies over 4.5 MB, and phone photos are often bigger.
 
 ### Admin (`admin.ts`)
 
@@ -331,5 +341,4 @@ Both wait for the request and then read a cached copy, so builds never touch the
 
 These are Next.js wiring, planned in the build week:
 
-- An upload route that calls `addProjectImage`
 - A scheduled job that runs `sweepOrphanedImages` and `purgeExpiredAuthRecords` nightly

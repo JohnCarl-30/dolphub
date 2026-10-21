@@ -1,4 +1,6 @@
 import { expect, test } from "@playwright/test";
+import { randomBytes } from "node:crypto";
+import sharp from "sharp";
 import { authenticate } from "./helpers";
 
 /*
@@ -67,10 +69,37 @@ test("a new student creates a page, publishes a project, and removes it", async 
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.locator("form").getByRole("status")).toHaveText("Nothing to save.");
 
+  // Photos upload as soon as they're chosen. A file that isn't an image is refused by the server.
+  const addPhoto = page.getByLabel("Add a photo to project 1");
+  await addPhoto.setInputFiles({ name: "notes.png", mimeType: "image/png", buffer: Buffer.from("not a picture") });
+  await expect(page.locator("form").getByRole("alert")).toHaveText("Photo: That file is not an image we can read.");
+  const screenshot = await sharp({ create: { width: 640, height: 360, channels: 3, background: "#2f6fdf" } })
+    .png()
+    .toBuffer();
+  await addPhoto.setInputFiles({ name: "seats.png", mimeType: "image/png", buffer: screenshot });
+  await expect(page.getByRole("img", { name: "Photo 1 of Lab seat finder" })).toBeVisible();
+  await expect(page.locator("form").getByRole("alert")).toHaveCount(0);
+  await expect(page.getByText("Photos: 1 of 10 used")).toBeVisible();
+
+  // A phone photo over the 4 MB cap is shrunk in the browser before it is sent.
+  const side = 1500;
+  const bigPhoto = await sharp(randomBytes(side * side * 3), { raw: { width: side, height: side, channels: 3 } })
+    .png()
+    .toBuffer();
+  // The server refuses anything over 4 MB, so this photo only lands if the browser shrank it.
+  expect(bigPhoto.byteLength).toBeGreaterThan(4 * 1024 * 1024);
+  await addPhoto.setInputFiles({ name: "camera.png", mimeType: "image/png", buffer: bigPhoto });
+  await expect(page.getByRole("img", { name: "Photo 2 of Lab seat finder" })).toBeVisible();
+  await expect(page.getByText("Photos: 2 of 10 used")).toBeVisible();
+
   // The public page and the home showcase show it straight away.
   await page.goto(`/u/${handle}`);
   const article = page.getByRole("article");
   await expect(article.getByRole("heading", { name: "Lab seat finder" })).toBeVisible();
+  const shown = article.getByRole("img", { name: "Screenshot of Lab seat finder" });
+  await expect(shown).toBeVisible();
+  // The browser really loaded the stored WebP, not a broken image.
+  await expect.poll(() => shown.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(640);
   await expect(article.getByRole("link", { name: "Demo →" })).toHaveAttribute("href", "https://seats.example.com");
   await expect(article.getByText("Tools for the CS lab.")).toBeVisible();
 
@@ -78,15 +107,21 @@ test("a new student creates a page, publishes a project, and removes it", async 
   const card = page.locator(`[data-showcase-card="${handle}"]:visible`);
   await expect(card).toHaveCount(1);
   await expect(card).toContainText("Lab seat finder");
+  await expect(card.locator("img")).toHaveAttribute("src", /\/dev-images\/profiles\/.+\.webp$/);
 
   // The dashboard now shows the page.
   await page.goto("/dashboard");
   await expect(rail.getByRole("heading", { name })).toBeVisible();
   await expect(rail.getByRole("link", { name: "View public page →" })).toHaveAttribute("href", `/u/${handle}`);
 
-  // The saved project loads back into the editor. Opt out of search engines and remove the project.
+  // The saved project and its photo load back into the editor. Removing the photo saves straight away.
   await page.goto("/profile");
   await expect(page.getByRole("textbox", { name: "Project 1 title" })).toHaveValue("Lab seat finder");
+  await page.getByRole("button", { name: "Remove photo 1 from project 1" }).click();
+  await expect(page.getByRole("img", { name: "Photo 2 of Lab seat finder" })).toHaveCount(0);
+  await expect(page.getByText("Photos: 1 of 10 used")).toBeVisible();
+
+  // Opt out of search engines and remove the project, which deletes its last photo too.
   await page.getByRole("checkbox", { name: "Show my page in search engines" }).uncheck();
   await page.getByRole("button", { name: "Remove project 1" }).click();
   await page.getByRole("button", { name: "Save changes" }).click();
@@ -94,6 +129,7 @@ test("a new student creates a page, publishes a project, and removes it", async 
 
   await page.goto(`/u/${handle}`);
   await expect(page.getByRole("article").getByText("No projects on this page yet.")).toBeVisible();
+  await expect(page.getByRole("article").getByRole("img")).toHaveCount(0);
   const robots = await page
     .locator('meta[name="robots"]')
     .evaluateAll((tags) => tags.map((tag) => tag.getAttribute("content")));
