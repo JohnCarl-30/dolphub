@@ -8,7 +8,9 @@ import { ParticleBoundary } from "@/components/particles/particle-boundary";
 import { FocusBand } from "@/components/home/focus-band";
 import { NewsletterSignup } from "@/components/home/newsletter-signup";
 import { UpcomingStrip } from "@/components/home/upcoming-strip";
-import { useMockHome } from "@/components/home/use-mock-home";
+import { useNow } from "@/components/home/use-now";
+import { focusOpportunity, upcomingOpportunities } from "@/lib/opportunity-display";
+import type { PublicOpportunity } from "@/lib/services/opportunities";
 import dynamic from "next/dynamic";
 import { Suspense, use, useCallback, useMemo, useRef, useState, type RefObject } from "react";
 
@@ -34,9 +36,16 @@ const STEPS = [
   },
 ];
 
-export function HomePage({ showcase }: { showcase: Promise<Showcase> }) {
+export function HomePage({
+  showcase,
+  opportunities,
+}: {
+  showcase: Promise<Showcase>;
+  /** Open posts from the database, soonest closing first. */
+  opportunities: Promise<PublicOpportunity[]>;
+}) {
   const environment = useMotionEnvironment();
-  const home = useMockHome();
+  const now = useNow();
   const [showcaseActive, setShowcaseActive] = useState(false);
   const homepage = useRef<HTMLDivElement>(null);
   const network = useRef<HTMLDivElement>(null);
@@ -83,7 +92,9 @@ export function HomePage({ showcase }: { showcase: Promise<Showcase> }) {
           </p>
         </section>
 
-        {home?.focus ? <FocusBand post={home.focus} now={home.now} /> : null}
+        <Suspense fallback={null}>
+          <LoadedFocusBand opportunities={opportunities} now={now} />
+        </Suspense>
 
         <Suspense fallback={<ShowcaseFallback />}>
           <LoadedShowcase
@@ -119,10 +130,24 @@ export function HomePage({ showcase }: { showcase: Promise<Showcase> }) {
           </ol>
         </section>
 
-        <UpcomingStrip posts={home?.upcoming ?? null} now={home?.now ?? null} />
+        <Suspense fallback={<UpcomingStrip posts={null} now={null} />}>
+          <LoadedUpcomingStrip opportunities={opportunities} now={now} />
+        </Suspense>
         <NewsletterSignup />
     </div>
   );
+}
+
+/** Both wait for the visitor's clock, so a post that closed since the server read it never shows. */
+function LoadedFocusBand({ opportunities, now }: { opportunities: Promise<PublicOpportunity[]>; now: Date | null }) {
+  const posts = use(opportunities);
+  const post = now ? focusOpportunity(posts, now) : null;
+  return post && now ? <FocusBand post={post} now={now} /> : null;
+}
+
+function LoadedUpcomingStrip({ opportunities, now }: { opportunities: Promise<PublicOpportunity[]>; now: Date | null }) {
+  const posts = use(opportunities);
+  return <UpcomingStrip posts={now ? upcomingOpportunities(posts, now) : null} now={now} />;
 }
 
 function LoadedShowcase({ showcase, ...motion }: {

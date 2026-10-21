@@ -1,8 +1,7 @@
 import Link from "next/link";
 import type { PublicOpportunity } from "@/lib/services/opportunities";
 import { closingLabel } from "@/lib/opportunity-time";
-import { dateTimeLabel, whereLabel } from "@/lib/opportunity-display";
-import { KIND_NAMES } from "@/lib/mock-home";
+import { dateTimeLabel, KIND_NAMES, whereLabel } from "@/lib/opportunity-display";
 import { opportunityPath } from "@/lib/seo";
 
 /** One open post in the /opportunities list. Opens the post's own page, which has the apply link. */

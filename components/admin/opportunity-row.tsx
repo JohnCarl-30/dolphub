@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { deleteOpportunityAction, setOpportunityHiddenAction } from "@/app/admin/opportunities/actions";
 import type { ActionResult } from "@/lib/actions/result";
-import { KIND_NAMES } from "@/lib/mock-home";
+import { KIND_NAMES } from "@/lib/opportunity-display";
 import { closingLabel } from "@/lib/opportunity-time";
 import { opportunityPath } from "@/lib/seo";
 import type { AdminOpportunity } from "@/lib/services/opportunities";

@@ -131,7 +131,7 @@ const post = await getOpportunityPage(slug); // null when missing or hidden: cal
 | `getOpportunityPage(slug)` | One post plus `isClosed`. Closed posts are still returned, so show "This opportunity has closed" |
 | `getAdminOpportunities()` | Every post including hidden and closed, with `id`, `isHidden`, `hiddenReason`, `isClosed`. Admins only |
 
-Both public loaders wait for the request and then read a cached copy, so pages never touch the database at build time. A post leaves the list the moment it closes.
+Both public loaders wait for the request and then read a cached copy, so pages never touch the database at build time. A post leaves the list the moment it closes. The home page passes `getOpenOpportunities()` unawaited to the client, which picks the next three posts and the focus band post (closing within three days) with `upcomingOpportunities` and `focusOpportunity` from `lib/opportunity-display.ts`, using the visitor's clock.
 
 Each post (`PublicOpportunity` in `lib/services/opportunities.ts`) has these fields:
 

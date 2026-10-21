@@ -3,7 +3,13 @@
 import { useEffect, useId, useState } from "react";
 import type { OpportunityKind } from "@/lib/services/opportunities";
 import { contactEmail } from "@/lib/services/validation";
-import { NEWSLETTER_TOPICS } from "@/lib/mock-home";
+
+const NEWSLETTER_TOPICS: { id: OpportunityKind; label: string }[] = [
+  { id: "internship", label: "Internships" },
+  { id: "event", label: "Events" },
+  { id: "competition", label: "Competitions" },
+  { id: "program", label: "Programs" },
+];
 
 const STORAGE_KEY = "dolphub-mock-newsletter";
 
