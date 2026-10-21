@@ -106,3 +106,91 @@ test.describe("reduced motion", () => {
     });
   });
 });
+
+test.describe("site-wide particle network", () => {
+  async function particleHost(page: import("@playwright/test").Page) {
+    const host = page.locator('[data-particle-layer] [data-particle-host="true"]');
+    await expect(host).toBeVisible();
+    return host;
+  }
+
+  async function snapshot(host: import("@playwright/test").Locator) {
+    return host.evaluate((element) => {
+      const container = (element as HTMLDivElement & { __dolphubParticleContainer?: {
+        animationStatus: boolean;
+        pageHidden: boolean;
+        particles: { count: number; get(index: number): { position: { x: number; y: number } } | undefined };
+        actualOptions: { particles: { move: { enable: boolean } }; interactivity: { events: { onHover: { mode: string | string[] } } } };
+      } }).__dolphubParticleContainer;
+      if (!container) return null;
+      const positions = Array.from({ length: container.particles.count }, (_, index) => container.particles.get(index)?.position ?? null);
+      return {
+        positions,
+        animationStatus: container.animationStatus,
+        pageHidden: container.pageHidden,
+        drift: container.actualOptions.particles.move.enable,
+        hover: container.actualOptions.interactivity.events.onHover.mode,
+      };
+    });
+  }
+
+  test("keeps the canvas click-through while window hover repulsion moves real particles", async ({ page }) => {
+    test.skip(test.info().project.name === "phone", "The phone project intentionally has no fine pointer.");
+    await page.goto("/");
+    const host = await particleHost(page);
+    await expect.poll(() => snapshot(host)).not.toBeNull();
+    expect(await page.locator("[data-particle-layer]").evaluate((element) => getComputedStyle(element).pointerEvents)).toBe("none");
+    const before = await snapshot(host);
+    const target = before!.positions.find(Boolean)!;
+    await page.mouse.move(target.x, target.y);
+    await expect.poll(async () => {
+      const current = await snapshot(host);
+      return current && current.positions.some((position, index) => {
+        const previous = before!.positions[index];
+        return position && previous && Math.hypot(position.x - previous.x, position.y - previous.y) > 1;
+      });
+    }).toBe(true);
+    const current = await snapshot(host);
+    expect(current?.hover).toBe("repulse");
+  });
+
+  test("keeps cards, filters, and navigation usable above the layer", async ({ page }) => {
+    await page.goto("/");
+    const filter = page.getByRole("button", { name: /^CS \[/ });
+    await filter.click();
+    await expect(filter).toHaveAttribute("aria-pressed", "true");
+    await page.locator('a[href="/privacy"]').last().click();
+    await expect(page).toHaveURL(/\/privacy$/);
+  });
+
+  test("reuses the same canvas host across client-side routes", async ({ page }) => {
+    await page.goto("/");
+    const host = await particleHost(page);
+    const canvas = host.locator("canvas");
+    await expect(canvas).toBeVisible();
+    const handle = await canvas.elementHandle();
+    await page.locator('a[href="/privacy"]').last().click();
+    await expect(page).toHaveURL(/\/privacy$/);
+    await expect(page.locator('[data-particle-layer] [data-particle-host="true"]')).toHaveCount(1);
+    expect(await handle!.evaluate((element) => element.isConnected && element === document.querySelector('[data-particle-host="true"] canvas'))).toBe(true);
+    await page.locator('a[href="/"]').first().click();
+    await expect(page).toHaveURL(/\/$/);
+    expect(await handle!.evaluate((element) => element.isConnected && element === document.querySelector('[data-particle-host="true"] canvas'))).toBe(true);
+  });
+
+  test("pauses and resumes the persistent container when its tab is hidden", async ({ page }) => {
+    await page.goto("/");
+    const host = await particleHost(page);
+    await expect.poll(() => snapshot(host)).not.toBeNull();
+    const other = await page.context().newPage();
+    try {
+      await other.goto("/privacy");
+      await other.bringToFront();
+      await expect.poll(() => snapshot(host)).toMatchObject({ pageHidden: true, animationStatus: false });
+      await page.bringToFront();
+      await expect.poll(() => snapshot(host)).toMatchObject({ pageHidden: false, animationStatus: true });
+    } finally {
+      await other.close();
+    }
+  });
+});

@@ -2,22 +2,14 @@
 
 import { StudentShowcase } from "@/components/student-showcase";
 import { cardsInCourse, type Showcase } from "@/lib/showcase-data";
-import { shouldPlayParticles } from "@/lib/particles";
-import { useMotionEnvironment } from "@/components/animations/use-motion-environment";
-import { ParticleBoundary } from "@/components/particles/particle-boundary";
+import { useParticleNetwork } from "@/components/particles/particle-network-provider";
 import { FocusBand } from "@/components/home/focus-band";
 import { NewsletterSignup } from "@/components/home/newsletter-signup";
 import { UpcomingStrip } from "@/components/home/upcoming-strip";
 import { useNow } from "@/components/home/use-now";
 import { focusOpportunity, upcomingOpportunities } from "@/lib/opportunity-display";
 import type { PublicOpportunity } from "@/lib/services/opportunities";
-import dynamic from "next/dynamic";
-import { Suspense, use, useCallback, useMemo, useRef, useState, type RefObject } from "react";
-
-const ParticleBackground = dynamic(
-  () => import("@/components/particles/particle-background"),
-  { ssr: false },
-);
+import { Suspense, use, useMemo, useRef, useState, type RefObject } from "react";
 const STEPS = [
   {
     index: "01",
@@ -44,33 +36,12 @@ export function HomePage({
   /** Open posts from the database, soonest closing first. */
   opportunities: Promise<PublicOpportunity[]>;
 }) {
-  const environment = useMotionEnvironment();
+  const { environment, network, setShowcaseActive } = useParticleNetwork();
   const now = useNow();
-  const [showcaseActive, setShowcaseActive] = useState(false);
   const homepage = useRef<HTMLDivElement>(null);
-  const network = useRef<HTMLDivElement>(null);
-  const [particleFailed, setParticleFailed] = useState(false);
-  const onParticleStatus = useCallback((status: "ready" | "failed") => {
-    if (status === "failed") setParticleFailed(true);
-  }, []);
-  const onParticleError = useCallback(() => setParticleFailed(true), []);
-  const showParticles = environment.ready && !environment.reducedMotion && !particleFailed;
 
   return (
     <div ref={homepage} className="homepage relative isolate">
-        <div className="home-network-window pointer-events-none fixed inset-0 -z-10" aria-hidden="true">
-          <div ref={network} className="home-network">
-            {showParticles ? (
-              <ParticleBoundary onError={onParticleError}>
-                <ParticleBackground
-                  playing={shouldPlayParticles(environment, showcaseActive)}
-                  finePointer={environment.finePointer}
-                  onStatus={onParticleStatus}
-                />
-              </ParticleBoundary>
-            ) : null}
-          </div>
-        </div>
         {/* The entrance is CSS so it runs off the main thread while the particle chunk loads. */}
         <section data-hero className="mx-auto w-full max-w-6xl px-4 pb-8 pt-10 sm:px-6 sm:pt-14">
           <p className="rise font-mono text-[11px] uppercase tracking-wide text-muted">

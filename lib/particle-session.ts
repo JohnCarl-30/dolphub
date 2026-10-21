@@ -3,15 +3,23 @@ interface PlaybackTarget {
   actualOptions: {
     autoPlay: boolean;
     interactivity: { events: { onHover: { mode: string | string[] } } };
+    particles: { move: { enable: boolean } };
   };
   play(): void;
   pause(): void;
 }
 
-export function syncParticlePlayback(container: PlaybackTarget, playing: boolean, finePointer: boolean) {
+export function syncParticlePlayback(
+  container: PlaybackTarget,
+  playing: boolean,
+  finePointer: boolean,
+  driftAllowed = playing,
+) {
   if (container.destroyed) return;
   // Also applies before engine restarts after a responsive breakpoint change.
   container.actualOptions.autoPlay = playing;
+  // Showcase traversal stops autonomous drift but leaves the render loop alive for repulsion.
+  container.actualOptions.particles.move.enable = playing && driftAllowed;
   container.actualOptions.interactivity.events.onHover.mode = playing && finePointer ? "repulse" : [];
   if (playing) container.play();
   else container.pause();

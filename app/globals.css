@@ -78,8 +78,12 @@ p {
 }
 
 /* Decorative fallback remains available before JS, on error, and with reduced motion. */
-.home-network-window {
+.particle-layer {
   overflow: clip;
+}
+
+.particle-layer canvas {
+  pointer-events: none;
 }
 
 .home-network {

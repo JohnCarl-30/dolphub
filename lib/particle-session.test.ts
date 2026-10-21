@@ -15,7 +15,7 @@ describe("live particle playback", () => {
   function target() {
     return {
       destroyed: false,
-      actualOptions: { autoPlay: false, interactivity: { events: { onHover: { mode: [] as string | string[] } } } },
+      actualOptions: { autoPlay: false, interactivity: { events: { onHover: { mode: [] as string | string[] } } }, particles: { move: { enable: true } } },
       play: vi.fn(), pause: vi.fn(),
     };
   }
@@ -25,10 +25,19 @@ describe("live particle playback", () => {
     syncParticlePlayback(container, true, true);
     expect(container.play).toHaveBeenCalledOnce();
     expect(container.actualOptions.interactivity.events.onHover.mode).toBe("repulse");
+    expect(container.actualOptions.particles.move.enable).toBe(true);
     syncParticlePlayback(container, false, true);
     expect(container.pause).toHaveBeenCalledOnce();
     expect(container.actualOptions.autoPlay).toBe(false);
     expect(container.actualOptions.interactivity.events.onHover.mode).toEqual([]);
+    expect(container.actualOptions.particles.move.enable).toBe(false);
+  });
+
+  it("keeps repulsion active while showcase traversal stops autonomous drift", () => {
+    const container = target();
+    syncParticlePlayback(container, true, true, false);
+    expect(container.actualOptions.interactivity.events.onHover.mode).toBe("repulse");
+    expect(container.actualOptions.particles.move.enable).toBe(false);
   });
 
   it("keeps particles moving without repulsion on a coarse pointer", () => {

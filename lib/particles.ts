@@ -1,12 +1,13 @@
 import type { ISourceOptions } from "@tsparticles/engine";
 
-export const PARTICLE_BREAKPOINTS = [
-  { maxWidth: 640, count: 30 },
-  { maxWidth: 1024, count: 45 },
-] as const;
+/** One area value drives density at every viewport size; it is not a breakpoint table. */
+export const PARTICLE_DENSITY_AREA = 900_000;
+export const MAX_PARTICLES = 110;
 
-export function particleCount(width: number): number {
-  return PARTICLE_BREAKPOINTS.find((entry) => width < entry.maxWidth)?.count ?? 70;
+/** Estimate the calibrated density at a viewport checkpoint for tests and diagnostics. */
+export function particleCount(width: number, height: number, pixelRatio = 1): number {
+  const area = Math.max(1, width) * Math.max(1, height) / Math.max(1, pixelRatio ** 2);
+  return Math.min(MAX_PARTICLES, Math.round((MAX_PARTICLES * area) / PARTICLE_DENSITY_AREA));
 }
 
 export function particleOptions(ink: string): ISourceOptions {
@@ -16,11 +17,16 @@ export function particleOptions(ink: string): ISourceOptions {
     background: { opacity: 0 },
     fpsLimit: 60,
     detectRetina: true,
-    // Visibility and showcase traversal are managed by the homepage.
-    pauseOnBlur: false,
+    // The persistent provider owns visibility/showcase playback; tsParticles also pauses on blur.
+    pauseOnBlur: true,
     pauseOnOutsideViewport: false,
     particles: {
-      number: { value: particleCount(1024), density: { enable: false } },
+      // Density is calculated from one area value. MAX_PARTICLES is a hard safety cap.
+      number: {
+        value: MAX_PARTICLES,
+        limit: { mode: "delete", value: MAX_PARTICLES },
+        density: { enable: true, width: Math.sqrt(PARTICLE_DENSITY_AREA), height: Math.sqrt(PARTICLE_DENSITY_AREA) },
+      },
       color: { value: ink },
       shape: { type: "circle" },
       opacity: { value: 0.35 },
@@ -28,10 +34,6 @@ export function particleOptions(ink: string): ISourceOptions {
       links: { enable: true, color: ink, distance: 150, opacity: 0.25, width: 1 },
       move: { enable: true, speed: 0.6, outModes: { default: "out" } },
     },
-    responsive: PARTICLE_BREAKPOINTS.map(({ maxWidth, count }) => ({
-      maxWidth,
-      options: { particles: { number: { value: count } } },
-    })),
     interactivity: {
       detectsOn: "window",
       events: {
@@ -50,9 +52,10 @@ export interface MotionEnvironment {
   hidden: boolean;
 }
 
-export function shouldPlayParticles(
-  environment: MotionEnvironment,
-  showcaseActive = false,
-): boolean {
-  return environment.ready && !environment.reducedMotion && !environment.hidden && !showcaseActive;
+export function shouldPlayParticles(environment: MotionEnvironment): boolean {
+  return environment.ready && !environment.reducedMotion && !environment.hidden;
+}
+
+export function shouldMoveParticles(environment: MotionEnvironment, showcaseActive: boolean): boolean {
+  return shouldPlayParticles(environment) && !showcaseActive;
 }
