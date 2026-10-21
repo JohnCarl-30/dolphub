@@ -89,7 +89,8 @@ test("a new student creates a page, publishes a project, and removes it", async 
   // The server refuses anything over 4 MB, so this photo only lands if the browser shrank it.
   expect(bigPhoto.byteLength).toBeGreaterThan(4 * 1024 * 1024);
   await addPhoto.setInputFiles({ name: "camera.png", mimeType: "image/png", buffer: bigPhoto });
-  await expect(page.getByRole("img", { name: "Photo 2 of Lab seat finder" })).toBeVisible();
+  // Shrinking in the browser, then re-encoding noise on the server, takes several seconds on a CI runner.
+  await expect(page.getByRole("img", { name: "Photo 2 of Lab seat finder" })).toBeVisible({ timeout: 20_000 });
   await expect(page.getByText("Photos: 2 of 10 used")).toBeVisible();
 
   // The public page and the home showcase show it straight away.
