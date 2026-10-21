@@ -1,6 +1,6 @@
 # PCU Community: Overall Plan
 
-Last updated: 2026-10-17. The decisions behind this plan are in [ARCHITECTURE.md](./ARCHITECTURE.md).
+Last updated: 2026-10-21. The decisions behind this plan are in [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## At a glance
 
@@ -55,9 +55,7 @@ One task per day, sized for evenings during classes.
 | Fri Oct 23 | Admin page with profile count, hide profile and freeze signups. "Report this page" link. Test on a budget Android phone on campus wifi | Backend, plus frontend for the admin screen | Hiding a page works from a phone, and a real 4 MB photo uploads |
 | Sat Oct 24 | **Soft launch** to about 10 classmates, invited by name | Both | Ten invites sent |
 
-**Progress, Oct 17:** the app is scaffolded, and the backend for Sunday's and Monday's tasks is done early. That covers the schema and migrations, the course seed, tested services for profiles, projects, image upload and admin, and working magic-link sign-in through Resend, tested end to end in a browser. The dashboard's server actions and data loader are also done and browser-tested, so fnzh-i can build the Tuesday screens against them. What is left for the backend this week is the upload route, the public page data, and admin actions. See [BACKEND.md](./BACKEND.md).
-
-**Still blocking sign-in on the live site:** verify `dolphub.tech` in Resend, set the production environment variables on Vercel, and send one real link to a PCU inbox.
+**Progress, Oct 21:** all of the build-week code is on `main`. That covers sign-in, the profile editor with photo upload, public pages with link previews, the home grid and opportunities, the admin page with the hide switch and signup freeze, the "Report this page" link on student and opportunity pages, and the nightly cleanup. Resend is verified for `dolphub.tech` and sending sign-in emails. What is left before the soft launch is testing on a budget Android phone and sending the invites. See [BACKEND.md](./BACKEND.md) and the [runbook](./RUNBOOK.md).
 
 **If behind schedule:** move the soft launch to Oct 31. Do not cut the admin hide switch or the upload limits to make the date.
 
@@ -66,7 +64,7 @@ One task per day, sized for evenings during classes.
 - **Build opportunities.** Internships, events, competitions and programs, posted by admins and linking out. The plan and schedule are in [OPPORTUNITIES.md](./OPPORTUNITIES.md).
 
 - **Fix what testers hit.** Watch the first 10 students sign up and upload. Fix every blocker they report.
-- **Remove the single point of failure.** Add a second owner on Vercel, Cloudflare, Neon, Resend and the domain. Write a one-page runbook in this repo.
+- **Remove the single point of failure.** Add a second owner on Vercel, Cloudflare, Neon, Resend and the domain. The runbook is in [RUNBOOK.md](./RUNBOOK.md).
 - **Prepare the launch post.** Seed the grid with the testers' pages so it is not empty on day one.
 
 ### Public launch gate
