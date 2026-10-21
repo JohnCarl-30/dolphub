@@ -1,4 +1,5 @@
 import { ProjectList } from "@/components/project-list";
+import { REPORT_EMAIL } from "@/components/support-contacts";
 import type { PublicProfile } from "@/lib/services/profiles";
 
 export function ProfilePage({ profile }: { profile: PublicProfile }) {
@@ -23,10 +24,23 @@ export function ProfilePage({ profile }: { profile: PublicProfile }) {
           <ProjectList projects={profile.projects} />
         </div>
       </section>
+
+      <p className="mt-12 border-t border-ink/10 pt-5 text-sm leading-6 text-muted">
+        Fake page, copied work, or something that should not be here?{" "}
+        <a
+          href={`mailto:${REPORT_EMAIL}?subject=${encodeURIComponent(`Report a student page: ${profile.handle}`)}`}
+          className={inlineLink}
+        >
+          Report this page
+        </a>
+        .
+      </p>
     </article>
   );
 }
 
+const inlineLink =
+  "font-medium text-ink underline decoration-ink/30 underline-offset-4 transition-colors hover:decoration-ink focus-visible:ring-2 focus-visible:ring-ink";
 const primaryLink =
   "press inline-flex min-h-11 items-center border border-ink bg-ink px-4 py-2 font-mono text-[11px] uppercase tracking-wide text-white outline-none hover:border-ink/85 hover:bg-ink/85 focus-visible:ring-2 focus-visible:ring-ink";
 const secondaryLink =

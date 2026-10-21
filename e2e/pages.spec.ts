@@ -165,6 +165,10 @@ test.describe("profile", () => {
       "href",
       "mailto:mira.santos@example.com",
     );
+    await expect(page.getByRole("link", { name: "Report this page" })).toHaveAttribute(
+      "href",
+      "mailto:johncarlsantos30@gmail.com?subject=Report%20a%20student%20page%3A%20mira",
+    );
     const projects = page.locator("ol > li.rise");
     expect(await projects.count()).toBeGreaterThan(1);
     const delays = await projects.evaluateAll((elements) =>

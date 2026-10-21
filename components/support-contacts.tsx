@@ -3,6 +3,9 @@ const CONTACTS = [
   { name: "John Carl", email: "johncarlsantos30@gmail.com" },
 ] as const;
 
+/** Where "Report a problem" links on public pages go: the maintainer who runs the admin page. */
+export const REPORT_EMAIL = "johncarlsantos30@gmail.com";
+
 const inlineLink =
   "font-medium text-ink underline decoration-ink/30 underline-offset-4 transition-colors hover:decoration-ink focus-visible:ring-2 focus-visible:ring-ink";
 
