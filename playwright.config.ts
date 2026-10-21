@@ -2,8 +2,10 @@ import { defineConfig, devices } from "@playwright/test";
 
 const PORT = Number(process.env.E2E_PORT ?? 3100);
 const baseURL = `http://127.0.0.1:${PORT}`;
+/** Lets e2e/cleanup.spec.ts run the nightly cleanup the way Vercel does. */
+export const CRON_SECRET = "e2e-cron-secret-0123";
 // Empty Google values keep a developer's .env.local keys out of the tests: Next never overrides a variable that is already set.
-const testEnvironment = `E2E_TEST=1 DATABASE_URL=pglite:./.data/e2e-pglite APP_URL=${baseURL} PCU_EMAIL_DOMAINS=pcu.edu.ph GOOGLE_CLIENT_ID= GOOGLE_CLIENT_SECRET=`;
+const testEnvironment = `E2E_TEST=1 DATABASE_URL=pglite:./.data/e2e-pglite APP_URL=${baseURL} PCU_EMAIL_DOMAINS=pcu.edu.ph CRON_SECRET=${CRON_SECRET} GOOGLE_CLIENT_ID= GOOGLE_CLIENT_SECRET=`;
 
 export default defineConfig({
   testDir: "./e2e",

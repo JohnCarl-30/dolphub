@@ -44,6 +44,8 @@ const envSchema = z
     /** Google OAuth client for "Continue with Google". Optional: email links work without it. */
     GOOGLE_CLIENT_ID: optional,
     GOOGLE_CLIENT_SECRET: optional,
+    /** Vercel sends it with the nightly cleanup request. Without it, /api/cron/cleanup refuses every request. */
+    CRON_SECRET: optional.pipe(z.string().min(16, "use at least 16 characters").optional()),
     R2_ACCOUNT_ID: optional,
     R2_ACCESS_KEY_ID: optional,
     R2_SECRET_ACCESS_KEY: optional,

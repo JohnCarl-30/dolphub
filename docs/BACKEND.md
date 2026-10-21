@@ -337,8 +337,8 @@ const { cards, courses } = await getShowcase(); // or pass the promise to a clie
 
 Both wait for the request and then read a cached copy, so builds never touch the database. Student saves and the admin hide switch expire the tags.
 
-## Still to build
+## Nightly cleanup at `/api/cron/cleanup`
 
-These are Next.js wiring, planned in the build week:
+`vercel.json` schedules a GET every day at 19:00 UTC, 3 a.m. in Manila. Vercel runs schedules on production deployments only, and sends `Authorization: Bearer <CRON_SECRET>`. The route refuses any other request (401), and every request while `CRON_SECRET` is unset (503).
 
-- A scheduled job that runs `sweepOrphanedImages` and `purgeExpiredAuthRecords` nightly
+It runs `sweepOrphanedImages`, then `purgeExpiredAuthRecords`. Each runs even when the other fails. The answer counts what went: `{ ok, images: { deleted, failed }, auth: { loginTokens, sessions } }`, with `null` for a job that failed and status 500 when anything failed. The route's logic lives in `lib/cleanup-route.ts`. To run it by hand: `curl -H "Authorization: Bearer $CRON_SECRET" https://dolphub.tech/api/cron/cleanup`.
