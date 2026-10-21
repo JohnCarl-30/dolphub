@@ -1,6 +1,6 @@
 import type { PublicOpportunity } from "@/lib/services/opportunities";
 import { closingLabel, formatManilaTime } from "@/lib/opportunity-time";
-import { actionLabel, KIND_NAMES } from "@/lib/mock-home";
+import { actionLabel, KIND_NAMES } from "@/lib/opportunity-display";
 
 /** One post that closes within three days, set apart on ink so it is the first thing read. */
 export function FocusBand({ post, now }: { post: PublicOpportunity; now: Date }) {

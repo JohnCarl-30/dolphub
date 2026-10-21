@@ -1,7 +1,6 @@
 import type { PublicOpportunity } from "@/lib/services/opportunities";
 import { closingLabel, formatManilaDate, formatManilaTime } from "@/lib/opportunity-time";
-import { actionLabel, KIND_NAMES } from "@/lib/mock-home";
-import { whereLabel } from "@/lib/opportunity-display";
+import { actionLabel, KIND_NAMES, whereLabel } from "@/lib/opportunity-display";
 import Link from "next/link";
 
 /** The next three open posts, soonest closing first. `posts` is null while the clock loads. */

@@ -1,39 +1,31 @@
 import { expect, test } from "@playwright/test";
 
+// Posts come from e2e/seed-auth.ts. The admin tests may add a competition closing in 12 days while these run.
+
 test.describe("upcoming strip", () => {
-  test("shows the next three open posts with closing labels, soonest first", async ({ page }) => {
+  test("shows the next three open posts from the database, soonest closing first", async ({ page }) => {
     await page.goto("/");
     const strip = page.getByRole("region", { name: "Upcoming" });
     const cards = strip.getByRole("listitem");
     await expect(cards).toHaveCount(3);
-    await expect(cards.nth(0)).toContainText("Closes today");
-    await expect(cards.nth(1)).toContainText("Closes tomorrow");
-    await expect(strip).not.toContainText("UI design jam"); // the closed sample post
+    await expect(cards.nth(0)).toContainText("Team capture-the-flag");
+    await expect(cards.nth(0)).toContainText("Closes tomorrow");
+    await expect(cards.nth(1)).toContainText("Cloud hack day");
+    await expect(cards.nth(1)).toContainText(/Closes in \d days/);
+    await expect(strip).not.toContainText("Closed scholarship");
+    await expect(strip).not.toContainText("Hidden internship");
     const link = cards.nth(0).getByRole("link");
-    await expect(link).toHaveAttribute("href", /^https:\/\//);
+    await expect(link).toHaveAttribute("href", "https://example.com/team-ctf");
     await expect(link).toHaveAttribute("target", "_blank");
-  });
-
-  test("explains itself when nothing is open", async ({ page }) => {
-    await page.goto("/?mock=empty");
-    const strip = page.getByRole("region", { name: "Upcoming" });
-    await expect(strip.getByText("Nothing open right now")).toBeVisible();
-    await expect(page.getByRole("complementary")).toHaveCount(0);
   });
 });
 
 test.describe("focus band", () => {
-  test("puts the post closing soonest above the showcase", async ({ page }) => {
+  test("puts the post closing within three days above the showcase", async ({ page }) => {
     await page.goto("/");
-    const band = page.getByRole("complementary", { name: /Hack Night/ });
-    await expect(band).toContainText("Closes today");
-    await expect(band.getByRole("link", { name: /Register/ })).toHaveAttribute("href", /^https:\/\//);
-  });
-
-  test("stays away when nothing closes within three days", async ({ page }) => {
-    await page.goto("/?mock=calm");
-    await expect(page.getByRole("region", { name: "Upcoming" }).getByRole("listitem")).toHaveCount(3);
-    await expect(page.getByRole("complementary")).toHaveCount(0);
+    const band = page.getByRole("complementary", { name: "Team capture-the-flag" });
+    await expect(band).toContainText("Closes tomorrow");
+    await expect(band.getByRole("link", { name: /Register/ })).toHaveAttribute("href", "https://example.com/team-ctf");
   });
 });
 

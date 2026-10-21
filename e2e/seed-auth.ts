@@ -199,7 +199,10 @@ async function seedNewcomers(db: E2eDb) {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** Posts for the /opportunities tests: two open, one closed, one hidden. Dates move with each run. */
+/**
+ * Posts for the /opportunities and home page tests: three open, one closed, one hidden. Dates move with each run.
+ * The competition closes tomorrow, so it leads the home strip and fills the focus band.
+ */
 async function seedOpportunities(db: E2eDb) {
   const now = Date.now();
   const at = (days: number) => new Date(now + days * DAY_MS);
@@ -230,6 +233,20 @@ async function seedOpportunities(db: E2eDb) {
       startsAt: at(5),
       endsAt: at(5.2),
       deadline: null,
+      isHidden: false,
+    },
+    {
+      slug: "e2e-team-ctf-f7g8",
+      kind: "competition",
+      title: "Team capture-the-flag",
+      organization: "PCU IT Society",
+      summary: "A one-day CTF for teams of four.",
+      url: "https://example.com/team-ctf",
+      locationType: "online",
+      location: null,
+      startsAt: null,
+      endsAt: null,
+      deadline: at(1),
       isHidden: false,
     },
     {

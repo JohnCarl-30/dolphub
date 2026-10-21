@@ -3,9 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { JsonLd } from "@/lib/json-ld";
-import { actionLabel, KIND_NAMES } from "@/lib/mock-home";
 import { getOpportunityPage } from "@/lib/opportunities";
-import { dateTimeLabel, whereLabel } from "@/lib/opportunity-display";
+import { actionLabel, dateTimeLabel, KIND_NAMES, whereLabel } from "@/lib/opportunity-display";
 import { closingLabel } from "@/lib/opportunity-time";
 import {
   missingOpportunityMetadata,
