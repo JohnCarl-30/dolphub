@@ -35,6 +35,7 @@ Open http://localhost:3000/login and enter a PCU address. The sign-in link print
    | `PCU_EMAIL_DOMAINS` | `pcu.edu.ph` |
    | `RESEND_API_KEY` | From Resend |
    | `RATE_LIMIT_SECRET` | 32 or more random characters, such as the output of `openssl rand -hex 32` |
+   | `CRON_SECRET` | 32 or more random characters. Vercel sends it with the nightly cleanup, scheduled in `vercel.json` |
    | `EMAIL_FROM` | `PCU Community <login@dolphub.tech>` |
    | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_BASE_URL` | From Cloudflare |
 

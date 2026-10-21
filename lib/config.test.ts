@@ -20,6 +20,8 @@ describe("loadConfig", () => {
     expect(c.SIGNIN_LINKS_PER_NETWORK_PER_HOUR).toBe(30);
     expect(c.RATE_LIMIT_SECRET).toBeUndefined();
     expect(() => loadConfig({ ...dev, RATE_LIMIT_SECRET: "short" })).toThrow(/RATE_LIMIT_SECRET/);
+    expect(c.CRON_SECRET).toBeUndefined();
+    expect(() => loadConfig({ ...dev, CRON_SECRET: "short" })).toThrow(/CRON_SECRET/);
   });
 
   it("requires Resend, R2, https and a real database in production", () => {
