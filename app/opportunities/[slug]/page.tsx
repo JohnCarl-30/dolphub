@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { REPORT_EMAIL } from "@/components/support-contacts";
 import { JsonLd } from "@/lib/json-ld";
 import { getOpportunityPage } from "@/lib/opportunities";
 import { actionLabel, dateTimeLabel, KIND_NAMES, whereLabel } from "@/lib/opportunity-display";
@@ -13,9 +14,6 @@ import {
   opportunityMetadata,
   siteUrl,
 } from "@/lib/seo";
-
-/** Where "Report a problem with this post" goes: the maintainer who runs the admin page. */
-const REPORT_EMAIL = "johncarlsantos30@gmail.com";
 
 const inlineLink =
   "font-medium text-ink underline decoration-ink/30 underline-offset-4 transition-colors hover:decoration-ink focus-visible:ring-2 focus-visible:ring-ink";
