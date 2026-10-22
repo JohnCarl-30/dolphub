@@ -307,6 +307,7 @@ Every function takes the acting user's id and refuses non-admins. Every write is
 | `unhideProfile(ctx, actorId, handle)` | Restores a page |
 | `setSignupsFrozen(ctx, actorId, frozen, reason?)` | The signup kill switch. Existing users can still sign in |
 | `deleteAccount(ctx, { actorUserId, targetUserId, confirm: true })` | Users may delete themselves, and admins may delete anyone. Removes the profile, projects, images and R2 files |
+| `deleteAccountByHandle(ctx, actorId, handle, confirmHandle)` | The admin page's delete button. `confirmHandle` must match the handle. Refuses the admin's own account |
 
 The admin page at `/admin` reads these through `lib/admin.ts`. `requireAdminPage()` sends signed-out visitors to `/login` and shows everyone else who is not an admin the ordinary 404. Its actions are in `app/admin/actions.ts`:
 
@@ -315,6 +316,7 @@ The admin page at `/admin` reads these through `lib/admin.ts`. `requireAdminPage
 | `hideProfileAction(handle, reason)` | A reason is required. Refreshes the page and the home grid | `{ handle }` |
 | `unhideProfileAction(handle)` | | `{ handle }` |
 | `setSignupsFrozenAction(frozen, reason?)` | The reason goes to the audit log | `{ frozen }` |
+| `deleteAccountAction(handle, confirmHandle)` | The handle, typed by the admin. Refreshes the page and the home grid | `{ handle }` |
 
 Make someone an admin by setting `users.is_admin` to true in the database. There is no screen for it.
 

@@ -2,7 +2,7 @@ import sharp from "sharp";
 import { beforeEach, describe, expect, it } from "vitest";
 import { adminAuditLog, images, profiles, projects, users } from "../db/schema";
 import { createTestContext, PCU_DOMAINS, type TestEnv } from "../test/helpers";
-import { deleteAccount, getStats, hideProfile, listProfilesForAdmin, setSignupsFrozen, unhideProfile } from "./admin";
+import { deleteAccount, deleteAccountByHandle, getStats, hideProfile, listProfilesForAdmin, setSignupsFrozen, unhideProfile } from "./admin";
 import { addProjectImage } from "./images";
 import { createProfile, getPublicProfile } from "./profiles";
 import { createProject } from "./projects";
@@ -98,5 +98,23 @@ describe("admin", () => {
     expect(result.handle).toBe("juan");
     const [log] = await env.db.select().from(adminAuditLog);
     expect(log).toMatchObject({ action: "self_delete_account", actorUserId: null });
+  });
+
+  it("deletes an account by handle from the admin page, once the handle is typed", async () => {
+    await expect(deleteAccountByHandle(env.ctx, studentId, "juan", "juan")).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(deleteAccountByHandle(env.ctx, adminId, "juan", "jua")).rejects.toMatchObject({ field: "confirm" });
+    await expect(deleteAccountByHandle(env.ctx, adminId, "nobody", "nobody")).rejects.toMatchObject({ code: "NOT_FOUND" });
+
+    expect(await deleteAccountByHandle(env.ctx, adminId, "JUAN", " Juan ")).toEqual({ handle: "juan" });
+    expect(await env.db.select().from(profiles)).toHaveLength(0);
+    expect((await env.db.select().from(users)).map((u) => u.id)).toEqual([adminId]);
+    const [log] = await env.db.select().from(adminAuditLog);
+    expect(log).toMatchObject({ action: "delete_account", actorUserId: adminId, target: `user:${studentId}` });
+  });
+
+  it("will not let an admin delete their own account from the admin page", async () => {
+    await createProfile(env.db, adminId, { handle: "boss", displayName: "Boss", courseId: env.courseId });
+    await expect(deleteAccountByHandle(env.ctx, adminId, "boss", "boss")).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(await env.db.select().from(profiles)).toHaveLength(2);
   });
 });

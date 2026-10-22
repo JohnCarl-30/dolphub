@@ -64,7 +64,9 @@ A 500 answer names the job that failed. Either job missing a night is harmless, 
 
 ## A student asks to delete their account
 
-There is no button for this yet. The `deleteAccount` service in `lib/services/admin.ts` removes the profile, projects, images and R2 files, but nothing calls it. Hide the page right away, then ask the backend owner to run the deletion. Self-serve deletion is on the backlog in [PLAN.md](./PLAN.md#backlog-after-launch).
+On `/admin`, find their page under Student pages, press **Delete**, type the handle and press **Delete for good**. This removes the account, page, projects and photos, and cannot be undone. The audit log records who did it. Any photo that fails to leave R2 is removed by the nightly cleanup. Self-serve deletion is on the backlog in [PLAN.md](./PLAN.md#backlog-after-launch).
+
+The button only lists accounts that have a page, and it will not delete your own account.
 
 ## Free-tier limits to watch
 

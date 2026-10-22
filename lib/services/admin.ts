@@ -200,3 +200,27 @@ export async function deleteAccount(
   });
   return { handle: profile?.handle ?? null, failedKeys };
 }
+
+/**
+ * The admin screen's delete button. `confirmHandle` must match the handle,
+ * typed by the admin. Admins cannot delete their own account this way, so a
+ * slip cannot lock the last admin out. Any R2 file that fails to delete is
+ * left for the nightly sweep.
+ */
+export async function deleteAccountByHandle(
+  ctx: ServiceContext,
+  actorUserId: string,
+  handle: string,
+  confirmHandle: string,
+): Promise<{ handle: string }> {
+  await requireAdmin(ctx.db, actorUserId);
+  const profile = await findProfileByHandle(ctx.db, handle);
+  if (confirmHandle.trim().toLowerCase() !== profile.handle) {
+    throw new ServiceError("VALIDATION", `Type ${profile.handle} to confirm`, "confirm");
+  }
+  if (profile.userId === actorUserId) {
+    throw new ServiceError("FORBIDDEN", "You cannot delete your own account from the admin page");
+  }
+  await deleteAccount(ctx, { actorUserId, targetUserId: profile.userId, confirm: true });
+  return { handle: profile.handle };
+}

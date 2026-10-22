@@ -101,7 +101,7 @@ Added later: `/api/mcp/admin` for the admin MCP server, and `/api/mcp` for the p
 
 - Course search. Course is still stored.
 - Report button and auto-hide. Replaced by a "report this page" link to the admin.
-- Self-serve account deletion. Done by hand on request, within days.
+- Self-serve account deletion. An admin deletes the account from /admin on request, within days.
 - Recovery email.
 
 ## Open items and risks
