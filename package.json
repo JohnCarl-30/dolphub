@@ -21,7 +21,7 @@
     "@neondatabase/serverless": "^1.2.0",
     "@tsparticles/engine": "^3.9.1",
     "@tsparticles/react": "^3.0.0",
-    "@tsparticles/slim": "^3.9.1",
+    "@tsparticles/slim": "^4.4.0",
     "drizzle-orm": "^0.45.4",
     "next": "16.4.2",
     "react": "19.3.1",
