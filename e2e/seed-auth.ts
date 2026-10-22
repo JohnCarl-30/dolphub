@@ -58,18 +58,21 @@ async function storeSession(db: E2eDb, userId: string, token: string) {
 }
 
 /**
- * For e2e/admin.spec.ts: one visible student page per Playwright project, so
- * the desktop and phone runs never hide the same page at once. Signups start open.
+ * For e2e/admin.spec.ts: one visible student page to hide and one account to
+ * delete per Playwright project, so the desktop and phone runs never touch the
+ * same page at once. A deleted account is created again on the next run. Signups start open.
  */
 async function seedAdminTargets(db: E2eDb) {
   const [course] = await db.select({ id: courses.id }).from(courses).limit(1);
   if (!course) throw new Error("No courses seeded");
   for (const project of ["desktop", "phone"]) {
-    const handle = `e2e-hide-${project}`;
-    await db.insert(users).values({ email: `${handle}@pcu.edu.ph` }).onConflictDoNothing({ target: users.email });
-    const [student] = await db.select({ id: users.id }).from(users).where(eq(users.email, `${handle}@pcu.edu.ph`));
-    const row = { userId: student!.id, handle, displayName: `Hide test ${project}`, courseId: course.id, isHidden: false, hiddenReason: null };
-    await db.insert(profiles).values(row).onConflictDoUpdate({ target: profiles.handle, set: row });
+    for (const [kind, name] of [["hide", "Hide"], ["delete", "Delete"]]) {
+      const handle = `e2e-${kind}-${project}`;
+      await db.insert(users).values({ email: `${handle}@pcu.edu.ph` }).onConflictDoNothing({ target: users.email });
+      const [student] = await db.select({ id: users.id }).from(users).where(eq(users.email, `${handle}@pcu.edu.ph`));
+      const row = { userId: student!.id, handle, displayName: `${name} test ${project}`, courseId: course.id, isHidden: false, hiddenReason: null };
+      await db.insert(profiles).values(row).onConflictDoUpdate({ target: profiles.handle, set: row });
+    }
   }
   await db.update(appSettings).set({ signupsFrozen: false }).where(eq(appSettings.id, 1));
 }

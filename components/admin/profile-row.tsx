@@ -3,22 +3,28 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { hideProfileAction, unhideProfileAction } from "@/app/admin/actions";
+import { deleteAccountAction, hideProfileAction, unhideProfileAction } from "@/app/admin/actions";
+import type { ActionResult } from "@/lib/actions/result";
 import type { AdminProfile } from "@/lib/admin";
 import { formatManilaDate } from "@/lib/opportunity-time";
 import { profilePath } from "@/lib/seo";
 import { dangerButton, inlineLink, inputClass, labelClass, secondaryButton } from "./styles";
 
-/** One student page in the admin list, with hide and restore. */
+type Mode = "idle" | "hiding" | "deleting";
+
+/** One student page in the admin list: hide or restore, and delete the account after typing its handle. */
 export function ProfileRow({ profile }: { profile: AdminProfile }) {
   const router = useRouter();
-  const [hiding, setHiding] = useState(false);
+  const [mode, setMode] = useState<Mode>("idle");
   const [reason, setReason] = useState("");
+  const [typedHandle, setTypedHandle] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const reasonId = `hide-reason-${profile.handle}`;
+  const confirmId = `delete-confirm-${profile.handle}`;
+  const handleTyped = typedHandle.trim().toLowerCase() === profile.handle;
 
-  function run(action: () => Promise<{ ok: true } | { ok: false; error: string }>) {
+  function run(action: () => Promise<ActionResult<unknown>>) {
     startTransition(async () => {
       const result = await action();
       if (!result.ok) {
@@ -26,10 +32,17 @@ export function ProfileRow({ profile }: { profile: AdminProfile }) {
         return;
       }
       setError(null);
-      setHiding(false);
+      setMode("idle");
       setReason("");
+      setTypedHandle("");
       router.refresh();
     });
+  }
+
+  function cancel() {
+    setMode("idle");
+    setTypedHandle("");
+    setError(null);
   }
 
   return (
@@ -50,7 +63,7 @@ export function ProfileRow({ profile }: { profile: AdminProfile }) {
         <p className="text-sm leading-6">Reason: {profile.hiddenReason}</p>
       ) : null}
 
-      {hiding ? (
+      {mode === "hiding" ? (
         <form
           className="grid gap-2"
           onSubmit={(event) => {
@@ -78,15 +91,43 @@ export function ProfileRow({ profile }: { profile: AdminProfile }) {
             <button type="submit" disabled={pending} className={dangerButton}>
               {pending ? "Hiding…" : "Hide page"}
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setHiding(false);
-                setError(null);
-              }}
-              className={secondaryButton}
-            >
+            <button type="button" onClick={cancel} className={secondaryButton}>
               Cancel
+            </button>
+          </div>
+        </form>
+      ) : mode === "deleting" ? (
+        <form
+          aria-label="Confirm delete"
+          className="grid gap-2 border border-red-700 px-4 py-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            run(() => deleteAccountAction(profile.handle, typedHandle));
+          }}
+        >
+          <p className="text-sm leading-6">
+            Delete this student&apos;s account for good? Their page, projects and photos are removed and cannot be
+            restored. Hiding keeps everything so you can bring the page back.
+          </p>
+          <label htmlFor={confirmId} className={labelClass}>
+            Type {profile.handle} to confirm
+          </label>
+          <input
+            id={confirmId}
+            value={typedHandle}
+            onChange={(event) => setTypedHandle(event.target.value)}
+            autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            autoFocus
+            className={inputClass}
+          />
+          <div className="flex flex-wrap gap-2">
+            <button type="submit" disabled={pending || !handleTyped} className={dangerButton}>
+              {pending ? "Deleting…" : "Delete for good"}
+            </button>
+            <button type="button" onClick={cancel} className={secondaryButton}>
+              Keep it
             </button>
           </div>
         </form>
@@ -103,10 +144,13 @@ export function ProfileRow({ profile }: { profile: AdminProfile }) {
               <span className="sr-only"> /u/{profile.handle}</span>
             </button>
           ) : (
-            <button type="button" onClick={() => setHiding(true)} className={secondaryButton}>
+            <button type="button" onClick={() => setMode("hiding")} className={secondaryButton}>
               Hide<span className="sr-only"> /u/{profile.handle}</span>
             </button>
           )}
+          <button type="button" onClick={() => setMode("deleting")} className={secondaryButton}>
+            Delete<span className="sr-only"> /u/{profile.handle}</span>
+          </button>
         </div>
       )}
       {error ? (

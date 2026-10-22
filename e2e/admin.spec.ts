@@ -78,6 +78,33 @@ test.describe("admin overview", () => {
     await expect(heading).toHaveText(`Hide test ${testInfo.project.name}`);
   });
 
+  test("deletes a student's account once the handle is typed", async ({ page }, testInfo) => {
+    const handle = `e2e-delete-${testInfo.project.name}`;
+    const heading = page.getByRole("heading", { level: 1 });
+    await page.goto(`/u/${handle}`);
+    await expect(heading).toHaveText(`Delete test ${testInfo.project.name}`);
+
+    await page.goto("/admin");
+    const row = page.getByRole("article", { name: `/u/${handle}` });
+    await row.getByRole("button", { name: `Delete /u/${handle}` }).click();
+    await row.getByRole("button", { name: "Keep it" }).click();
+    await expect(row.getByRole("button", { name: "Delete for good" })).toHaveCount(0);
+
+    await row.getByRole("button", { name: `Delete /u/${handle}` }).click();
+    const confirm = row.getByLabel(`Type ${handle} to confirm`);
+    await expect(confirm).toBeFocused();
+    const deleteButton = row.getByRole("button", { name: "Delete for good" });
+    await expect(deleteButton).toBeDisabled();
+    await confirm.fill("e2e-delete");
+    await expect(deleteButton).toBeDisabled();
+    await confirm.fill(handle);
+    await deleteButton.click();
+    await expect(page.getByRole("article", { name: `/u/${handle}` })).toHaveCount(0);
+
+    await page.goto(`/u/${handle}`);
+    await expect(heading).toHaveText("No page for this handle.");
+  });
+
   test("pauses and resumes signups", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "phone", "Signups are site-wide, so one project covers it, from a phone");
     await page.goto("/admin");

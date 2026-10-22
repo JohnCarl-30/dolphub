@@ -5,12 +5,12 @@ import { ok, toActionError, type ActionResult } from "@/lib/actions/result";
 import { requireUser } from "@/lib/auth";
 import { GRID_TAG, profileTag } from "@/lib/cache-tags";
 import { getServiceContext } from "@/lib/server";
-import { hideProfile, setSignupsFrozen, unhideProfile } from "@/lib/services/admin";
+import { deleteAccountByHandle, hideProfile, setSignupsFrozen, unhideProfile } from "@/lib/services/admin";
 
 /*
  * Moderation actions for the admin page. Each checks the session, and the
- * service refuses anyone who is not an admin. Hiding and restoring a page
- * refresh it and the home grid straight away.
+ * service refuses anyone who is not an admin. Hiding, restoring and deleting
+ * a page refresh it and the home grid straight away.
  */
 
 function refreshPublicPages(handle: string) {
@@ -41,6 +41,21 @@ export async function unhideProfileAction(handle: string): Promise<ActionResult<
     return ok(result);
   } catch (error) {
     return toActionError(error, "Unhide profile");
+  }
+}
+
+/** Deletes the student's account and everything it owns. `confirmHandle` is the handle, typed by the admin. */
+export async function deleteAccountAction(
+  handle: string,
+  confirmHandle: string,
+): Promise<ActionResult<{ handle: string }>> {
+  const user = await requireUser();
+  try {
+    const result = await deleteAccountByHandle(await getServiceContext(), user.id, handle, confirmHandle);
+    refreshPublicPages(result.handle);
+    return ok(result);
+  } catch (error) {
+    return toActionError(error, "Delete account");
   }
 }
 
