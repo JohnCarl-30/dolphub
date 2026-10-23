@@ -45,6 +45,8 @@ npm run db:make-admin -- them@pcu.edu.ph
 
 Admin rights apply on their next page load.
 
+There is no password admin on the live site. The `admin@pcu.edu.ph` / `password` mock admin in the README only works in local development against the `pglite:` database.
+
 ## Deploy and roll back
 
 - **Deploy.** Merging a pull request into `main` deploys to production. CI must pass first.

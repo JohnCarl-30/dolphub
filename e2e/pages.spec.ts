@@ -311,6 +311,14 @@ test.describe("login", () => {
     expect(styles.background).toBe("rgb(14, 16, 18)");
     await expect(button).toHaveClass(/press/);
   });
+
+  // Browser tests run a production build, which must never offer the fixed-password admin.
+  test("has no mock admin login in a production build", async ({ page }) => {
+    await page.goto("/login");
+    await expect(page.getByRole("button", { name: "Email me a sign-in link" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Local mock admin" })).toHaveCount(0);
+    await expect(page.locator('input[type="password"]')).toHaveCount(0);
+  });
 });
 
 for (const path of ["/", "/u/mira", "/dashboard", "/profile", "/login", "/privacy", "/terms", "/support"]) {
