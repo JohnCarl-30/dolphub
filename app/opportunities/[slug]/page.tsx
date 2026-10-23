@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { SignInOptions } from "@/components/sign-in-options";
 import { REPORT_EMAIL } from "@/components/support-contacts";
+import { getCurrentUser } from "@/lib/auth";
 import { JsonLd } from "@/lib/json-ld";
 import { getOpportunityPage } from "@/lib/opportunities";
 import { actionLabel, dateTimeLabel, KIND_NAMES, whereLabel } from "@/lib/opportunity-display";
@@ -12,6 +14,7 @@ import {
   OPPORTUNITIES_PATH,
   opportunityJsonLd,
   opportunityMetadata,
+  opportunityPath,
   siteUrl,
 } from "@/lib/seo";
 
@@ -49,7 +52,7 @@ export default function Page({ params }: PageProps<"/opportunities/[slug]">) {
 
 async function OpportunityDetail({ params }: { params: PageProps<"/opportunities/[slug]">["params"] }) {
   const { slug } = await params;
-  const post = await getOpportunityPage(slug);
+  const [post, user] = await Promise.all([getOpportunityPage(slug), getCurrentUser()]);
   if (!post) notFound();
 
   const now = new Date();
@@ -103,7 +106,20 @@ async function OpportunityDetail({ params }: { params: PageProps<"/opportunities
         ))}
       </dl>
 
-      {post.isClosed ? null : (
+      {post.isClosed ? null : !user ? (
+        // The apply link is for signed-in students only, so it never reaches a signed-out page.
+        <section aria-labelledby="sign-in-heading" className="mt-8 border border-ink/10 bg-paper px-4 py-5">
+          <h2 id="sign-in-heading" className="font-medium">
+            Sign in to {action.toLowerCase()}
+          </h2>
+          <p className="mt-1 text-sm leading-6 text-muted">
+            The {action.toLowerCase()} link is for PCU students. Sign in and you&apos;ll come straight back to this post.
+          </p>
+          <div className="mt-4 max-w-sm">
+            <SignInOptions next={opportunityPath(post.slug)} />
+          </div>
+        </section>
+      ) : (
         <div className="mt-8">
           <a
             href={post.url}

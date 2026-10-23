@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { JsonLd } from "@/lib/json-ld";
-import { getOpenOpportunities } from "@/lib/opportunities";
+import { getOpenOpportunityPreviews } from "@/lib/opportunities";
 import { getShowcase } from "@/lib/profiles";
 import { OG_DEFAULTS, SITE, siteUrl, websiteJsonLd } from "@/lib/seo";
 import { HomePage } from "./home-page";
@@ -15,8 +15,8 @@ export default function Home() {
   return (
     <>
       <JsonLd data={websiteJsonLd(siteUrl())} />
-      {/* Not awaited: the hero renders at once and the showcase and posts stream in. */}
-      <HomePage showcase={getShowcase()} opportunities={getOpenOpportunities()} />
+      {/* Not awaited: the hero renders at once and the showcase and posts stream in. Previews leave out apply links, which need sign-in. */}
+      <HomePage showcase={getShowcase()} opportunities={getOpenOpportunityPreviews()} />
     </>
   );
 }

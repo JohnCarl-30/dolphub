@@ -1,10 +1,10 @@
-import type { PublicOpportunity } from "@/lib/services/opportunities";
 import { closingLabel, formatManilaDate, formatManilaTime } from "@/lib/opportunity-time";
-import { actionLabel, KIND_NAMES, whereLabel } from "@/lib/opportunity-display";
+import { actionLabel, KIND_NAMES, whereLabel, type OpportunityPreview } from "@/lib/opportunity-display";
+import { opportunityPath } from "@/lib/seo";
 import Link from "next/link";
 
 /** The next three open posts, soonest closing first. `posts` is null while the clock loads. */
-export function UpcomingStrip({ posts, now }: { posts: PublicOpportunity[] | null; now: Date | null }) {
+export function UpcomingStrip({ posts, now }: { posts: OpportunityPreview[] | null; now: Date | null }) {
   return (
     <section aria-labelledby="upcoming-heading" className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
       <p className="font-mono text-[11px] uppercase tracking-wide text-muted">/upcoming</p>
@@ -44,16 +44,15 @@ export function UpcomingStrip({ posts, now }: { posts: PublicOpportunity[] | nul
   );
 }
 
-function UpcomingCard({ post, now }: { post: PublicOpportunity; now: Date }) {
+/** Opens the post's own page, where signed-in students find the apply link. */
+function UpcomingCard({ post, now }: { post: OpportunityPreview; now: Date }) {
   const date = post.startsAt ?? post.deadline;
   const time = post.startsAt ? `, ${formatManilaTime(post.startsAt)}` : "";
   const where = whereLabel(post);
 
   return (
-    <a
-      href={post.url}
-      target="_blank"
-      rel="noopener noreferrer"
+    <Link
+      href={opportunityPath(post.slug)}
       className="press group flex h-full flex-col border border-ink/10 bg-paper px-4 py-5 outline-none transition-colors hover:border-ink/40 focus-visible:ring-2 focus-visible:ring-ink"
     >
       <p className="flex items-baseline justify-between gap-4 font-mono text-[11px] uppercase tracking-wide">
@@ -83,8 +82,7 @@ function UpcomingCard({ post, now }: { post: PublicOpportunity; now: Date }) {
         <span aria-hidden="true" className="inline-block transition-transform duration-150 group-hover:translate-x-1">
           →
         </span>
-        <span className="sr-only">(opens in a new tab)</span>
       </p>
-    </a>
+    </Link>
   );
 }

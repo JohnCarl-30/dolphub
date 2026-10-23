@@ -107,7 +107,6 @@ describe("opportunity SEO", () => {
     title: "Software Intern",
     organization: "Accenture",
     summary: "Three-month internship for IT and CS students.",
-    url: "https://careers.example.com/intern",
     locationType: "onsite",
     location: "Ortigas, Pasig",
     startsAt: null,
@@ -149,6 +148,8 @@ describe("opportunity SEO", () => {
     expect(ld).toMatchObject({ "@type": "Event", startDate: "2026-10-30T06:00:00.000Z" });
     expect(ld.eventAttendanceMode).toBe("https://schema.org/MixedEventAttendanceMode");
     expect(ld.location).toHaveLength(2);
+    // The online part points at the post page. The organization's link is for signed-in students only.
+    expect(ld.location).toContainEqual({ "@type": "VirtualLocation", url: "https://dolphub.tech/opportunities/" + base.slug });
     expect(opportunityJsonLd({ ...base, kind: "competition" }, "https://dolphub.tech", false)).toBeNull();
     expect(opportunityJsonLd({ ...base, kind: "program" }, "https://dolphub.tech", false)).toBeNull();
     expect(opportunityJsonLd(base, "https://dolphub.tech", true)).toBeNull();

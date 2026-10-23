@@ -7,6 +7,12 @@ import { formatManilaDate, formatManilaTime, isEndOfManilaDay } from "./opportun
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * An open post without the organization's link, for pages anyone can open.
+ * The link is only shown on the post's own page, to signed-in students.
+ */
+export type OpportunityPreview = Omit<PublicOpportunity, "url">;
+
 /** Display names, kept in step with KIND_LABELS in lib/services/opportunities.ts (a server module). */
 export const KIND_NAMES: Record<OpportunityKind, string> = {
   internship: "Internship",
@@ -21,11 +27,7 @@ export function actionLabel(kind: OpportunityKind): string {
 }
 
 /** Open posts, soonest closing first, the same rule as listOpenOpportunities. */
-export function upcomingOpportunities(
-  posts: PublicOpportunity[],
-  now: Date,
-  limit = 3,
-): PublicOpportunity[] {
+export function upcomingOpportunities<T extends OpportunityPreview>(posts: T[], now: Date, limit = 3): T[] {
   return posts
     .filter((item) => item.closesAt.getTime() > now.getTime())
     .sort((a, b) => a.closesAt.getTime() - b.closesAt.getTime())
@@ -36,7 +38,7 @@ export function upcomingOpportunities(
 export const FOCUS_WINDOW_DAYS = 3;
 
 /** The soonest-closing open post that closes within the focus window, or null. */
-export function focusOpportunity(posts: PublicOpportunity[], now: Date): PublicOpportunity | null {
+export function focusOpportunity<T extends OpportunityPreview>(posts: T[], now: Date): T | null {
   const [first] = upcomingOpportunities(posts, now, 1);
   if (!first) return null;
   return first.closesAt.getTime() - now.getTime() <= FOCUS_WINDOW_DAYS * DAY_MS ? first : null;

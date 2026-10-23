@@ -113,6 +113,8 @@ Without R2 settings, photos are kept in server memory and served from `/dev-imag
 
 The plan is in [OPPORTUNITIES.md](./OPPORTUNITIES.md). Admins post, students follow the link out.
 
+**The apply link needs sign-in.** Anyone can read a post, but only signed-in students see its `url`. Signed out, `/opportunities/<slug>` shows "Sign in to apply" with the Google and email options, and both return to the post. The `url` is left out of every page a signed-out visitor can open: the home page gets `getOpenOpportunityPreviews()` (the `OpportunityPreview` type, without `url`), its cards and focus band link to the post page, and the structured data points online events at the post page.
+
 ### Loading
 
 From a Server Component inside a `<Suspense>` boundary:
@@ -131,7 +133,7 @@ const post = await getOpportunityPage(slug); // null when missing or hidden: cal
 | `getOpportunityPage(slug)` | One post plus `isClosed`. Closed posts are still returned, so show "This opportunity has closed" |
 | `getAdminOpportunities()` | Every post including hidden and closed, with `id`, `isHidden`, `hiddenReason`, `isClosed`. Admins only |
 
-Both public loaders wait for the request and then read a cached copy, so pages never touch the database at build time. A post leaves the list the moment it closes. The home page passes `getOpenOpportunities()` unawaited to the client, which picks the next three posts and the focus band post (closing within three days) with `upcomingOpportunities` and `focusOpportunity` from `lib/opportunity-display.ts`, using the visitor's clock.
+Both public loaders wait for the request and then read a cached copy, so pages never touch the database at build time. A post leaves the list the moment it closes. The home page passes `getOpenOpportunityPreviews()` unawaited to the client, which picks the next three posts and the focus band post (closing within three days) with `upcomingOpportunities` and `focusOpportunity` from `lib/opportunity-display.ts`, using the visitor's clock.
 
 Each post (`PublicOpportunity` in `lib/services/opportunities.ts`) has these fields:
 
@@ -242,9 +244,11 @@ Student email addresses must never reach the server logs. Log unexpected errors 
 
 Students sign in with a one-time link emailed through Resend. The link opens a page with a "Continue" button, and only the button uses the link. Mail scanners that open links in advance therefore cannot use it up.
 
+**Returning after sign-in.** `/login`, `/auth/google` and `/dashboard` take `?next=<path>`, such as an opportunity page. The email flow carries it in the emailed link and the verify form; the Google flow keeps it in the attempt cookie, including on the way back after a failure. A signed-in visit to `/dashboard?next=` goes straight there. `safeNextPath` in `lib/next-path.ts` only accepts plain paths on this site, so a crafted link cannot send anyone elsewhere.
+
 | Function | Does |
 |---|---|
-| `requestSignInLink(ctx, sender, settings, email, clientIp?)` | Emails a link to `APP_URL/auth/verify`. Existing users can always ask. New addresses must pass the domain check and open signups. Limits: 3 links per address per 15 minutes, `SIGNIN_LINKS_PER_NETWORK_PER_HOUR` per network, and `DAILY_EMAIL_CAP` per 24 hours. Networks are stored only as a keyed hash |
+| `requestSignInLink(ctx, sender, settings, email, clientIp?, next?)` | Emails a link to `APP_URL/auth/verify`, with `next` when it is a safe path. Existing users can always ask. New addresses must pass the domain check and open signups. Limits: 3 links per address per 15 minutes, `SIGNIN_LINKS_PER_NETWORK_PER_HOUR` per network, and `DAILY_EMAIL_CAP` per 24 hours. Networks are stored only as a keyed hash |
 | `consumeSignInLink(ctx, settings, token)` | Uses the link once, creates the account if needed, and returns a 30-day session token |
 | `startGoogleSignIn(settings)` | Builds Google's consent URL with PKCE, a state value and a nonce, and returns them for a 10-minute cookie. `GET /auth/google` sets that cookie and redirects |
 | `finishGoogleSignIn(ctx, settings, { code, state, attempt })` | `GET /auth/google/callback`. Checks the state, trades the code for an ID token, checks its issuer, audience, expiry, nonce and verified email, then signs in or registers under the same domain and frozen-signup rules as email links. Failures return to `/dashboard?signin=<reason>` |

@@ -2,14 +2,17 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { withNext } from "@/lib/next-path";
 import { verifyAction, type VerifyState } from "../actions";
 
-export function VerifyForm({ token }: { token: string }) {
+/** `next` is where to go after sign-in, carried over from the emailed link. */
+export function VerifyForm({ token, next }: { token: string; next: string | null }) {
   const [state, action, pending] = useActionState<VerifyState, FormData>(verifyAction, { error: null });
 
   return (
     <form action={action} className="flex flex-col gap-3">
       <input type="hidden" name="token" value={token} />
+      {next ? <input type="hidden" name="next" value={next} /> : null}
       <button
         type="submit"
         disabled={pending}
@@ -20,7 +23,7 @@ export function VerifyForm({ token }: { token: string }) {
       {state.error && (
         <p role="alert" className="rise text-sm text-red-700">
           {state.error}{" "}
-          <Link href="/login" className="underline underline-offset-4 transition-colors hover:text-ink">
+          <Link href={withNext("/login", next)} className="underline underline-offset-4 transition-colors hover:text-ink">
             Get a new link
           </Link>
         </p>

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { loginTokens, sessions, users } from "../db/schema";
 import type { EmailSender } from "../email/types";
 import { logError } from "../log";
+import { safeNextPath, withNext } from "../next-path";
 import { nowOf, type ServiceContext } from "./context";
 import { ServiceError } from "./errors";
 import { assertCanRegister, findActiveUserByEmail, normalizeEmail, signInOrRegister } from "./signup";
@@ -108,6 +109,8 @@ export async function requestSignInLink(
   rawEmail: string,
   /** The requester's IP address, as set by the hosting platform. Optional. */
   clientIp?: string | null,
+  /** A path on this site to open after sign-in, such as an opportunity page. Unsafe paths are dropped. */
+  next?: string | null,
 ): Promise<{ email: string }> {
   const parsed = emailSchema.safeParse(normalizeEmail(rawEmail));
   if (!parsed.success) throw new ServiceError("VALIDATION", "Enter a valid email address", "email");
@@ -179,7 +182,7 @@ export async function requestSignInLink(
     })
     .returning({ id: loginTokens.id });
 
-  const link = `${settings.appUrl.replace(/\/+$/, "")}/auth/verify?token=${token}`;
+  const link = withNext(`${settings.appUrl.replace(/\/+$/, "")}/auth/verify?token=${token}`, safeNextPath(next));
   try {
     await sender.send({ to: email, ...signInEmail(link) });
   } catch (error) {

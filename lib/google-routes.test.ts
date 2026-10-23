@@ -58,8 +58,8 @@ describe("Google sign-in routes", () => {
   });
 
   /** Runs /auth/google, then plays Google sending the student back with a code. */
-  async function signIn(tamper: (url: URL) => void = () => {}) {
-    const started = await routes.start();
+  async function signIn(tamper: (url: URL) => void = () => {}, next?: string) {
+    const started = await routes.start(next);
     const google = new URL(started.headers.get("location")!);
     lastNonce = google.searchParams.get("nonce")!;
     const attempt = cookie(started, ATTEMPT)!;
@@ -105,6 +105,25 @@ describe("Google sign-in routes", () => {
     expect(response.headers.get("location")).toBe(`${APP}/dashboard?signin=${reason}`);
     expect(cookie(response, "__Host-session")).toBeUndefined();
     expect(cookie(response, ATTEMPT)!.line).toMatch(/Max-Age=0.*Secure|Secure.*Max-Age=0/i);
+  });
+
+  it("returns to the page the student started from", async () => {
+    const { response } = await signIn(undefined, "/opportunities/acme-intern-a1b2");
+    expect(response.headers.get("location")).toBe(`${APP}/opportunities/acme-intern-a1b2`);
+    expect(cookie(response, "__Host-session")).toBeDefined();
+  });
+
+  it("keeps the return path when sign-in fails, so a retry still comes back", async () => {
+    email = "mira.santos.dev@gmail.com";
+    const { response } = await signIn(undefined, "/opportunities/acme-intern-a1b2");
+    expect(response.headers.get("location")).toBe(
+      `${APP}/dashboard?signin=not-pcu&next=%2Fopportunities%2Facme-intern-a1b2`,
+    );
+  });
+
+  it("ignores a return path to another site", async () => {
+    const { response } = await signIn(undefined, "//evil.example/phish");
+    expect(response.headers.get("location")).toBe(`${APP}/dashboard`);
   });
 
   it("rejects a callback that arrives without the attempt cookie", async () => {

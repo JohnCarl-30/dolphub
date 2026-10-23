@@ -1,6 +1,7 @@
 "use server";
 
 import { logError } from "@/lib/log";
+import { safeNextPath } from "@/lib/next-path";
 import { getClientIp } from "@/lib/request-ip";
 import { requestSignInLink } from "@/lib/services/auth";
 import { ServiceError } from "@/lib/services/errors";
@@ -13,6 +14,7 @@ export type LoginState =
 
 export async function requestLinkAction(_prev: LoginState, formData: FormData): Promise<LoginState> {
   const email = String(formData.get("email") ?? "");
+  const next = safeNextPath(formData.get("next"));
   try {
     const result = await requestSignInLink(
       await getServiceContext(),
@@ -20,6 +22,7 @@ export async function requestLinkAction(_prev: LoginState, formData: FormData): 
       getAuthSettings(),
       email,
       await getClientIp(),
+      next,
     );
     return { status: "sent", email: result.email };
   } catch (error) {

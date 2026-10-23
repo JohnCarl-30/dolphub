@@ -7,8 +7,7 @@ import { FocusBand } from "@/components/home/focus-band";
 import { NewsletterSignup } from "@/components/home/newsletter-signup";
 import { UpcomingStrip } from "@/components/home/upcoming-strip";
 import { useNow } from "@/components/home/use-now";
-import { focusOpportunity, upcomingOpportunities } from "@/lib/opportunity-display";
-import type { PublicOpportunity } from "@/lib/services/opportunities";
+import { focusOpportunity, upcomingOpportunities, type OpportunityPreview } from "@/lib/opportunity-display";
 import { Suspense, use, useMemo, useRef, useState, type RefObject } from "react";
 const STEPS = [
   {
@@ -34,7 +33,7 @@ export function HomePage({
 }: {
   showcase: Promise<Showcase>;
   /** Open posts from the database, soonest closing first. */
-  opportunities: Promise<PublicOpportunity[]>;
+  opportunities: Promise<OpportunityPreview[]>;
 }) {
   const { environment, network, setShowcaseActive } = useParticleNetwork();
   const now = useNow();
@@ -110,13 +109,13 @@ export function HomePage({
 }
 
 /** Both wait for the visitor's clock, so a post that closed since the server read it never shows. */
-function LoadedFocusBand({ opportunities, now }: { opportunities: Promise<PublicOpportunity[]>; now: Date | null }) {
+function LoadedFocusBand({ opportunities, now }: { opportunities: Promise<OpportunityPreview[]>; now: Date | null }) {
   const posts = use(opportunities);
   const post = now ? focusOpportunity(posts, now) : null;
   return post && now ? <FocusBand post={post} now={now} /> : null;
 }
 
-function LoadedUpcomingStrip({ opportunities, now }: { opportunities: Promise<PublicOpportunity[]>; now: Date | null }) {
+function LoadedUpcomingStrip({ opportunities, now }: { opportunities: Promise<OpportunityPreview[]>; now: Date | null }) {
   const posts = use(opportunities);
   return <UpcomingStrip posts={now ? upcomingOpportunities(posts, now) : null} now={now} />;
 }
