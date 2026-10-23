@@ -33,13 +33,11 @@ test.describe("home", () => {
     await expect(page.locator("[data-showcase-card]:visible")).toHaveCount(expected);
     const home = page.getByRole("link", { name: "[ 00 ] Home" });
     const dashboard = page.getByRole("link", { name: "[ 01 ] Dashboard" });
-    const profile = page.getByRole("link", { name: "[ 02 ] Profile" });
     await expect(home).toHaveAttribute("href", "/");
     await expect(home).toHaveAttribute("aria-current", "page");
     await expect(dashboard).toHaveAttribute("href", "/dashboard");
     await expect(dashboard).not.toHaveAttribute("aria-current", "page");
-    await expect(profile).toHaveAttribute("href", "/profile");
-    await expect(profile).not.toHaveAttribute("aria-current", "page");
+    await expect(page.getByRole("link", { name: "[ 02 ] Profile" })).toHaveCount(0);
     await expect(page.getByText("Dolphub · Built for PCU tech students", { exact: true })).toBeVisible();
     await expect(
       page.getByText("© 2026 Dolphub contributors · MIT License", { exact: true }),
@@ -62,7 +60,7 @@ test.describe("site menu", () => {
 
     await expect(page.getByRole("link", { name: "[ 00 ] Home" })).toBeVisible();
     await expect(page.getByRole("link", { name: "[ 01 ] Dashboard" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "[ 02 ] Profile" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "[ 02 ] Profile" })).toHaveCount(0);
 
     const open = page.getByRole("button", { name: "Open navigation menu" });
     await open.click();
@@ -71,10 +69,12 @@ test.describe("site menu", () => {
       "true",
     );
     const menu = page.getByRole("navigation", { name: "Site menu" });
-    await expect(menu.getByRole("link", { name: "[ 03 ] Privacy & Security" })).toBeVisible();
-    await expect(menu.getByRole("link", { name: "[ 04 ] Terms" })).toBeVisible();
-    await expect(menu.getByRole("link", { name: "[ 05 ] Support" })).toBeVisible();
-    await expect(menu.getByRole("link", { name: "[ 00 ] Home" })).toBeHidden();
+    await expect(menu.locator("a:visible")).toHaveText([
+      "[ 02 ] Profile",
+      "[ 03 ] Privacy & Security",
+      "[ 04 ] Terms",
+      "[ 05 ] Support",
+    ]);
 
     await page.keyboard.press("Escape");
     const reopened = page.getByRole("button", { name: "Open navigation menu" });
@@ -96,9 +96,14 @@ test.describe("site menu", () => {
     await page.getByRole("button", { name: "Open navigation menu" }).click();
 
     const menu = page.getByRole("navigation", { name: "Site menu" });
-    await expect(menu.getByRole("link", { name: "[ 00 ] Home" })).toBeVisible();
-    await expect(menu.getByRole("link", { name: "[ 01 ] Dashboard" })).toBeVisible();
-    await expect(menu.getByRole("link", { name: "[ 02 ] Profile" })).toBeVisible();
+    await expect(menu.locator("a:visible")).toHaveText([
+      "[ 00 ] Home",
+      "[ 01 ] Dashboard",
+      "[ 02 ] Profile",
+      "[ 03 ] Privacy & Security",
+      "[ 04 ] Terms",
+      "[ 05 ] Support",
+    ]);
     await menu.getByRole("link", { name: "[ 03 ] Privacy & Security" }).click();
 
     await expect(page).toHaveURL(/\/privacy$/);
@@ -223,6 +228,7 @@ test.describe("dashboard", () => {
       "aria-current",
       "page",
     );
+    await page.getByRole("button", { name: "Open navigation menu" }).click();
     await expect(page.getByRole("link", { name: "[ 02 ] Profile" })).not.toHaveAttribute(
       "aria-current",
       "page",
@@ -266,9 +272,7 @@ test.describe("profile editor", () => {
 
   test("marks Profile as current and preserves editor validation", async ({ page }) => {
     await page.goto("/profile");
-    if ((page.viewportSize()?.width ?? 0) < 640) {
-      await page.getByRole("button", { name: "Open navigation menu" }).click();
-    }
+    await page.getByRole("button", { name: "Open navigation menu" }).click();
     await expect(page.getByRole("link", { name: "[ 02 ] Profile" })).toHaveAttribute(
       "aria-current",
       "page",

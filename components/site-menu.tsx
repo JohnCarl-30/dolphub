@@ -3,13 +3,13 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { NavLink } from "./nav-link";
 
-const PRIMARY_LINKS = [
+const MOBILE_HEADER_LINKS = [
   { href: "/", index: "00", label: "Home" },
   { href: "/dashboard", index: "01", label: "Dashboard" },
-  { href: "/profile", index: "02", label: "Profile" },
 ];
 
-const INFO_LINKS = [
+const MENU_LINKS = [
+  { href: "/profile", index: "02", label: "Profile" },
   { href: "/privacy", index: "03", label: "Privacy & Security" },
   { href: "/terms", index: "04", label: "Terms" },
   { href: "/support", index: "05", label: "Support" },
@@ -67,7 +67,7 @@ export function SiteMenu() {
           className="absolute right-0 top-[calc(100%+0.75rem)] z-50 w-[min(18rem,calc(100vw-2rem))] border border-ink/10 bg-background shadow-[0_16px_40px_rgb(14_16_18_/_0.14)]"
         >
           <div className="border-b border-ink/10 sm:hidden">
-            {PRIMARY_LINKS.map((item) => (
+            {MOBILE_HEADER_LINKS.map((item) => (
               <NavLink
                 key={item.href}
                 href={item.href}
@@ -79,7 +79,7 @@ export function SiteMenu() {
             ))}
           </div>
           <div>
-            {INFO_LINKS.map((item) => (
+            {MENU_LINKS.map((item) => (
               <NavLink
                 key={item.href}
                 href={item.href}
