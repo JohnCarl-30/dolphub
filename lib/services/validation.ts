@@ -13,11 +13,21 @@ export function parse<T>(schema: z.ZodType<T>, input: unknown): T {
 const trimmed = (max: number, label: string) =>
   z.string().trim().max(max, `${label} must be at most ${max} characters`);
 
-/** An https link, with no credentials embedded in it. */
+/**
+ * Adds https:// to a link typed without a scheme, such as "jeep.example.com"
+ * or "m.me/juan". A link with any other scheme, including http://, is left
+ * alone for httpsUrl to reject.
+ */
+export function withHttps(value: string): string {
+  return value && !/^[a-z][a-z0-9+.-]*:/i.test(value) ? `https://${value}` : value;
+}
+
+/** An https link, with no credentials embedded in it. A link typed without https:// gets it added. */
 export const httpsUrl = z
   .string()
   .trim()
-  .max(500, "Link must be at most 500 characters")
+  .transform(withHttps)
+  .refine((value) => value.length <= 500, "Link must be at most 500 characters")
   .refine((value) => {
     try {
       const url = new URL(value);

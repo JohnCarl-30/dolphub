@@ -8,17 +8,19 @@ import { DashboardPage } from "./dashboard-page";
 export const metadata: Metadata = { title: "Dashboard", robots: PRIVATE_ROBOTS };
 export const instant = false;
 
-/** Signed in: the feed. Signed out: the sign-in landing, with a reason if Google sign-in just failed. */
+/** Signed in: the student's page, next steps and open opportunities. Signed out: the sign-in landing, with a reason if Google sign-in just failed. */
 export default async function Page(props: PageProps<"/dashboard">) {
   const user = await getCurrentUser();
   if (user) {
-    const { profile, courses } = await getDashboard();
+    const { profile, courses, projects, imageCount } = await getDashboard();
     const me = profile
       ? {
           handle: profile.handle,
           displayName: profile.displayName,
           tagline: profile.tagline,
           courseName: courses.find((c) => c.id === profile.courseId)?.name ?? "",
+          projectCount: projects.length,
+          photoCount: imageCount,
         }
       : null;
     return <DashboardPage email={user.email} me={me} />;

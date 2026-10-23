@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { checkHandleAction, createProfileAction } from "@/app/dashboard/actions";
+import { suggestHandle } from "@/lib/services/handles";
 import { Field, FormMessages, focusField, inputClass, submitClass } from "./fields";
 
 type HandleStatus =
@@ -25,6 +26,8 @@ export function CreateProfileForm({ courses }: { courses: { id: number; name: st
   const [pending, startTransition] = useTransition();
 
   const handle = values.handle.trim().toLowerCase();
+  // Most people type their name first. Offer the handle that name would make.
+  const suggestion = handleStatus.state === "problem" ? suggestHandle(values.handle) : null;
   useEffect(() => {
     if (!handle) return;
     let current = true;
@@ -75,7 +78,7 @@ export function CreateProfileForm({ courses }: { courses: { id: number; name: st
       </p>
 
       <form onSubmit={onSubmit} className="mt-8 grid gap-5" noValidate>
-        <Field id="handle" label="Handle" hint="Letters, numbers and hyphens. It can't be changed later.">
+        <Field id="handle" label="Handle" hint="Lowercase letters, numbers, - and _. It can't be changed later.">
           <input
             id="handle"
             name="handle"
@@ -99,6 +102,15 @@ export function CreateProfileForm({ courses }: { courses: { id: number; name: st
             <span className="text-red-700">{handleStatus.message}</span>
           )}
         </p>
+        {suggestion && suggestion !== handle ? (
+          <button
+            type="button"
+            onClick={() => set("handle", suggestion)}
+            className="press -mt-3 justify-self-start border border-ink/15 bg-white px-3 py-2 font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:border-ink/40 focus-visible:ring-2 focus-visible:ring-ink"
+          >
+            Use /u/{suggestion}
+          </button>
+        ) : null}
         <Field id="displayName" label="Name">
           <input
             id="displayName"

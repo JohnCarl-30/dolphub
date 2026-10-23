@@ -14,6 +14,7 @@ export function ProjectPhotos({
   atLimit,
   onAdded,
   onRemoved,
+  onStart,
 }: {
   /** Null until the project is saved. */
   projectId: string | null;
@@ -23,6 +24,8 @@ export function ProjectPhotos({
   atLimit: boolean;
   onAdded: (image: PublicImage) => void;
   onRemoved: (imageId: string) => void;
+  /** Called when an upload or removal begins, so the editor can clear an older "Saved" notice. */
+  onStart: () => void;
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +40,7 @@ export function ProjectPhotos({
     // Clear it, so choosing the same file again after an error still fires.
     event.target.value = "";
     if (!file || !projectId) return;
+    onStart();
     setError(null);
     setBusy("Uploading photo…");
     try {
@@ -51,6 +55,7 @@ export function ProjectPhotos({
   }
 
   async function remove(imageId: string) {
+    onStart();
     setError(null);
     setBusy("Removing photo…");
     const result = await deleteImageAction(imageId);

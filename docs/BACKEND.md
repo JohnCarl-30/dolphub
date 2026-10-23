@@ -68,11 +68,11 @@ Rules the actions enforce, so the frontend doesn't have to:
 
 - **Signed out:** the action redirects to `/login`.
 - **Text limits:** name up to 60 characters, tagline 100, project title 80, description 1,000.
-- **Links:** project links must start with `https://`, and the Messenger link must be `https://m.me/...` or `https://www.messenger.com/...`. An empty string clears an optional field.
+- **Links:** project links must be `https`, and the Messenger link must be `https://m.me/...` or `https://www.messenger.com/...`. A link typed without a scheme, such as `jeep.example.com` or `m.me/juan`, gets `https://` added. `http://` links are still refused. An empty string clears an optional field.
 - **GitHub:** `githubUsername` takes a bare username or a pasted `https://github.com/<username>` link, and stores the username only. It is 1 to 39 letters, digits or single hyphens, with no hyphen at either end. The page builds the link as `https://github.com/<username>`.
 - **Contact email:** `contactEmail` is stored lowercase, up to 254 characters, any domain. It is separate from the sign-in email and is empty until the student adds one. It shows to anyone on the public page, so the dashboard must say so. It must stay out of structured data, link previews, the sitemap and logs.
 - **Course:** `courseId` may be a number or the text from a `<select>`, such as `"3"`.
-- **Handle:** cannot change after creation.
+- **Handle:** cannot change after creation. When a typed handle is badly formed, the create form offers `suggestHandle` from `handles.ts`, which turns a name like "Juan Dela Cruz" into `juan-dela-cruz`.
 - **Refresh:** every successful write refreshes the student's public page and the home grid.
 
 ### Using an action from a form
