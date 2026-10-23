@@ -1,77 +1,10 @@
-"use client";
-
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { Suspense } from "react";
 import { courseLabel } from "@/lib/course-labels";
-
-type FeedAuthor = {
-  name: string;
-  detail: string;
-  initials: string;
-};
-
-type FeedComment = {
-  id: string;
-  author: string;
-  body: string;
-};
-
-type FeedPost = {
-  id: string;
-  author: FeedAuthor;
-  body: string;
-  createdAt: number;
-  timeLabel: string;
-  reactions: number;
-  reacted: boolean;
-  comments: FeedComment[];
-};
-
-type FeedSort = "recent" | "top";
-
-const SEED_POSTS: FeedPost[] = [
-  {
-    id: "orgfair-preview",
-    author: { name: "Mira Santos", detail: "BS Information Technology", initials: "MS" },
-    body: "I finished the mobile pass for OrgFair. The directory now keeps meeting rooms and organization links readable on smaller phones.",
-    createdAt: 3,
-    timeLabel: "18 min",
-    reactions: 24,
-    reacted: false,
-    comments: [
-      { id: "orgfair-comment", author: "Aisha Villanueva", body: "The quick filters make this much easier to scan." },
-    ],
-  },
-  {
-    id: "lab-gate-demo",
-    author: { name: "Kenji Ramos", detail: "BS Computer Engineering", initials: "KR" },
-    body: "Our RFID lab gate logger is ready for a classroom demo. Next step is testing how it behaves when the network drops halfway through a scan.",
-    createdAt: 2,
-    timeLabel: "2 hr",
-    reactions: 41,
-    reacted: false,
-    comments: [
-      { id: "lab-comment", author: "Paolo Cruz", body: "A queued offline mode would be useful for the older lab connection." },
-      { id: "lab-comment-2", author: "Mira Santos", body: "Bring it to the project table this Friday." },
-    ],
-  },
-  {
-    id: "study-jam",
-    author: { name: "PCU Developer Circle", detail: "Student organization", initials: "PD" },
-    body: "Frontend study jam this Saturday: responsive layouts, keyboard navigation, and a short portfolio review. Bring one screen you want feedback on.",
-    createdAt: 1,
-    timeLabel: "Yesterday",
-    reactions: 12,
-    reacted: false,
-    comments: [],
-  },
-];
-
-const opportunities = [
-  { type: "Internship", title: "Junior web developer", meta: "Applications close Friday" },
-  { type: "Event", title: "Campus project showcase", meta: "Registration is open" },
-  { type: "Program", title: "Open-source mentoring", meta: "Four student slots" },
-];
+import { getOpenOpportunities } from "@/lib/opportunities";
+import { KIND_NAMES } from "@/lib/opportunity-display";
+import { closingLabel } from "@/lib/opportunity-time";
+import { opportunityPath, profilePath } from "@/lib/seo";
 
 /** The signed-in student's own page, or null before they create one. */
 export type DashboardMe = {
@@ -79,25 +12,16 @@ export type DashboardMe = {
   displayName: string;
   tagline: string;
   courseName: string;
+  projectCount: number;
+  photoCount: number;
 } | null;
 
+/** How many open posts the dashboard lists before pointing to /opportunities. */
+const OPPORTUNITY_PREVIEW = 3;
+
+/** Signed in: the student's page, what to do next, and open opportunities. */
 export function DashboardPage({ email, me }: { email: string; me: DashboardMe }) {
-  const [posts, setPosts] = useState(SEED_POSTS);
-  const [draft, setDraft] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [sort, setSort] = useState<FeedSort>("recent");
-  const [openComments, setOpenComments] = useState<string[]>([]);
-
-  const sortedPosts = useMemo(() => {
-    return [...posts].sort((left, right) => {
-      if (sort === "top" && right.reactions !== left.reactions) {
-        return right.reactions - left.reactions;
-      }
-      return right.createdAt - left.createdAt;
-    });
-  }, [posts, sort]);
-
-  // Before a page exists, posts go out under the sign-in address's name part.
+  // Before a page exists, the card uses the sign-in address's name part.
   const name = me?.displayName ?? email.split("@")[0]!;
   const initials = name
     .split(/[\s._-]+/)
@@ -107,62 +31,23 @@ export function DashboardPage({ email, me }: { email: string; me: DashboardMe })
     .slice(0, 2)
     .toUpperCase();
 
-  function publish(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const body = draft.trim();
-    if (!body) {
-      setError("Write something before publishing.");
-      return;
-    }
-
-    setPosts((current) => [
-      ...current,
-      {
-        id: `post-${crypto.randomUUID()}`,
-        author: {
-          name,
-          detail: me?.courseName ?? "PCU student",
-          initials,
-        },
-        body,
-        createdAt: Date.now(),
-        timeLabel: "Now",
-        reactions: 0,
-        reacted: false,
-        comments: [],
-      },
-    ]);
-    setDraft("");
-    setError(null);
-    setSort("recent");
-  }
-
-  function toggleReaction(id: string) {
-    setPosts((current) =>
-      current.map((post) =>
-        post.id === id
-          ? {
-              ...post,
-              reacted: !post.reacted,
-              reactions: post.reactions + (post.reacted ? -1 : 1),
-            }
-          : post,
-      ),
-    );
-  }
-
-  function toggleComments(id: string) {
-    setOpenComments((current) =>
-      current.includes(id) ? current.filter((postId) => postId !== id) : [...current, id],
-    );
-  }
+  const steps = [
+    { label: "Create your page", hint: "Pick a handle and add your name and course.", done: me !== null },
+    {
+      label: "Add a project",
+      hint: "Your page joins the home page once it has a project.",
+      done: (me?.projectCount ?? 0) > 0,
+    },
+    { label: "Add a photo", hint: "A screenshot makes a project easier to picture.", done: (me?.photoCount ?? 0) > 0 },
+  ];
+  const doneCount = steps.filter((step) => step.done).length;
 
   return (
     <section aria-labelledby="dashboard-title" className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
       <div className="mb-5">
         <p className="font-mono text-[11px] uppercase tracking-wide text-muted">/dashboard</p>
         <h1 id="dashboard-title" className="mt-2 text-3xl font-medium tracking-tight sm:text-4xl">
-          Community feed
+          Dashboard
         </h1>
       </div>
 
@@ -189,7 +74,7 @@ export function DashboardPage({ email, me }: { email: string; me: DashboardMe })
               <Link href="/profile" className="press border-r border-ink/10 px-4 py-3 font-mono text-[11px] uppercase tracking-wide outline-none hover:bg-paper focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink lg:border-b lg:border-r-0">
                 Edit profile →
               </Link>
-              <Link href={`/u/${me.handle}`} className="press px-4 py-3 font-mono text-[11px] uppercase tracking-wide text-muted outline-none hover:bg-paper hover:text-ink focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink">
+              <Link href={profilePath(me.handle)} className="press px-4 py-3 font-mono text-[11px] uppercase tracking-wide text-muted outline-none hover:bg-paper hover:text-ink focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink">
                 View public page →
               </Link>
             </div>
@@ -202,133 +87,90 @@ export function DashboardPage({ email, me }: { email: string; me: DashboardMe })
           )}
         </aside>
 
-        <div className="min-w-0 space-y-4">
-          <form onSubmit={publish} className="border border-ink/10 bg-background p-4" noValidate>
-            <div className="flex items-start gap-3">
-              <Avatar initials={initials} className="size-10 shrink-0" />
-              <div className="min-w-0 flex-1">
-                <label htmlFor="feed-post" className="font-mono text-[11px] uppercase tracking-wide text-muted">
-                  Share an update
-                </label>
-                <textarea
-                  id="feed-post"
-                  name="post"
-                  value={draft}
-                  onChange={(event) => {
-                    setDraft(event.target.value);
-                    if (error) setError(null);
-                  }}
-                  aria-describedby={error ? "feed-post-error" : "feed-post-hint"}
-                  placeholder="What are you building or learning?"
-                  className="mt-2 min-h-24 w-full resize-y border border-ink/15 bg-white px-3 py-2 text-base outline-none transition-colors hover:border-ink/40 focus-visible:border-ink focus-visible:ring-2 focus-visible:ring-ink"
-                />
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                  <p id={error ? "feed-post-error" : "feed-post-hint"} role={error ? "alert" : undefined} className={`text-xs ${error ? "text-red-700" : "text-muted"}`}>
-                    {error ?? `Posting as ${email}`}
-                  </p>
-                  <button type="submit" className="press border border-ink bg-ink px-4 py-2 font-mono text-[11px] uppercase tracking-wide text-white outline-none hover:bg-ink/85 focus-visible:ring-2 focus-visible:ring-ink">
-                    Publish
-                  </button>
-                </div>
-              </div>
-            </div>
-          </form>
-
-          <div className="flex items-center justify-between gap-3 border-b border-ink/10 pb-3">
-            <p className="font-mono text-[11px] uppercase tracking-wide text-muted">Latest from the community</p>
-            <div role="group" aria-label="Sort feed" className="flex border border-ink/10">
-              {(["recent", "top"] as const).map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  aria-pressed={sort === option}
-                  onClick={() => setSort(option)}
-                  className={`press px-3 py-2 font-mono text-[10px] uppercase tracking-wide outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink ${sort === option ? "bg-ink text-white" : "bg-background text-muted hover:text-ink"}`}
-                >
-                  {option === "recent" ? "Recent" : "Top"}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <ol data-testid="feed-posts" className="grid list-none gap-4">
-            {sortedPosts.map((post, index) => {
-              const commentsOpen = openComments.includes(post.id);
-              return (
-                <li key={post.id} data-post-id={post.id} className="rise border border-ink/10 bg-background" style={{ "--i": index } as React.CSSProperties}>
-                  <article aria-labelledby={`${post.id}-author`}>
-                    <header className="flex items-start gap-3 p-4">
-                      <Avatar initials={post.author.initials} className="size-10 shrink-0" />
-                      <div className="min-w-0">
-                        <h2 id={`${post.id}-author`} className="font-medium tracking-tight">{post.author.name}</h2>
-                        <p className="truncate text-xs text-muted">{post.author.detail}</p>
-                        <p className="mt-1 font-mono text-[10px] uppercase tracking-wide text-muted">{post.timeLabel}</p>
-                      </div>
-                    </header>
-                    <p className="px-4 pb-4 text-sm leading-6">{post.body}</p>
-                    <div className="flex items-center justify-between border-y border-ink/10 px-4 py-2 text-xs text-muted">
-                      <span>{post.reactions} {post.reactions === 1 ? "reaction" : "reactions"}</span>
-                      <span>{post.comments.length} {post.comments.length === 1 ? "comment" : "comments"}</span>
-                    </div>
-                    <div className="grid grid-cols-2">
-                      <button
-                        type="button"
-                        aria-pressed={post.reacted}
-                        onClick={() => toggleReaction(post.id)}
-                        className={`press border-r border-ink/10 px-4 py-3 font-mono text-[11px] uppercase tracking-wide outline-none hover:bg-paper focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink ${post.reacted ? "bg-paper text-ink" : "text-muted"}`}
-                      >
-                        {post.reacted ? "Reacted" : "React"}
-                      </button>
-                      <button
-                        type="button"
-                        aria-expanded={commentsOpen}
-                        aria-controls={`${post.id}-comments`}
-                        onClick={() => toggleComments(post.id)}
-                        className="press px-4 py-3 font-mono text-[11px] uppercase tracking-wide text-muted outline-none hover:bg-paper hover:text-ink focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink"
-                      >
-                        Comments
-                      </button>
-                    </div>
-                    {commentsOpen ? (
-                      <div id={`${post.id}-comments`} className="rise border-t border-ink/10 bg-paper p-4">
-                        {post.comments.length ? (
-                          <ol className="grid gap-3">
-                            {post.comments.map((comment) => (
-                              <li key={comment.id} className="text-sm leading-6">
-                                <strong className="font-medium">{comment.author}</strong>
-                                <p className="text-muted">{comment.body}</p>
-                              </li>
-                            ))}
-                          </ol>
-                        ) : (
-                          <p className="text-sm text-muted">No comments yet.</p>
-                        )}
-                      </div>
-                    ) : null}
-                  </article>
-                </li>
-              );
-            })}
-          </ol>
-        </div>
-
-        <aside data-testid="discovery-rail" aria-label="Discover opportunities" className="hidden border border-ink/10 bg-background lg:block">
-          <div className="border-b border-ink/10 p-4">
-            <p className="font-mono text-[10px] uppercase tracking-wide text-muted">Discover</p>
-            <h2 className="mt-2 text-xl font-medium tracking-tight">Open opportunities</h2>
+        <section aria-labelledby="steps-heading" className="min-w-0 border border-ink/10 bg-background">
+          <div className="flex items-baseline justify-between gap-4 border-b border-ink/10 p-4">
+            <h2 id="steps-heading" className="text-xl font-medium tracking-tight">
+              {doneCount === steps.length ? "Your page is ready" : "Next steps"}
+            </h2>
+            <p className="font-mono text-[11px] uppercase tracking-wide text-muted">
+              {doneCount} of {steps.length} done
+            </p>
           </div>
           <ol className="divide-y divide-ink/10">
-            {opportunities.map((opportunity) => (
-              <li key={opportunity.title} className="p-4">
-                <p className="font-mono text-[10px] uppercase tracking-wide text-muted">{opportunity.type}</p>
-                <h3 className="mt-2 text-sm font-medium leading-5">{opportunity.title}</h3>
-                <p className="mt-1 text-xs leading-5 text-muted">{opportunity.meta}</p>
+            {steps.map((step) => (
+              <li key={step.label} className="flex items-start gap-3 p-4">
+                <span aria-hidden="true" className="w-12 shrink-0 font-mono text-[11px] uppercase tracking-wide text-muted">
+                  {step.done ? "[ x ]" : "[   ]"}
+                </span>
+                <div className="min-w-0">
+                  <p className={`text-sm font-medium leading-6 ${step.done ? "text-muted line-through decoration-ink/30" : ""}`}>
+                    {step.label}
+                    <span className="sr-only">{step.done ? ", done" : ", not done yet"}</span>
+                  </p>
+                  {step.done ? null : <p className="text-xs leading-5 text-muted">{step.hint}</p>}
+                </div>
               </li>
             ))}
           </ol>
+          <div className="border-t border-ink/10 p-4">
+            {doneCount === steps.length && me ? (
+              <p className="text-sm leading-6">
+                Share your link in your class group chat:{" "}
+                <Link href={profilePath(me.handle)} className="font-medium underline decoration-ink/30 underline-offset-4 hover:decoration-ink">
+                  dolphub.tech/u/{me.handle}
+                </Link>
+              </p>
+            ) : (
+              <Link
+                href="/profile"
+                className="press inline-flex min-h-11 items-center border border-ink bg-ink px-4 py-2 font-mono text-[11px] uppercase tracking-wide text-white outline-none hover:bg-ink/85 focus-visible:ring-2 focus-visible:ring-ink"
+              >
+                {me ? "Continue your page →" : "Create your page →"}
+              </Link>
+            )}
+          </div>
+        </section>
+
+        <aside data-testid="discovery-rail" aria-labelledby="discover-heading" className="border border-ink/10 bg-background">
+          <div className="border-b border-ink/10 p-4">
+            <p className="font-mono text-[10px] uppercase tracking-wide text-muted">Discover</p>
+            <h2 id="discover-heading" className="mt-2 text-xl font-medium tracking-tight">
+              Open opportunities
+            </h2>
+          </div>
+          <Suspense fallback={<p className="p-4 font-mono text-[11px] uppercase tracking-wide text-muted">Loading posts…</p>}>
+            <OpenOpportunities />
+          </Suspense>
+          <Link href="/opportunities" className="press block border-t border-ink/10 px-4 py-3 font-mono text-[11px] uppercase tracking-wide outline-none hover:bg-paper focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink">
+            See all opportunities →
+          </Link>
         </aside>
       </div>
     </section>
+  );
+}
+
+async function OpenOpportunities() {
+  const posts = (await getOpenOpportunities()).slice(0, OPPORTUNITY_PREVIEW);
+  const now = new Date();
+  if (posts.length === 0) {
+    return <p className="p-4 text-sm leading-6 text-muted">Nothing open right now. New posts go up every week.</p>;
+  }
+  return (
+    <ol className="divide-y divide-ink/10">
+      {posts.map((post) => (
+        <li key={post.slug}>
+          <Link href={opportunityPath(post.slug)} className="press block p-4 outline-none hover:bg-paper focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink">
+            <p className="flex items-baseline justify-between gap-3 font-mono text-[10px] uppercase tracking-wide">
+              <span className="text-muted">{KIND_NAMES[post.kind]}</span>
+              <span>{closingLabel(post.closesAt, now)}</span>
+            </p>
+            <h3 className="mt-2 text-sm font-medium leading-5">{post.title}</h3>
+            <p className="mt-1 text-xs leading-5 text-muted">{post.organization}</p>
+          </Link>
+        </li>
+      ))}
+    </ol>
   );
 }
 

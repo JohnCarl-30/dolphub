@@ -31,6 +31,18 @@ describe("projects", () => {
     expect(project).toMatchObject({ demoUrl: "https://app.example.com", sourceUrl: null });
   });
 
+  it("adds https:// to a link typed without it", async () => {
+    const { project } = await createProject(env.db, owner.id, {
+      title: "App",
+      demoUrl: " jeep.example.com/map ",
+      sourceUrl: "github.com/juan/jeep",
+    });
+    expect(project).toMatchObject({ demoUrl: "https://jeep.example.com/map", sourceUrl: "https://github.com/juan/jeep" });
+    await expect(
+      createProject(env.db, owner.id, { title: "App", demoUrl: "not a link" }),
+    ).rejects.toMatchObject({ field: "demoUrl" });
+  });
+
   it("orders new projects at the end", async () => {
     const a = await createProject(env.db, owner.id, { title: "A" });
     const b = await createProject(env.db, owner.id, { title: "B" });

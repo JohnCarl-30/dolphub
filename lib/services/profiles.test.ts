@@ -38,6 +38,8 @@ describe("profiles", () => {
     ).rejects.toMatchObject({ field: "messengerUrl" });
     const ok = await createProfile(env.db, u.id, { ...base(env), messengerUrl: "https://m.me/juan" });
     expect(ok.messengerUrl).toBe("https://m.me/juan");
+    const updated = await updateProfile(env.db, u.id, { messengerUrl: "m.me/juan.cruz" });
+    expect(updated.messengerUrl).toBe("https://m.me/juan.cruz");
   });
 
   it("shows pages in search engines by default, and lets the student opt out", async () => {

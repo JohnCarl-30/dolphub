@@ -324,6 +324,7 @@ export function ProfileEditor({ dashboard }: { dashboard: Dashboard & { profile:
                   title={project.title}
                   images={(project.id && photos[project.id]) || []}
                   atLimit={photoCount >= imageLimit}
+                  onStart={() => setNotice(null)}
                   onAdded={(image) =>
                     setPhotos((prev) => ({ ...prev, [project.id!]: [...(prev[project.id!] ?? []), image] }))
                   }

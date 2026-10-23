@@ -233,39 +233,22 @@ test.describe("dashboard", () => {
     );
   });
 
-  test("validates and publishes a temporary post", async ({ page }) => {
+  test("shows next steps and real open opportunities, with no sample feed", async ({ page }) => {
     await page.goto("/dashboard");
-    const composer = page.getByRole("textbox", { name: "Share an update" });
-    await page.getByRole("button", { name: "Publish" }).click();
-    await expect(page.locator("form").getByRole("alert")).toHaveText(
-      "Write something before publishing.",
-    );
+    // The seeded student has a page with no projects.
+    const steps = page.getByRole("region", { name: "Next steps" });
+    await expect(steps.getByText("1 of 3 done")).toBeVisible();
+    await expect(steps.getByText("Create your page, done")).toBeAttached();
+    await expect(steps.getByText("Add a project, not done yet")).toBeAttached();
+    await expect(steps.getByRole("link", { name: "Continue your page →" })).toHaveAttribute("href", "/profile");
 
-    await composer.fill("Testing the new project demo with our class today.");
-    await page.getByRole("button", { name: "Publish" }).click();
-    const firstPost = page.getByTestId("feed-posts").locator("li[data-post-id]").first();
-    await expect(firstPost).toContainText("Testing the new project demo with our class today.");
-    await expect(firstPost).toContainText("Now");
+    const discover = page.getByTestId("discovery-rail");
+    await expect(discover.getByRole("link", { name: /Cloud hack day/ })).toBeVisible();
+    await expect(discover.getByRole("link", { name: "See all opportunities →" })).toHaveAttribute("href", "/opportunities");
+    await expect(page.getByRole("button", { name: "Publish" })).toHaveCount(0);
   });
 
-  test("reacts, opens comments, and applies both sort modes", async ({ page }) => {
-    await page.goto("/dashboard");
-    const posts = page.getByTestId("feed-posts").locator("li[data-post-id]");
-    await expect(posts.first()).toHaveAttribute("data-post-id", "orgfair-preview");
-
-    const firstPost = posts.first();
-    await firstPost.getByRole("button", { name: "React", exact: true }).click();
-    await expect(firstPost.getByText("25 reactions")).toBeVisible();
-    await firstPost.getByRole("button", { name: "Comments" }).click();
-    await expect(firstPost.getByText("The quick filters make this much easier to scan.")).toBeVisible();
-
-    await page.getByRole("button", { name: "Top" }).click();
-    await expect(posts.first()).toHaveAttribute("data-post-id", "lab-gate-demo");
-    await page.getByRole("button", { name: "Recent" }).click();
-    await expect(posts.first()).toHaveAttribute("data-post-id", "orgfair-preview");
-  });
-
-  test("uses three columns on desktop and hides discovery on phones", async ({ page }) => {
+  test("uses three columns on desktop and stacks on phones", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/dashboard");
     await expect(page.getByTestId("identity-rail")).toBeVisible();
@@ -273,7 +256,7 @@ test.describe("dashboard", () => {
 
     await page.setViewportSize({ width: 320, height: 640 });
     await expect(page.getByTestId("identity-rail")).toBeVisible();
-    await expect(page.getByTestId("discovery-rail")).toBeHidden();
+    await expect(page.getByTestId("discovery-rail")).toBeAttached();
     await expectNoHorizontalOverflow(page);
   });
 });

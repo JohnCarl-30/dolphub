@@ -26,7 +26,7 @@ export function validateHandle(raw: string): string {
   if (!HANDLE_PATTERN.test(handle)) {
     throw new ServiceError(
       "VALIDATION",
-      "Handle must be 3 to 30 characters of lowercase letters, numbers, - or _, starting and ending with a letter or number",
+      "Use 3 to 30 lowercase letters, numbers, - or _, starting and ending with a letter or number",
       "handle",
     );
   }
@@ -38,4 +38,25 @@ export function validateHandle(raw: string): string {
     throw new ServiceError("VALIDATION", "That handle is reserved", "handle");
   }
   return handle;
+}
+
+/**
+ * Turns what a student typed, often their name, into a handle that passes
+ * validateHandle: "Juan Dela Cruz" becomes "juan-dela-cruz" and "Ñiño" becomes
+ * "nino". Null when nothing usable is left or the result is reserved.
+ */
+export function suggestHandle(raw: string): string | null {
+  const candidate = raw
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9_]+/g, "-")
+    .replace(/^[-_]+/, "")
+    .slice(0, 30)
+    .replace(/[-_]+$/, "");
+  try {
+    return validateHandle(candidate);
+  } catch {
+    return null;
+  }
 }

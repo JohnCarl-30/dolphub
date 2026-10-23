@@ -45,7 +45,7 @@ test.describe("dashboard sign-in landing", () => {
     }
   });
 
-  test("signed-in students skip the landing and see the feed", async ({ page }) => {
+  test("signed-in students skip the landing and see their dashboard", async ({ page }) => {
     await authenticate(page);
     await page.goto("/dashboard");
     await expect(page.getByRole("heading", { name: "Your page starts here" })).toHaveCount(0);

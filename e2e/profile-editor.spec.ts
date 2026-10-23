@@ -29,6 +29,10 @@ test("a new student creates a page, publishes a project, and removes it", async 
   const handleInput = page.getByRole("textbox", { name: "Handle" });
   await handleInput.fill("mira");
   await expect(page.locator("#handle-status")).toHaveText("That handle is already taken");
+  // Typing a name instead of a handle offers the handle that name would make.
+  await handleInput.fill(`New Student ${project}`);
+  await page.getByRole("button", { name: `Use /u/new-student-${project}` }).click();
+  await expect(handleInput).toHaveValue(`new-student-${project}`);
   await handleInput.fill(handle);
   await expect(page.locator("#handle-status")).toHaveText(`/u/${handle} is free`, { ignoreCase: true });
 
@@ -61,7 +65,8 @@ test("a new student creates a page, publishes a project, and removes it", async 
   await expect(page.locator("form").getByRole("alert")).toHaveText("Project 01: Link must be a full https:// address");
   await expect(demo).toBeFocused();
 
-  await demo.fill("https://seats.example.com");
+  // A link typed without https:// gets it added by the server.
+  await demo.fill("seats.example.com");
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.locator("form").getByRole("status")).toHaveText("Saved. Your public page shows the changes now.");
 
@@ -73,6 +78,8 @@ test("a new student creates a page, publishes a project, and removes it", async 
   const addPhoto = page.getByLabel("Add a photo to project 1");
   await addPhoto.setInputFiles({ name: "notes.png", mimeType: "image/png", buffer: Buffer.from("not a picture") });
   await expect(page.locator("form").getByRole("alert")).toHaveText("Photo: That file is not an image we can read.");
+  // The older "Nothing to save." notice goes away once a photo is chosen.
+  await expect(page.locator("form").getByRole("status")).toHaveCount(0);
   const screenshot = await sharp({ create: { width: 640, height: 360, channels: 3, background: "#2f6fdf" } })
     .png()
     .toBuffer();
@@ -110,9 +117,12 @@ test("a new student creates a page, publishes a project, and removes it", async 
   await expect(card).toContainText("Lab seat finder");
   await expect(card.locator("img")).toHaveAttribute("src", /\/dev-images\/profiles\/.+\.webp$/);
 
-  // The dashboard now shows the page.
+  // The dashboard now shows the page, with every step done.
   await page.goto("/dashboard");
   await expect(rail.getByRole("heading", { name })).toBeVisible();
+  const steps = page.getByRole("region", { name: "Your page is ready" });
+  await expect(steps.getByText("3 of 3 done")).toBeVisible();
+  await expect(steps.getByRole("link", { name: `dolphub.tech/u/${handle}` })).toHaveAttribute("href", `/u/${handle}`);
   await expect(rail.getByRole("link", { name: "View public page →" })).toHaveAttribute("href", `/u/${handle}`);
 
   // The saved project and its photo load back into the editor. Removing the photo saves straight away.
