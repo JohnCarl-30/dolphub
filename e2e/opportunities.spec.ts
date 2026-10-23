@@ -62,11 +62,12 @@ test.describe("opportunity page", () => {
     await expectNoHorizontalOverflow(page);
 
     // The email sign-in form carries the post along, so the emailed link returns here.
+    // Scoped to main: while a page streams, React briefly keeps a hidden copy of the content outside it.
     await signIn.getByRole("link", { name: "Get a sign-in link by email instead" }).click();
-    await expect(page.locator('input[name="next"]')).toHaveValue(path);
+    await expect(page.getByRole("main").locator('input[name="next"]')).toHaveValue(path);
     // So does the page the emailed link opens, and the dashboard landing a failed Google sign-in returns to.
     await page.goto(`/auth/verify?token=example-token&next=${next}`);
-    await expect(page.locator('input[name="next"]')).toHaveValue(path);
+    await expect(page.getByRole("main").locator('input[name="next"]')).toHaveValue(path);
     await page.goto(`/dashboard?signin=cancelled&next=${next}`);
     await expect(page.getByRole("link", { name: "Continue with Google" })).toHaveAttribute("href", `/auth/google?next=${next}`);
   });
