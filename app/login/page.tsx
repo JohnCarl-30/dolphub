@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { safeNextPath } from "@/lib/next-path";
 import { PRIVATE_ROBOTS } from "@/lib/seo";
+import { MOCK_ADMIN, mockAdminEnabled } from "@/lib/services/mock-admin";
 import { LoginForm } from "./login-form";
+import { MockAdminForm } from "./mock-admin-form";
 
 export const metadata: Metadata = { title: "Sign in", robots: PRIVATE_ROBOTS };
 
@@ -22,6 +24,7 @@ export default function LoginPage(props: PageProps<"/login">) {
           <LoginWithNext searchParams={props.searchParams} />
         </Suspense>
       </div>
+      {mockAdminEnabled(process.env) ? <MockAdminForm email={MOCK_ADMIN.email} /> : null}
     </section>
   );
 }

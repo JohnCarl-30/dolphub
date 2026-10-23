@@ -21,6 +21,8 @@ npm run dev
 
 Open http://localhost:3000/login and enter a PCU address. The sign-in link prints in the terminal. The local database lives in `.data/` and is created on first start.
 
+To try the admin screens, use **Local mock admin** under the sign-in form: `admin@pcu.edu.ph` with the password `password`. It signs in as an admin and opens `/admin`. It only appears with `npm run dev` and a `pglite:` database, so it never exists on the live site or against Neon.
+
 ## Production setup
 
 1. **Resend.** Add `dolphub.tech` as a domain in Resend and create the DNS records it lists at your domain registrar. Wait until Resend shows the domain as verified, then create an API key.
