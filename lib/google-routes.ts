@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { logError } from "./log";
+import { safeNextPath, withNext } from "./next-path";
 import type { ServiceContext } from "./services/context";
 import { ServiceError } from "./services/errors";
 import {
@@ -29,15 +30,19 @@ export function googleAttemptCookie(secure: boolean) {
   return secure ? "__Host-google-signin" : "google-signin";
 }
 
-function readAttempt(raw: string | undefined): GoogleAttempt | null {
-  if (!raw) return null;
+/** The attempt cookie: Google's one-time secrets, plus where to send the student afterwards. */
+function readAttempt(raw: string | undefined): { attempt: GoogleAttempt | null; next: string | null } {
+  if (!raw) return { attempt: null, next: null };
   try {
     const value = JSON.parse(Buffer.from(raw, "base64url").toString("utf8"));
-    return typeof value?.state === "string" && typeof value.nonce === "string" && typeof value.verifier === "string"
-      ? value
-      : null;
+    const valid =
+      typeof value?.state === "string" && typeof value.nonce === "string" && typeof value.verifier === "string";
+    return {
+      attempt: valid ? { state: value.state, nonce: value.nonce, verifier: value.verifier } : null,
+      next: safeNextPath(value?.next),
+    };
   } catch {
-    return null;
+    return { attempt: null, next: null };
   }
 }
 
@@ -56,19 +61,21 @@ export function createGoogleRoutes(deps: GoogleRouteDeps) {
   const cookieOptions = { httpOnly: true, secure: deps.secure, sameSite: "lax", path: "/" } as const;
   // Browsers drop a __Host- cookie unless every Set-Cookie for it says Secure, deletions included.
   const clearAttempt = (response: NextResponse) => response.cookies.set(attemptCookie, "", { ...cookieOptions, maxAge: 0 });
-  const back = (problem: GoogleSignInProblem) => {
-    const response = NextResponse.redirect(to(`/dashboard?signin=${problem}`), 303);
+  const back = (problem: GoogleSignInProblem, next: string | null = null) => {
+    const response = NextResponse.redirect(to(withNext(`/dashboard?signin=${problem}`, next)), 303);
     clearAttempt(response);
     return response;
   };
 
-  async function start(): Promise<NextResponse> {
+  /** `rawNext` is the ?next= path to return to after sign-in, such as an opportunity page. */
+  async function start(rawNext?: string | null): Promise<NextResponse> {
+    const next = safeNextPath(rawNext);
     const settings = deps.settings();
-    if (!settings) return back("unavailable");
+    if (!settings) return back("unavailable", next);
     const { url, attempt } = startGoogleSignIn(settings);
     const response = NextResponse.redirect(url, 303);
     // Lax still sends the cookie on Google's top-level redirect back to us.
-    response.cookies.set(attemptCookie, Buffer.from(JSON.stringify(attempt)).toString("base64url"), {
+    response.cookies.set(attemptCookie, Buffer.from(JSON.stringify({ ...attempt, next })).toString("base64url"), {
       ...cookieOptions,
       maxAge: GOOGLE_ATTEMPT_TTL_MS / 1000,
     });
@@ -79,8 +86,9 @@ export function createGoogleRoutes(deps: GoogleRouteDeps) {
     const settings = deps.settings();
     if (!settings) return back("unavailable");
     const params = request.nextUrl.searchParams;
+    const { attempt, next } = readAttempt(request.cookies.get(attemptCookie)?.value);
     // The student pressed Cancel on Google's screen, or Google refused.
-    if (params.get("error")) return back(params.get("error") === "access_denied" ? "cancelled" : "failed");
+    if (params.get("error")) return back(params.get("error") === "access_denied" ? "cancelled" : "failed", next);
 
     try {
       const session = await finishGoogleSignIn(
@@ -89,17 +97,17 @@ export function createGoogleRoutes(deps: GoogleRouteDeps) {
         {
           code: params.get("code") ?? "",
           state: params.get("state") ?? "",
-          attempt: readAttempt(request.cookies.get(attemptCookie)?.value),
+          attempt,
         },
         deps.fetch,
       );
-      const response = NextResponse.redirect(to("/dashboard"), 303);
+      const response = NextResponse.redirect(to(next ?? "/dashboard"), 303);
       clearAttempt(response);
       response.cookies.set(deps.sessionCookie, session.sessionToken, { ...cookieOptions, expires: session.expiresAt });
       return response;
     } catch (error) {
       if (!(error instanceof ServiceError)) logError("Google sign-in", error);
-      return back(problemOf(error));
+      return back(problemOf(error), next);
     }
   }
 

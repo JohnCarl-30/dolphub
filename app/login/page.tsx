@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { safeNextPath } from "@/lib/next-path";
 import { PRIVATE_ROBOTS } from "@/lib/seo";
+import { MOCK_ADMIN, mockAdminEnabled } from "@/lib/services/mock-admin";
 import { LoginForm } from "./login-form";
+import { MockAdminForm } from "./mock-admin-form";
 
 export const metadata: Metadata = { title: "Sign in", robots: PRIVATE_ROBOTS };
 
-export default function LoginPage() {
+export default function LoginPage(props: PageProps<"/login">) {
   return (
     // The shell already renders <main>; a second one would give screen readers two landmarks.
     <section className="mx-auto w-full max-w-md px-4 py-16 sm:py-24">
@@ -16,8 +20,17 @@ export default function LoginPage() {
         Use your PCU email. We&apos;ll send you a link, no password needed.
       </p>
       <div className="rise mt-8" style={{ "--i": 3 } as React.CSSProperties}>
-        <LoginForm />
+        <Suspense fallback={<LoginForm next={null} />}>
+          <LoginWithNext searchParams={props.searchParams} />
+        </Suspense>
       </div>
+      {mockAdminEnabled(process.env) ? <MockAdminForm email={MOCK_ADMIN.email} /> : null}
     </section>
   );
+}
+
+/** ?next= is where to go after sign-in, for example back to an opportunity. */
+async function LoginWithNext({ searchParams }: { searchParams: PageProps<"/login">["searchParams"] }) {
+  const { next } = await searchParams;
+  return <LoginForm next={safeNextPath(next)} />;
 }

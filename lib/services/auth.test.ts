@@ -54,6 +54,13 @@ describe("sign-in links", () => {
     expect(row!.tokenHash).not.toContain(token);
   });
 
+  it("carries a safe return path in the emailed link, and drops an unsafe one", async () => {
+    await requestSignInLink(ctx, sender, settings, "juan@pcu.edu.ph", null, "/opportunities/acme-intern-a1b2");
+    expect(sender.sent.at(-1)!.text).toMatch(/\/auth\/verify\?token=[A-Za-z0-9_-]+&next=%2Fopportunities%2Facme-intern-a1b2/);
+    await requestSignInLink(ctx, sender, settings, "juan@pcu.edu.ph", null, "https://evil.example");
+    expect(sender.sent.at(-1)!.text).not.toContain("next=");
+  });
+
   it("signs in a new student, creating the account, and the session works", async () => {
     await requestSignInLink(ctx, sender, settings, "maria@pcu.edu.ph");
     const { sessionToken, user } = await consumeSignInLink(ctx, settings, tokenFrom(sender));

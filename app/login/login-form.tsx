@@ -3,7 +3,8 @@
 import { useActionState } from "react";
 import { requestLinkAction, type LoginState } from "./actions";
 
-export function LoginForm() {
+/** `next` is a path to open after sign-in, carried in the emailed link. */
+export function LoginForm({ next }: { next: string | null }) {
   const [state, action, pending] = useActionState<LoginState, FormData>(requestLinkAction, {
     status: "idle",
   });
@@ -22,6 +23,7 @@ export function LoginForm() {
 
   return (
     <form action={action} className="flex flex-col gap-3">
+      {next ? <input type="hidden" name="next" value={next} /> : null}
       <label htmlFor="email" className="font-mono text-[11px] uppercase tracking-wide text-muted">
         PCU email
       </label>

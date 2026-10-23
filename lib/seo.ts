@@ -159,7 +159,6 @@ export interface SeoOpportunity {
   title: string;
   organization: string;
   summary: string;
-  url: string;
   locationType: "onsite" | "online" | "hybrid";
   location: string | null;
   startsAt: Date | null;
@@ -265,7 +264,8 @@ export function opportunityJsonLd(o: SeoOpportunity, origin: string, isClosed: b
   }
 
   if ((o.kind === "event" || o.kind === "competition") && o.startsAt) {
-    const online = { "@type": "VirtualLocation", url: o.url };
+    // The post page, not the organization's link: that is only shown to signed-in students.
+    const online = { "@type": "VirtualLocation", url: pageUrl };
     return {
       "@context": "https://schema.org",
       "@type": "Event",

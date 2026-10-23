@@ -42,7 +42,7 @@ Each kind needs a date, so every post can expire:
 | Route | Shows | Owner |
 |---|---|---|
 | `/opportunities` | Open posts, soonest closing first, with filter tabs for each kind and a "Closes in 3 days" badge | Frontend |
-| `/opportunities/<slug>` | One post with its details and a big "Apply" or "Register" button. Shareable in Messenger with its own link preview | Frontend |
+| `/opportunities/<slug>` | One post with its details and a big "Apply" or "Register" button. The details are public and shareable in Messenger with their own link preview. The button needs sign-in: signed-out visitors get "Sign in to apply", and sign-in returns them to the post | Frontend |
 | Home page | An "Upcoming" strip with the next three posts and a link to the full list | Frontend |
 | Admin page | Create, edit, hide and delete posts, including closed ones | Frontend, with backend actions |
 

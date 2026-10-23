@@ -14,9 +14,10 @@ test.describe("upcoming strip", () => {
     await expect(cards.nth(1)).toContainText(/Closes in \d days/);
     await expect(strip).not.toContainText("Closed scholarship");
     await expect(strip).not.toContainText("Hidden internship");
+    // Cards open the post's page. The apply link there needs sign-in, so it is never on the home page.
     const link = cards.nth(0).getByRole("link");
-    await expect(link).toHaveAttribute("href", "https://example.com/team-ctf");
-    await expect(link).toHaveAttribute("target", "_blank");
+    await expect(link).toHaveAttribute("href", "/opportunities/e2e-team-ctf-f7g8");
+    expect(await page.content()).not.toContain("example.com/team-ctf");
   });
 });
 
@@ -25,7 +26,7 @@ test.describe("focus band", () => {
     await page.goto("/");
     const band = page.getByRole("complementary", { name: "Team capture-the-flag" });
     await expect(band).toContainText("Closes tomorrow");
-    await expect(band.getByRole("link", { name: /Register/ })).toHaveAttribute("href", "https://example.com/team-ctf");
+    await expect(band.getByRole("link", { name: /Register/ })).toHaveAttribute("href", "/opportunities/e2e-team-ctf-f7g8");
   });
 });
 

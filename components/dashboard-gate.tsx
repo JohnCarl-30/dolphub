@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { GoogleMark } from "./google-mark";
+import { SignInOptions } from "./sign-in-options";
 
 /** Messages for /dashboard?signin=<reason>, set by the Google callback route. */
 const PROBLEMS: Record<string, string> = {
@@ -11,8 +10,8 @@ const PROBLEMS: Record<string, string> = {
   failed: "Google sign-in did not finish. Please try again.",
 };
 
-/** The landing shown at /dashboard before sign-in. The button goes to the /auth/google route. */
-export function DashboardGate({ problem }: { problem: string | null }) {
+/** The landing shown at /dashboard before sign-in. `next` is where to return after signing in. */
+export function DashboardGate({ problem, next }: { problem: string | null; next: string | null }) {
   const error = problem ? (PROBLEMS[problem] ?? PROBLEMS.failed!) : null;
 
   return (
@@ -26,29 +25,14 @@ export function DashboardGate({ problem }: { problem: string | null }) {
         Sign in with your PCU Google account to set up your page, add projects and share one link.
       </p>
 
-      <div className="rise mt-8 flex flex-col gap-3" style={{ "--i": 3 } as React.CSSProperties}>
-        {/* A plain link: /auth/google is a route handler that redirects to Google. */}
-        <a
-          href="/auth/google"
-          aria-describedby="google-hint"
-          className="press flex h-12 items-center justify-center gap-3 border border-ink bg-ink font-mono text-[11px] uppercase tracking-wide text-white outline-none hover:border-ink/85 hover:bg-ink/85 focus-visible:ring-2 focus-visible:ring-ink"
-        >
-          <span className="grid size-6 place-items-center rounded-full bg-white">
-            <GoogleMark className="size-3.5" />
-          </span>
-          Continue with Google
-        </a>
-        <p id="google-hint" className="text-sm leading-6 text-muted">
-          Use your @pcu.edu.ph account. Personal Gmail addresses cannot sign in.
-        </p>
-        {error ? (
-          <p role="alert" className="rise border border-ink/10 bg-paper p-4 text-sm leading-6">
-            {error}
-          </p>
-        ) : null}
-        <Link href="/login" className="text-sm underline underline-offset-4 transition-colors hover:text-muted">
-          Get a sign-in link by email instead
-        </Link>
+      <div className="rise mt-8" style={{ "--i": 3 } as React.CSSProperties}>
+        <SignInOptions next={next}>
+          {error ? (
+            <p role="alert" className="rise border border-ink/10 bg-paper p-4 text-sm leading-6">
+              {error}
+            </p>
+          ) : null}
+        </SignInOptions>
       </div>
     </section>
   );

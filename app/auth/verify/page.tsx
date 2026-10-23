@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import { safeNextPath, withNext } from "@/lib/next-path";
 import { PRIVATE_ROBOTS } from "@/lib/seo";
 import { VerifyForm } from "./verify-form";
 
@@ -27,17 +28,18 @@ export default function VerifyPage(props: PageProps<"/auth/verify">) {
 }
 
 async function Verify({ searchParams }: { searchParams: PageProps<"/auth/verify">["searchParams"] }) {
-  const { token } = await searchParams;
+  const { token, next: rawNext } = await searchParams;
+  const next = safeNextPath(rawNext);
   if (typeof token !== "string" || !token) {
     return (
       <p className="text-sm leading-6">
         This link is incomplete.{" "}
-        <Link href="/login" className="underline underline-offset-4 transition-colors hover:text-muted">
+        <Link href={withNext("/login", next)} className="underline underline-offset-4 transition-colors hover:text-muted">
           Request a new one
         </Link>
         .
       </p>
     );
   }
-  return <VerifyForm token={token} />;
+  return <VerifyForm token={token} next={next} />;
 }

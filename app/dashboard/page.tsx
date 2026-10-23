@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { DashboardGate } from "@/components/dashboard-gate";
 import { getCurrentUser } from "@/lib/auth";
 import { getDashboard } from "@/lib/dashboard";
+import { safeNextPath } from "@/lib/next-path";
 import { PRIVATE_ROBOTS } from "@/lib/seo";
 import { DashboardPage } from "./dashboard-page";
 
@@ -11,7 +13,11 @@ export const instant = false;
 /** Signed in: the student's page, next steps and open opportunities. Signed out: the sign-in landing, with a reason if Google sign-in just failed. */
 export default async function Page(props: PageProps<"/dashboard">) {
   const user = await getCurrentUser();
+  const { signin, next: rawNext } = await props.searchParams;
+  const next = safeNextPath(rawNext);
   if (user) {
+    // Already signed in, so go straight to the page sign-in was meant to return to.
+    if (next) redirect(next);
     const { profile, courses, projects, imageCount } = await getDashboard();
     const me = profile
       ? {
@@ -25,6 +31,5 @@ export default async function Page(props: PageProps<"/dashboard">) {
       : null;
     return <DashboardPage email={user.email} me={me} />;
   }
-  const { signin } = await props.searchParams;
-  return <DashboardGate problem={typeof signin === "string" ? signin : null} />;
+  return <DashboardGate problem={typeof signin === "string" ? signin : null} next={next} />;
 }

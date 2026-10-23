@@ -1,9 +1,10 @@
-import type { PublicOpportunity } from "@/lib/services/opportunities";
+import Link from "next/link";
 import { closingLabel, formatManilaTime } from "@/lib/opportunity-time";
-import { actionLabel, KIND_NAMES } from "@/lib/opportunity-display";
+import { actionLabel, KIND_NAMES, type OpportunityPreview } from "@/lib/opportunity-display";
+import { opportunityPath } from "@/lib/seo";
 
-/** One post that closes within three days, set apart on ink so it is the first thing read. */
-export function FocusBand({ post, now }: { post: PublicOpportunity; now: Date }) {
+/** One post that closes within three days, set apart on ink so it is the first thing read. Opens the post's page, where signed-in students apply. */
+export function FocusBand({ post, now }: { post: OpportunityPreview; now: Date }) {
   const when = post.startsAt && post.kind === "event" ? `Starts ${formatManilaTime(post.startsAt)}` : null;
 
   return (
@@ -21,15 +22,13 @@ export function FocusBand({ post, now }: { post: PublicOpportunity; now: Date })
           </h2>
           <p className="mt-1 text-sm leading-6 text-white/70">{post.organization}</p>
         </div>
-        <a
-          href={post.url}
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          href={opportunityPath(post.slug)}
           className="press inline-flex h-12 shrink-0 items-center self-start border border-white bg-white px-5 font-mono text-[11px] uppercase tracking-wide text-ink outline-none hover:bg-white/85 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-ink sm:self-auto"
         >
           {actionLabel(post.kind)}
-          <span className="sr-only"> for {post.title} (opens in a new tab)</span>
-        </a>
+          <span className="sr-only"> for {post.title}</span>
+        </Link>
       </div>
     </aside>
   );

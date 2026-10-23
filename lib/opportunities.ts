@@ -3,6 +3,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { connection } from "next/server";
 import { requireUser } from "./auth";
 import { OPPORTUNITIES_TAG } from "./cache-tags";
+import type { OpportunityPreview } from "./opportunity-display";
 import { getServiceContext } from "./server";
 import {
   getOpportunity,
@@ -46,6 +47,15 @@ async function cachedBySlug(slug: string) {
   cacheTag(OPPORTUNITIES_TAG);
   cacheLife("hours");
   return getOpportunity(await getServiceContext(), slug);
+}
+
+/** The same open posts without the organization's link, for client components on public pages such as the home page. */
+export async function getOpenOpportunityPreviews(): Promise<OpportunityPreview[]> {
+  return (await getOpenOpportunities()).map((post) => {
+    const preview: OpportunityPreview & { url?: string } = { ...post };
+    delete preview.url;
+    return preview;
+  });
 }
 
 /**
