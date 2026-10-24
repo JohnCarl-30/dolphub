@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { signOutAction } from "@/app/auth/actions";
 import { ProfileAvatar } from "./profile-avatar";
 import { NavLink } from "./nav-link";
+import { PUBLIC_NAV_LINKS } from "./site-navigation";
 
 const linkClass =
   "block border-b border-ink/10 px-4 py-3 font-mono text-[11px] uppercase tracking-wide outline-none transition-colors last:border-b-0 hover:bg-paper hover:text-ink focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink";
@@ -21,9 +22,7 @@ export function SiteMenu({
   const trigger = useRef<HTMLButtonElement>(null);
   const signedIn = Boolean(account);
   const mobileLinks = [
-    { href: "/what", label: "What" },
-    { href: "/about", label: "About" },
-    { href: "/vision", label: "Vision" },
+    ...PUBLIC_NAV_LINKS,
     ...(signedIn
       ? [{ href: homeHref, label: "Home" }, { href: "/dashboard", label: "Dashboard" }, { href: "/profile", label: "Profile" }]
       : []),
@@ -49,8 +48,19 @@ export function SiteMenu({
     };
   }, [open]);
 
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 64rem)");
+    const closeAtDesktop = () => {
+      if (desktop.matches) setOpen(false);
+    };
+
+    closeAtDesktop();
+    desktop.addEventListener("change", closeAtDesktop);
+    return () => desktop.removeEventListener("change", closeAtDesktop);
+  }, []);
+
   return (
-    <div ref={container} className="relative">
+    <div ref={container} className="relative lg:hidden">
       <button
         ref={trigger}
         type="button"
@@ -82,7 +92,7 @@ export function SiteMenu({
               </div>
             </div>
           ) : null}
-          <div className="lg:hidden">
+          <div>
             {mobileLinks.map((item) => (
               <NavLink
                 key={item.href}
@@ -94,15 +104,8 @@ export function SiteMenu({
               </NavLink>
             ))}
           </div>
-          {account ? (
-            <div className="hidden lg:block">
-              <NavLink href="/profile" className={linkClass} onClick={() => setOpen(false)}>
-                Profile
-              </NavLink>
-            </div>
-          ) : null}
           {!signedIn ? (
-            <div className="flex gap-2 border-t border-ink/10 p-3">
+            <div className="flex gap-2 border-t border-ink/10 p-3 sm:hidden">
               <NavLink href="/login" className="press inline-flex min-h-10 flex-1 items-center justify-center rounded-full border border-ink/15 bg-white/55 px-3 font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:bg-white/80 focus-visible:ring-2 focus-visible:ring-ink" onClick={() => setOpen(false)}>Log in</NavLink>
               <NavLink href="/login" className="press inline-flex min-h-10 flex-1 items-center justify-center rounded-full border border-ink bg-ink px-3 font-mono text-[11px] uppercase tracking-wide text-white outline-none transition-colors hover:bg-ink/85 focus-visible:ring-2 focus-visible:ring-ink" onClick={() => setOpen(false)}>Sign up</NavLink>
             </div>
