@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { Db } from "../db";
 import { courses, images, profilePictures, profiles, projects, users } from "../db/schema";
 import type { ServiceContext } from "./context";
-import { ServiceError, isUniqueViolation } from "./errors";
+import { ServiceError, isMissingRelation, isUniqueViolation } from "./errors";
 import { validateHandle } from "./handles";
 import * as v from "./validation";
 
@@ -153,6 +153,23 @@ export interface PublicImage {
   height: number;
 }
 
+/**
+ * Portraits are an optional enhancement. If a deployment reaches application
+ * code before the profile_pictures migration, preserve the existing profile
+ * page with initials instead of turning the whole page into a 500.
+ */
+export async function listProfilePicturesOrEmpty(db: Db, profileId: string) {
+  try {
+    return await db
+      .select()
+      .from(profilePictures)
+      .where(eq(profilePictures.profileId, profileId));
+  } catch (error) {
+    if (isMissingRelation(error, "profile_pictures")) return [];
+    throw error;
+  }
+}
+
 export interface PublicProject {
   id: string;
   title: string;
@@ -210,10 +227,7 @@ export async function getPublicProfile(
       .from(images)
       .where(eq(images.profileId, profile.id))
       .orderBy(asc(images.sortOrder), asc(images.createdAt)),
-    ctx.db
-      .select()
-      .from(profilePictures)
-      .where(eq(profilePictures.profileId, profile.id)),
+    listProfilePicturesOrEmpty(ctx.db, profile.id),
   ]);
 
   const toPublic = (i: typeof images.$inferSelect): PublicImage => ({

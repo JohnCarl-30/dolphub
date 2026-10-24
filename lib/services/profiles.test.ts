@@ -75,6 +75,17 @@ describe("profiles", () => {
     expect(await getPublicProfile(env.ctx, "juan")).toBeNull();
   });
 
+  it("keeps public profiles available with initials when the optional portrait migration is pending", async () => {
+    const u = await env.createUser();
+    await createProfile(env.db, u.id, base(env));
+    await env.client.query("drop table profile_pictures");
+
+    await expect(getPublicProfile(env.ctx, "juan")).resolves.toMatchObject({
+      handle: "juan",
+      profilePicture: null,
+    });
+  });
+
   it("lists only profiles with a project in the grid, newest first, with paging", async () => {
     const handles = ["ana", "ben", "cara"];
     for (const handle of handles) {

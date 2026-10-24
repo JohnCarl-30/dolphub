@@ -40,4 +40,14 @@ describe("getOwnDashboard", () => {
     expect(d.projects[0]!.images[0]!.url).toMatch(/^https:\/\/images\.test\/profiles\//);
     expect(d.imageCount).toBe(1);
   });
+
+  it("keeps the dashboard available when the optional portrait migration is pending", async () => {
+    const u = await env.createUser();
+    await createProfile(env.db, u.id, { handle: "ana", displayName: "Ana", courseId: env.courseId });
+    await env.client.query("drop table profile_pictures");
+
+    await expect(getOwnDashboard(env.ctx, u.id)).resolves.toMatchObject({
+      profile: { handle: "ana", profilePicture: null },
+    });
+  });
 });
