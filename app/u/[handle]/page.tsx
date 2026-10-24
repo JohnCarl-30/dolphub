@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ContentErrorBoundary } from "@/components/content-error-boundary";
 import { JsonLd } from "@/lib/json-ld";
 import { notFound } from "next/navigation";
 import { getProfilePage } from "@/lib/profiles";
@@ -28,16 +29,24 @@ export async function generateMetadata({ params }: PageProps<"/u/[handle]">): Pr
 
 export default function Page({ params }: PageProps<"/u/[handle]">) {
   return (
-    <Suspense
-      fallback={
-        <section className="mx-auto w-full max-w-3xl px-4 py-16 sm:px-6">
-          <p className="font-mono text-[11px] uppercase tracking-wide text-muted">/u</p>
-          <h1 className="mt-3 text-4xl font-medium tracking-tight">Loading page…</h1>
-        </section>
-      }
+    <ContentErrorBoundary
+      eyebrow="/u"
+      title="This student page is temporarily unavailable."
+      description="The page could not be loaded right now. Please try again shortly."
+      variant="page"
+      showHomeLink
     >
-      <ResolvedProfile params={params} />
-    </Suspense>
+      <Suspense
+        fallback={
+          <section className="mx-auto w-full max-w-3xl px-4 py-16 sm:px-6">
+            <p className="font-mono text-[11px] uppercase tracking-wide text-muted">/u</p>
+            <h1 className="mt-3 text-4xl font-medium tracking-tight">Loading page…</h1>
+          </section>
+        }
+      >
+        <ResolvedProfile params={params} />
+      </Suspense>
+    </ContentErrorBoundary>
   );
 }
 
