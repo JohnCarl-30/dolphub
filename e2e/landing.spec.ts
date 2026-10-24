@@ -32,6 +32,9 @@ test("the showcase requires sign-in and stays noindex without a robots block", a
   const robotsText = await (await request.get("/robots.txt")).text();
   expect(robotsText).not.toMatch(/^Disallow: \/home$/m);
   const sitemap = await (await request.get("/sitemap.xml")).text();
-  expect(sitemap).toContain("https://dolphub.tech/");
-  expect(sitemap).not.toContain("https://dolphub.tech/home");
+  const sitemapPaths = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(
+    ([, location]) => new URL(location!).pathname,
+  );
+  expect(sitemapPaths).toContain("/");
+  expect(sitemapPaths).not.toContain("/home");
 });
