@@ -8,7 +8,7 @@ import { getPublicProfile, listActiveCourses, listGridProfiles, type PublicProfi
 import type { Showcase } from "./showcase-data";
 
 /*
- * Loaders for the student pages and the home showcase. Call them inside a
+ * Loaders for the student pages and the signed-in `/home` showcase. Call them inside a
  * <Suspense> boundary.
  *
  * Each one waits for the request (connection()), so nothing reaches the
@@ -53,7 +53,7 @@ async function cachedShowcase(): Promise<Showcase> {
   };
 }
 
-/** Published student pages for the home showcase, newest first, with the course filter options. */
+/** Published student pages for the signed-in `/home` showcase, newest first, with the course filter options. */
 export async function getShowcase(): Promise<Showcase> {
   await connection();
   return cachedShowcase();

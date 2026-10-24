@@ -57,7 +57,7 @@ The metric is one count query shown on the admin page. No tracking script, no co
 19. **Signup domains are configuration.** `PCU_EMAIL_DOMAINS` lists the allowed email domains, matched exactly. The real PCU student email domain still needs confirming.
 20. **Custom magic-link sign-in instead of Auth.js.** The emailed link opens a page with a button, and only the button press uses the link. University mail scanners often open links before the student does, which would use up a link that signs in on open. Links last 15 minutes and work once. Sessions last 30 days in an httpOnly `__Host-session` cookie. Only hashes of links and session tokens are stored. Students can also choose "Continue with Google" at `/auth/google`. It uses OpenID Connect with PKCE, a state value and a nonce, accepts only Google-verified addresses on a `PCU_EMAIL_DOMAINS` domain, and starts the same session as an email link. It is optional: without `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, the button says Google sign-in is unavailable and points to the email link.
 21. **Local development needs no accounts.** `DATABASE_URL=pglite:<folder>` runs Postgres inside Node, and without `RESEND_API_KEY` sign-in links print to the terminal. Production refuses to start without Neon, Resend, R2 and an https `APP_URL`. Google sign-in is optional everywhere.
-22. **Search indexing.** The home page is indexed. Student pages are indexed by default once they show real data, and each student can turn that off with a "show my page in search engines" setting stored in `profiles.search_visible`. Sample profiles are never indexed. Every page gets its own canonical link, and student pages get a generated 1200x630 link preview with their name, course and tagline. Search logic lives in `lib/seo.ts` and `lib/seo-data.ts`.
+22. **Search indexing.** The public landing page at `/` is indexed. The signed-in showcase at `/home` is `noindex` but remains crawlable so search engines can see that directive. Student pages are indexed by default once they show real data, and each student can turn that off with a "show my page in search engines" setting stored in `profiles.search_visible`. Sample profiles are never indexed. Every page gets its own canonical link, and student pages get a generated 1200x630 link preview with their name, course and tagline. Search logic lives in `lib/seo.ts` and `lib/seo-data.ts`.
 
 ## Data model (launch)
 
@@ -82,7 +82,8 @@ Added after launch: `profiles.recovery_email`, `profiles.in_directory` (opt-in f
 
 | Route | Purpose |
 |---|---|
-| `/` | Grid of profiles with at least one project |
+| `/` | Public landing page explaining Dolphub, with configured featured portfolios |
+| `/home` | Signed-in showcase grid of profiles with at least one project |
 | `/u/[handle]` | Public profile page, ISR, preview tags |
 | `/login` | Email form that sends a sign-in link |
 | `/auth/verify` | Where the emailed link lands. A button finishes sign-in |

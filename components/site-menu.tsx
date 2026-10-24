@@ -5,11 +5,6 @@ import { signOutAction } from "@/app/auth/actions";
 import { ProfileAvatar } from "./profile-avatar";
 import { NavLink } from "./nav-link";
 
-const MOBILE_HEADER_LINKS = [
-  { href: "/", index: "00", label: "Home" },
-  { href: "/dashboard", index: "01", label: "Dashboard" },
-];
-
 const MENU_LINKS = [
   { href: "/profile", index: "02", label: "Profile" },
   { href: "/privacy", index: "03", label: "Privacy & Security" },
@@ -22,13 +17,19 @@ const linkClass =
 
 export function SiteMenu({
   account,
+  homeHref = "/",
 }: {
   account?: { name: string; handle: string | null; profilePictureUrl: string | null };
+  homeHref?: "/" | "/home";
 }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
   const container = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
+  const mobileHeaderLinks = [
+    { href: homeHref, index: "00", label: "Home" },
+    { href: "/dashboard", index: "01", label: "Dashboard" },
+  ];
 
   useEffect(() => {
     if (!open) return;
@@ -84,7 +85,7 @@ export function SiteMenu({
             </div>
           ) : null}
           <div className="border-b border-ink/10 sm:hidden">
-            {MOBILE_HEADER_LINKS.map((item) => (
+            {mobileHeaderLinks.map((item) => (
               <NavLink
                 key={item.href}
                 href={item.href}

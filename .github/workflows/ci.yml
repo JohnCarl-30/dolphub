@@ -59,6 +59,8 @@ jobs:
     timeout-minutes: 15
     env:
       NEXT_TELEMETRY_DISABLED: "1"
+      # Build static metadata with the same origin the Playwright server uses.
+      APP_URL: http://127.0.0.1:3100
     steps:
       - uses: actions/checkout@v7
 

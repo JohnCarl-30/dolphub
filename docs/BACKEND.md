@@ -118,7 +118,7 @@ Without R2 settings, photos are kept in server memory and served from `/dev-imag
 
 The plan is in [OPPORTUNITIES.md](./OPPORTUNITIES.md). Admins post, students follow the link out.
 
-**The apply link needs sign-in.** Anyone can read a post, but only signed-in students see its `url`. Signed out, `/opportunities/<slug>` shows "Sign in to apply" with the Google and email options, and both return to the post. The `url` is left out of every page a signed-out visitor can open: the home page gets `getOpenOpportunityPreviews()` (the `OpportunityPreview` type, without `url`), its cards and focus band link to the post page, and the structured data points online events at the post page.
+**The apply link needs sign-in.** Anyone can read a post, but only signed-in students see its `url`. Signed out, `/opportunities/<slug>` shows "Sign in to apply" with the Google and email options, and both return to the post. The `url` is left out of every page a signed-out visitor can open: the signed-in `/home` showcase gets `getOpenOpportunityPreviews()` (the `OpportunityPreview` type, without `url`), its cards and focus band link to the post page, and the structured data points online events at the post page.
 
 ### Loading
 
@@ -138,7 +138,7 @@ const post = await getOpportunityPage(slug); // null when missing or hidden: cal
 | `getOpportunityPage(slug)` | One post plus `isClosed`. Closed posts are still returned, so show "This opportunity has closed" |
 | `getAdminOpportunities()` | Every post including hidden and closed, with `id`, `isHidden`, `hiddenReason`, `isClosed`. Admins only |
 
-Both public loaders wait for the request and then read a cached copy, so pages never touch the database at build time. A post leaves the list the moment it closes. The home page passes `getOpenOpportunityPreviews()` unawaited to the client, which picks the next three posts and the focus band post (closing within three days) with `upcomingOpportunities` and `focusOpportunity` from `lib/opportunity-display.ts`, using the visitor's clock.
+Both public loaders wait for the request and then read a cached copy, so pages never touch the database at build time. A post leaves the list the moment it closes. The signed-in `/home` showcase passes `getOpenOpportunityPreviews()` unawaited to the client, which picks the next three posts and the focus band post (closing within three days) with `upcomingOpportunities` and `focusOpportunity` from `lib/opportunity-display.ts`, using the visitor's clock.
 
 Each post (`PublicOpportunity` in `lib/services/opportunities.ts`) has these fields:
 
@@ -215,7 +215,7 @@ Metadata, link preview images, structured data and the sitemap live in backend-o
 
 Indexing rules:
 
-- **Home** is indexed.
+- **The public landing page (`/`)** is indexed. The signed-in showcase (`/home`) is `noindex` and is intentionally not blocked by `robots.txt`, so crawlers can read that directive.
 - **Student pages** are indexed only when the data is real and the student left `searchVisible` on. Sample pages and unknown handles get `noindex`.
 - **Login, verify, dashboard and profile editor** always get `noindex`. `robots.txt` blocks `/dashboard`, `/profile`, `/auth/` and `/api/`, but not `/login` or `/u/`, so crawlers can still see their `noindex`.
 
@@ -284,7 +284,7 @@ In pages and actions, use the helpers in `lib/auth.ts`:
 | `updateProfile(db, userId, patch)` | Name, tagline, course, Messenger link, GitHub username, contact email, cover image. Rejects a handle change |
 | `getProfileByUserId(db, userId)` | The dashboard's own profile, or null |
 | `getPublicProfile(ctx, handle)` | Everything `/u/<handle>` shows, with image URLs and the preview cover. Null when missing, hidden, or being deleted. `updatedAt` is the preview image version |
-| `listGridProfiles(ctx, { limit, after })` | Home grid: visible profiles with a project, newest first. Pass the last card's `createdAt` and `id` as `after` for the next page |
+| `listGridProfiles(ctx, { limit, after })` | Showcase grid: visible profiles with a project, newest first. Pass the last card's `createdAt` and `id` as `after` for the next page |
 
 ### Projects (`projects.ts`)
 

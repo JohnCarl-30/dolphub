@@ -119,7 +119,7 @@ test("a new student creates a page, publishes a project, and removes it", async 
   await expect(article.getByRole("link", { name: "Demo →" })).toHaveAttribute("href", "https://seats.example.com");
   await expect(article.getByText("Tools for the CS lab.")).toBeVisible();
 
-  await page.goto("/");
+  await page.goto("/home");
   const card = page.locator(`[data-showcase-card="${handle}"]:visible`);
   await expect(card).toHaveCount(1);
   await expect(card).toContainText("Lab seat finder");
@@ -161,7 +161,7 @@ test("a new student creates a page, publishes a project, and removes it", async 
     .evaluateAll((tags) => tags.map((tag) => tag.getAttribute("content")));
   expect(robots.some((content) => content?.includes("noindex"))).toBe(true);
 
-  await page.goto("/");
+  await page.goto("/home");
   await expect(page.locator('[data-showcase-card="mira"]:visible')).toHaveCount(1);
   await expect(page.locator(`[data-showcase-card="${handle}"]`)).toHaveCount(0);
 });

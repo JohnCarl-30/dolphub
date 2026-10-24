@@ -30,7 +30,7 @@ export function DashboardPage({ email, me }: { email: string; me: DashboardMe })
     { label: "Create your page", hint: "Pick a handle and add your name and course.", done: me !== null },
     {
       label: "Add a project",
-      hint: "Your page joins the home page once it has a project.",
+      hint: "Your page joins the home showcase once it has a project.",
       done: (me?.projectCount ?? 0) > 0,
     },
     { label: "Add a photo", hint: "A screenshot makes a project easier to picture.", done: (me?.photoCount ?? 0) > 0 },
