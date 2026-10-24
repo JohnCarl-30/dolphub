@@ -61,6 +61,7 @@ test.describe("site menu", () => {
     await authenticate(page);
     await page.goto("/home");
 
+    await expect(page.getByRole("navigation", { name: "Primary" }).getByRole("link")).toHaveText(["What", "About", "Vision"]);
     await expect(page.getByRole("link", { name: "Home" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Dashboard" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Profile" })).toHaveCount(0);
@@ -72,7 +73,7 @@ test.describe("site menu", () => {
       "true",
     );
     const menu = page.getByRole("navigation", { name: "Site menu" });
-    await expect(menu.locator("a:visible")).toHaveText(["What", "About", "Vision", "Home", "Dashboard", "Profile"]);
+    await expect(menu.locator("a:visible")).toHaveText(["Profile"]);
 
     await page.keyboard.press("Escape");
     const reopened = page.getByRole("button", { name: "Open navigation menu" });
@@ -82,6 +83,35 @@ test.describe("site menu", () => {
     await reopened.click();
     await page.getByRole("heading", { level: 1 }).click();
     await expect(page.getByRole("navigation", { name: "Site menu" })).toHaveCount(0);
+  });
+
+  test("centers public links and separates signed-out authentication pills", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("/");
+
+    const primary = page.getByRole("navigation", { name: "Primary" });
+    await expect(primary.getByRole("link")).toHaveText(["What", "About", "Vision"]);
+    const center = await primary.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return rect.left + rect.width / 2;
+    });
+    expect(Math.abs(center - 640)).toBeLessThan(1);
+
+    const login = page.getByRole("link", { name: "Log in", exact: true });
+    const signup = page.getByRole("link", { name: "Sign up", exact: true });
+    await expect(login).toHaveAttribute("href", "/login");
+    await expect(signup).toHaveAttribute("href", "/login");
+    await expect(login).toHaveClass(/rounded-full/);
+    await expect(signup).toHaveClass(/rounded-full/);
+  });
+
+  test("keeps signed-out authentication actions separate on phones", async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 640 });
+    await page.goto("/");
+    await page.getByRole("button", { name: "Open navigation menu" }).click();
+    const menu = page.getByRole("navigation", { name: "Site menu" });
+    await expect(menu.getByRole("link", { name: "Log in", exact: true })).toHaveAttribute("href", "/login");
+    await expect(menu.getByRole("link", { name: "Sign up", exact: true })).toHaveAttribute("href", "/login");
   });
 
   test("puts every destination in the phone menu and closes after navigation", async ({ page }) => {
