@@ -96,6 +96,7 @@ test.describe("site menu", () => {
 
     const menu = page.getByRole("navigation", { name: "Site menu" });
     await expect(menu.locator("a:visible")).toHaveText(["What", "About", "Vision", "Home", "Dashboard", "Profile"]);
+    await page.getByRole("button", { name: "Close navigation menu" }).click();
     await page.getByRole("navigation", { name: "Legal" }).getByRole("link", { name: "Privacy & Security" }).click();
 
     await expect(page).toHaveURL(/\/privacy$/);

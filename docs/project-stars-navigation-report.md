@@ -23,3 +23,7 @@ Signed-in students can add or remove one star from another student's visible pro
 - `npm run build`
 - `npm test -- lib/services/project-stars.test.ts`
 - Focused Playwright checks for project stars and navigation on desktop and phone.
+
+## Follow-up
+
+The phone-menu test now closes the open menu before selecting the separate legal utility link. The menu panel otherwise covers that link during the test, although the link is intentionally outside the menu.
