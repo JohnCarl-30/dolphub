@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, exists, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { Db } from "../db";
-import { courses, images, profilePictures, profiles, projects, users } from "../db/schema";
+import { courses, images, profilePictures, profiles, projects, projectStars, users } from "../db/schema";
 import type { ServiceContext } from "./context";
 import { ServiceError, isMissingRelation, isUniqueViolation } from "./errors";
 import { validateHandle } from "./handles";
@@ -176,6 +176,7 @@ export interface PublicProject {
   description: string;
   demoUrl: string | null;
   sourceUrl: string | null;
+  starCount: number;
   images: PublicImage[];
 }
 
@@ -230,6 +231,15 @@ export async function getPublicProfile(
     listProfilePicturesOrEmpty(ctx.db, profile.id),
   ]);
 
+  const starRows = projectRows.length
+    ? await ctx.db
+        .select({ projectId: projectStars.projectId, count: sql<number>`count(*)::int` })
+        .from(projectStars)
+        .where(inArray(projectStars.projectId, projectRows.map((project) => project.id)))
+        .groupBy(projectStars.projectId)
+    : [];
+  const starsByProject = new Map(starRows.map((row) => [row.projectId, row.count]));
+
   const toPublic = (i: typeof images.$inferSelect): PublicImage => ({
     id: i.id,
     url: ctx.storage.publicUrl(i.r2Key),
@@ -243,6 +253,7 @@ export async function getPublicProfile(
     description: p.description,
     demoUrl: p.demoUrl,
     sourceUrl: p.sourceUrl,
+    starCount: starsByProject.get(p.id) ?? 0,
     images: imageRows.filter((i) => i.projectId === p.id).map(toPublic),
   }));
 
@@ -273,6 +284,67 @@ export async function getPublicProfile(
     searchVisible: profile.searchVisible,
     updatedAt: profile.updatedAt,
   };
+}
+
+export interface FeaturedProject {
+  id: string;
+  title: string;
+  description: string;
+  demoUrl: string | null;
+  sourceUrl: string | null;
+  starCount: number;
+  handle: string;
+  displayName: string;
+  courseName: string;
+  imageUrl: string | null;
+}
+
+/**
+ * Public landing projects: stars descending then newest first. Only each
+ * student's highest-ranked project is kept, so the showcase represents more people.
+ */
+export async function listFeaturedProjects(ctx: ServiceContext, limit = 3): Promise<FeaturedProject[]> {
+  const rows = await ctx.db
+    .select({
+      project: projects,
+      handle: profiles.handle,
+      displayName: profiles.displayName,
+      courseName: courses.name,
+      starCount: sql<number>`count(${projectStars.userId})::int`,
+    })
+    .from(projects)
+    .innerJoin(profiles, eq(profiles.id, projects.profileId))
+    .innerJoin(users, eq(users.id, profiles.userId))
+    .innerJoin(courses, eq(courses.id, profiles.courseId))
+    .leftJoin(projectStars, eq(projectStars.projectId, projects.id))
+    .where(visible)
+    .groupBy(projects.id, profiles.id, courses.id)
+    .orderBy(desc(sql`count(${projectStars.userId})`), desc(projects.createdAt));
+
+  const chosen = rows.filter((row, index, all) =>
+    all.findIndex((candidate) => candidate.project.profileId === row.project.profileId) === index,
+  ).slice(0, limit);
+  if (chosen.length === 0) return [];
+  const imageRows = await ctx.db
+    .select({ projectId: images.projectId, r2Key: images.r2Key })
+    .from(images)
+    .where(inArray(images.projectId, chosen.map((row) => row.project.id)))
+    .orderBy(asc(images.sortOrder), asc(images.createdAt));
+
+  return chosen.map((row) => ({
+    id: row.project.id,
+    title: row.project.title,
+    description: row.project.description,
+    demoUrl: row.project.demoUrl,
+    sourceUrl: row.project.sourceUrl,
+    starCount: row.starCount,
+    handle: row.handle,
+    displayName: row.displayName,
+    courseName: row.courseName,
+    imageUrl: imageRows.find((image) => image.projectId === row.project.id)
+      ? ctx.storage.publicUrl(imageRows.find((image) => image.projectId === row.project.id)!.r2Key)
+      : null,
+  }));
 }
 
 export interface GridCard {

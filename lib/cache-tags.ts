@@ -3,6 +3,7 @@
  * and the actions and routes that change it, which expire the tags.
  */
 export const GRID_TAG = "grid";
+export const FEATURED_PROJECTS_TAG = "featured-projects";
 
 export function profileTag(handle: string): string {
   return `profile:${handle.toLowerCase()}`;

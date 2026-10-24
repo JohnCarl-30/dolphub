@@ -45,12 +45,12 @@ Reuse the tokens in [app/globals.css](app/globals.css). Do not introduce a secon
 
 - Use the header, main, and footer from [components/site-shell.tsx](components/site-shell.tsx).
 - Use `max-w-6xl` for the homepage and shared chrome, `max-w-3xl` for public profile content, and `max-w-md` for dashboard and authentication forms. Use `px-4`, increasing to `sm:px-6` on public pages where appropriate.
-- Keep header links numbered: `[ 00 ] Home` leads signed-in students to `/home` and signed-out visitors to `/`; `[ 01 ] Dashboard` leads to `/dashboard`. Show both beside the menu button from the `sm` breakpoint up; place them inside the burger menu on smaller screens.
-- The burger menu is always available. `[ 02 ] Profile` for the current-user editor at `/profile` is its first desktop item and follows Home and Dashboard on smaller screens. Privacy & Security, Terms, and Support remain `[ 03 ]` through `[ 05 ]`. The menu closes on selection, outside interaction, or Escape, and returns focus to its trigger after Escape.
-- Signed-in menus begin with the student's portrait and identity, then end with `[ 06 ] Log out`. Signed-out menus keep the navigation-only version. The portrait is optional, with initials on paper as its fallback.
+- Public navigation links to What, About, and Vision. Signed-in students also see Home and Dashboard; signed-out visitors see Log in / Sign up instead. On smaller screens those destinations move into the burger menu.
+- The burger menu is always available. Signed-in menus begin with the student's portrait and identity and include Profile; signed-out menus omit private destinations. Privacy & Security, Terms, and Support stay visible in the header utility row and footer, outside the burger menu. The menu closes on selection, outside interaction, or Escape, and returns focus to its trigger after Escape.
+- The portrait is optional, with initials on paper as its fallback. Signed-in menus end with Log out.
 - Preserve the compact mono footer and hairline shell borders. Use `Dolphub · Built for PCU tech students` and `© 2026 Dolphub contributors · MIT License` as the production footer copy, followed by Privacy & Security, Terms, and Support links.
 - Use slash section labels such as `/students`, `/u/{handle}`, `/publish`, `/dashboard`, and `/login`.
-- Keep the public landing page focused on what Dolphub is, about Dolphub, its vision, and configured featured student cards. Follow the signed-in student showcase directly with a short numbered publishing sequence: sign in, add a project, and share `/u/your-handle`.
+- Keep the public landing page focused on compact links to What, About, and Vision, then up to three featured projects. Rank those projects by public star count, fill zero-star slots with recent projects, and show at most one project per student.
 - Keep dashboard forms phone-first. Existing image uploads remain labeled slots until an image workflow is implemented.
 
 ### Informational pages

@@ -4,6 +4,7 @@ import {
   check,
   index,
   integer,
+  primaryKey,
   pgTable,
   serial,
   text,
@@ -105,6 +106,26 @@ export const projects = pgTable(
     updatedAt: updatedAt(),
   },
   (t) => [index("projects_profile_id_idx").on(t.profileId)],
+);
+
+/** A signed-in student may star each project once. Stars are public counts, never public identities. */
+export const projectStars = pgTable(
+  "project_stars",
+  {
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    // A composite primary key makes repeated star requests idempotent.
+    primaryKey({ columns: [t.projectId, t.userId], name: "project_stars_project_user_pk" }),
+    index("project_stars_project_id_idx").on(t.projectId),
+    index("project_stars_user_id_idx").on(t.userId),
+  ],
 );
 
 /** Image bytes live in R2. Only the key and size are stored here. */

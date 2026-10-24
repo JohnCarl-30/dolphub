@@ -1,6 +1,17 @@
 import type { PublicProject } from "@/lib/services/profiles";
+import { ProjectStar } from "./project-star";
 
-export function ProjectList({ projects }: { projects: PublicProject[] }) {
+export function ProjectList({
+  projects,
+  starredProjectIds = new Set<string>(),
+  signedIn = false,
+  isOwner = false,
+}: {
+  projects: PublicProject[];
+  starredProjectIds?: Set<string>;
+  signedIn?: boolean;
+  isOwner?: boolean;
+}) {
   if (projects.length === 0) {
     return (
       <p className="text-sm leading-6 text-muted">No projects on this page yet.</p>
@@ -24,6 +35,13 @@ export function ProjectList({ projects }: { projects: PublicProject[] }) {
             <h3 className="text-xl font-medium tracking-tight">{project.title}</h3>
             <p className="text-sm leading-6 text-muted">{project.description}</p>
             <div className="flex flex-wrap gap-4 font-mono text-[11px] uppercase tracking-wide">
+              <ProjectStar
+                projectId={project.id}
+                count={project.starCount}
+                starred={starredProjectIds.has(project.id)}
+                canStar={signedIn && !isOwner}
+                signedIn={signedIn}
+              />
               {project.demoUrl ? (
                 <a
                   href={project.demoUrl}

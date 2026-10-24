@@ -44,6 +44,7 @@ export default function PrivacyPage() {
             Optional public contact details you choose to add, such as Messenger, GitHub, or a contact
             email address.
           </li>
+          <li>Project stars you add or remove while signed in. Dolphub shows project totals publicly, not who starred them.</li>
           <li>
             Security records such as hashed sign-in and session tokens, a keyed hash of the requesting
             network, and standard request information processed by the hosting platform.

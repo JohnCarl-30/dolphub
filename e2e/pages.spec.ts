@@ -33,13 +33,13 @@ test.describe("home", () => {
     await expect(all).toHaveAttribute("aria-pressed", "false");
     const expected = Number(/\[(\d+)\]/.exec((await cs.textContent()) ?? "")?.[1]);
     await expect(page.locator("[data-showcase-card]:visible")).toHaveCount(expected);
-    const home = page.getByRole("link", { name: "[ 00 ] Home" });
-    const dashboard = page.getByRole("link", { name: "[ 01 ] Dashboard" });
+    const home = page.getByRole("link", { name: "Home" });
+    const dashboard = page.getByRole("link", { name: "Dashboard" });
     await expect(home).toHaveAttribute("href", "/home");
     await expect(home).toHaveAttribute("aria-current", "page");
     await expect(dashboard).toHaveAttribute("href", "/dashboard");
     await expect(dashboard).not.toHaveAttribute("aria-current", "page");
-    await expect(page.getByRole("link", { name: "[ 02 ] Profile" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Profile" })).toHaveCount(0);
     await expect(page.getByText("Dolphub · Built for PCU tech students", { exact: true })).toBeVisible();
     await expect(
       page.getByText("© 2026 Dolphub contributors · MIT License", { exact: true }),
@@ -61,9 +61,9 @@ test.describe("site menu", () => {
     await authenticate(page);
     await page.goto("/home");
 
-    await expect(page.getByRole("link", { name: "[ 00 ] Home" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "[ 01 ] Dashboard" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "[ 02 ] Profile" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Home" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Dashboard" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Profile" })).toHaveCount(0);
 
     const open = page.getByRole("button", { name: "Open navigation menu" });
     await open.click();
@@ -72,12 +72,7 @@ test.describe("site menu", () => {
       "true",
     );
     const menu = page.getByRole("navigation", { name: "Site menu" });
-    await expect(menu.locator("a:visible")).toHaveText([
-      "[ 02 ] Profile",
-      "[ 03 ] Privacy & Security",
-      "[ 04 ] Terms",
-      "[ 05 ] Support",
-    ]);
+    await expect(menu.locator("a:visible")).toHaveText(["What", "About", "Vision", "Home", "Dashboard", "Profile"]);
 
     await page.keyboard.press("Escape");
     const reopened = page.getByRole("button", { name: "Open navigation menu" });
@@ -94,21 +89,15 @@ test.describe("site menu", () => {
     await authenticate(page);
     await page.goto("/home");
 
-    await expect(page.getByRole("link", { name: "[ 00 ] Home" })).toHaveCount(0);
-    await expect(page.getByRole("link", { name: "[ 01 ] Dashboard" })).toHaveCount(0);
-    await expect(page.getByRole("link", { name: "[ 02 ] Profile" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Home" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Dashboard" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Profile" })).toHaveCount(0);
     await page.getByRole("button", { name: "Open navigation menu" }).click();
 
     const menu = page.getByRole("navigation", { name: "Site menu" });
-    await expect(menu.locator("a:visible")).toHaveText([
-      "[ 00 ] Home",
-      "[ 01 ] Dashboard",
-      "[ 02 ] Profile",
-      "[ 03 ] Privacy & Security",
-      "[ 04 ] Terms",
-      "[ 05 ] Support",
-    ]);
-    await menu.getByRole("link", { name: "[ 03 ] Privacy & Security" }).click();
+    await expect(menu.locator("a:visible")).toHaveText(["What", "About", "Vision", "Home", "Dashboard", "Profile"]);
+    await page.getByRole("button", { name: "Close navigation menu" }).click();
+    await page.getByRole("navigation", { name: "Legal" }).getByRole("link", { name: "Privacy & Security" }).click();
 
     await expect(page).toHaveURL(/\/privacy$/);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Privacy & Security");
@@ -163,6 +152,16 @@ test.describe("information pages", () => {
 });
 
 test.describe("profile", () => {
+  test("shows public star counts and lets a signed-in student star another project", async ({ page }) => {
+    await page.goto("/u/mira");
+    await expect(page.getByRole("link", { name: /Log in to star/ }).first()).toBeVisible();
+    await authenticate(page);
+    await page.goto("/u/mira");
+    const star = page.getByRole("button", { name: "Star project" }).first();
+    await star.click();
+    await expect(page.getByRole("button", { name: "Remove star from project" }).first()).toBeVisible();
+  });
+
   test("shows contact links and projects, with projects staggered", async ({ page }) => {
     await page.goto("/u/mira");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Mira Santos");
@@ -226,16 +225,16 @@ test.describe("dashboard", () => {
   test("marks Dashboard as current and separates profile navigation", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/dashboard");
-    await expect(page.getByRole("link", { name: "[ 00 ] Home" })).not.toHaveAttribute(
+    await expect(page.getByRole("link", { name: "Home" })).not.toHaveAttribute(
       "aria-current",
       "page",
     );
-    await expect(page.getByRole("link", { name: "[ 01 ] Dashboard" })).toHaveAttribute(
+    await expect(page.getByRole("link", { name: "Dashboard" })).toHaveAttribute(
       "aria-current",
       "page",
     );
     await page.getByRole("button", { name: "Open navigation menu" }).click();
-    await expect(page.getByRole("link", { name: "[ 02 ] Profile" })).not.toHaveAttribute(
+    await expect(page.getByRole("link", { name: "Profile", exact: true })).not.toHaveAttribute(
       "aria-current",
       "page",
     );
@@ -279,7 +278,7 @@ test.describe("profile editor", () => {
   test("marks Profile as current and preserves editor validation", async ({ page }) => {
     await page.goto("/profile");
     await page.getByRole("button", { name: "Open navigation menu" }).click();
-    await expect(page.getByRole("link", { name: "[ 02 ] Profile" })).toHaveAttribute(
+    await expect(page.getByRole("link", { name: "Profile" })).toHaveAttribute(
       "aria-current",
       "page",
     );
@@ -335,7 +334,7 @@ test("logs out from the hamburger menu and clears the browser session", async ({
   await authenticate(page, `logout-${testInfo.project.name}`);
   await page.goto("/dashboard");
   await page.getByRole("button", { name: "Open navigation menu" }).click();
-  await page.getByRole("button", { name: "[ 06 ] Log out" }).click();
+  await page.getByRole("button", { name: "Log out" }).click();
 
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("heading", { name: "One link for every project you've built." })).toBeVisible();

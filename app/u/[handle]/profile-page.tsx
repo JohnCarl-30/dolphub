@@ -3,7 +3,17 @@ import { ProfileAvatar } from "@/components/profile-avatar";
 import { REPORT_EMAIL } from "@/components/support-contacts";
 import type { PublicProfile } from "@/lib/services/profiles";
 
-export function ProfilePage({ profile }: { profile: PublicProfile }) {
+export function ProfilePage({
+  profile,
+  starredProjectIds,
+  signedIn,
+  isOwner,
+}: {
+  profile: PublicProfile;
+  starredProjectIds: Set<string>;
+  signedIn: boolean;
+  isOwner: boolean;
+}) {
   return (
     <article className="mx-auto w-full max-w-3xl px-4 py-12 sm:px-6">
       <p className="font-mono text-[11px] uppercase tracking-wide text-muted">
@@ -27,7 +37,7 @@ export function ProfilePage({ profile }: { profile: PublicProfile }) {
         <p className="font-mono text-[11px] uppercase tracking-wide text-muted">/projects</p>
         <h2 className="mt-2 text-2xl font-medium tracking-tight">Projects</h2>
         <div className="mt-6">
-          <ProjectList projects={profile.projects} />
+          <ProjectList projects={profile.projects} starredProjectIds={starredProjectIds} signedIn={signedIn} isOwner={isOwner} />
         </div>
       </section>
 
