@@ -2,7 +2,7 @@
 
 ## What changed and why
 
-`/` is now the public, indexable Dolphub landing page for every visitor. It explains what Dolphub is, its audience and vision, offers page-creation and login actions, and reserves a featured-student section for configured public portfolio handles.
+`/` is now the public, indexable Dolphub landing page for every visitor. It explains what Dolphub is, its audience and vision, offers page-creation and login actions, and reserves a featured-student section for configured public portfolio handles. The landing shell no longer reads showcase data during prerendering; configured cards stream behind a Suspense boundary at request time.
 
 The existing showcase moved unchanged to authenticated `/home`. Signed-out visits continue through `/dashboard?next=/home`, so a successful sign-in returns to the showcase. Logout now goes to the public landing page.
 

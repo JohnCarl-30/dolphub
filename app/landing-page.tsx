@@ -1,11 +1,10 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { ProfileCard } from "@/components/profile-card";
-import { featuredStudents } from "@/lib/featured-students";
-import type { Showcase } from "@/lib/showcase-data";
+import { FEATURED_STUDENT_HANDLES, featuredStudents } from "@/lib/featured-students";
+import { getShowcase } from "@/lib/profiles";
 
-export function LandingPage({ showcase }: { showcase: Showcase }) {
-  const featured = featuredStudents(showcase.cards);
-
+export function LandingPage() {
   return (
     <div>
       <section data-hero className="mx-auto w-full max-w-6xl px-4 pb-12 pt-10 sm:px-6 sm:pt-16">
@@ -57,14 +56,36 @@ export function LandingPage({ showcase }: { showcase: Showcase }) {
       <section aria-labelledby="featured-students" className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
         <p className="font-mono text-[11px] uppercase tracking-wide text-muted">/featured</p>
         <h2 id="featured-students" className="mt-3 text-3xl font-medium tracking-tight">Featured students</h2>
-        {featured.length ? (
-          <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {featured.map((profile, index) => <li key={profile.handle}><ProfileCard profile={profile} index={index + 1} preview /></li>)}
-          </ol>
-        ) : (
-          <p className="mt-4 max-w-xl text-base leading-7 text-muted">Featured student portfolios will appear here soon.</p>
-        )}
+        <Suspense fallback={<FeaturedStudentsFallback />}>
+          <FeaturedStudents />
+        </Suspense>
       </section>
     </div>
   );
+}
+
+async function FeaturedStudents() {
+  if (FEATURED_STUDENT_HANDLES.length === 0) return <FeaturedStudentsEmpty />;
+
+  const { cards } = await getShowcase();
+  const featured = featuredStudents(cards);
+  if (featured.length === 0) return <FeaturedStudentsEmpty />;
+
+  return (
+    <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {featured.map((profile, index) => (
+        <li key={profile.handle}>
+          <ProfileCard profile={profile} index={index + 1} preview />
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function FeaturedStudentsEmpty() {
+  return <p className="mt-4 max-w-xl text-base leading-7 text-muted">Featured student portfolios will appear here soon.</p>;
+}
+
+function FeaturedStudentsFallback() {
+  return <p className="mt-4 font-mono text-[11px] uppercase tracking-wide text-muted">Loading featured students…</p>;
 }
