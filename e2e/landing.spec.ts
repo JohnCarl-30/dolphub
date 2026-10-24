@@ -9,7 +9,10 @@ test("the public landing is the same for signed-out and signed-in visitors", asy
   }
   await expect(page.getByRole("link", { name: "Create your page →" })).toHaveAttribute("href", "/dashboard");
   await expect(page.getByRole("link", { name: "Log in →" })).toHaveAttribute("href", "/login");
-  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/$/);
+  const canonical = page.locator('link[rel="canonical"]');
+  await expect(canonical).toHaveCount(1);
+  const canonicalUrl = new URL((await canonical.getAttribute("href"))!);
+  expect(canonicalUrl.pathname).toBe("/");
 
   await authenticate(page);
   await page.reload();
@@ -19,7 +22,7 @@ test("the public landing is the same for signed-out and signed-in visitors", asy
 
 test("the showcase requires sign-in and stays noindex without a robots block", async ({ page, request }) => {
   await page.goto("/home");
-  await expect(page).toHaveURL(/\/dashboard\?next=%2Fhome$/);
+  await expect(page).toHaveURL((url) => url.pathname === "/dashboard" && url.searchParams.get("next") === "/home");
 
   await authenticate(page);
   await page.goto("/home");
