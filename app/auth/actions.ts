@@ -28,5 +28,5 @@ export async function verifyAction(_prev: VerifyState, formData: FormData): Prom
 export async function signOutAction(): Promise<void> {
   await signOut(await getServiceContext(), await readSessionToken());
   await clearSessionCookie();
-  redirect("/dashboard");
+  redirect("/");
 }

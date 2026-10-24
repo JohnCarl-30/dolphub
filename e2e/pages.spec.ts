@@ -2,8 +2,10 @@ import { expect, test } from "@playwright/test";
 import { authenticate, expectNoHorizontalOverflow, expectVisibleFocusRing } from "./helpers";
 
 test.describe("home", () => {
+  test.beforeEach(async ({ page }) => authenticate(page));
+
   test("moves directly from the showcase to the publishing steps", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/home");
 
     await expect(page.getByRole("region", { name: "Community statistics" })).toHaveCount(0);
     await expect(page.getByText("Published pages", { exact: true })).toHaveCount(0);
@@ -20,7 +22,7 @@ test.describe("home", () => {
 
   test("filters are toggle buttons and the current nav link is marked", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
-    await page.goto("/");
+    await page.goto("/home");
     await expect(page.getByRole("tab")).toHaveCount(0);
     const group = page.getByRole("group", { name: "Filter by course" });
     const all = group.getByRole("button", { name: /^All \[/ });
@@ -33,7 +35,7 @@ test.describe("home", () => {
     await expect(page.locator("[data-showcase-card]:visible")).toHaveCount(expected);
     const home = page.getByRole("link", { name: "[ 00 ] Home" });
     const dashboard = page.getByRole("link", { name: "[ 01 ] Dashboard" });
-    await expect(home).toHaveAttribute("href", "/");
+    await expect(home).toHaveAttribute("href", "/home");
     await expect(home).toHaveAttribute("aria-current", "page");
     await expect(dashboard).toHaveAttribute("href", "/dashboard");
     await expect(dashboard).not.toHaveAttribute("aria-current", "page");
@@ -56,7 +58,8 @@ test.describe("home", () => {
 test.describe("site menu", () => {
   test("keeps primary links visible on desktop and closes with Escape or an outside click", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
-    await page.goto("/");
+    await authenticate(page);
+    await page.goto("/home");
 
     await expect(page.getByRole("link", { name: "[ 00 ] Home" })).toBeVisible();
     await expect(page.getByRole("link", { name: "[ 01 ] Dashboard" })).toBeVisible();
@@ -88,7 +91,8 @@ test.describe("site menu", () => {
 
   test("puts every destination in the phone menu and closes after navigation", async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 640 });
-    await page.goto("/");
+    await authenticate(page);
+    await page.goto("/home");
 
     await expect(page.getByRole("link", { name: "[ 00 ] Home" })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "[ 01 ] Dashboard" })).toHaveCount(0);
@@ -187,14 +191,16 @@ test.describe("profile", () => {
     await page.goto("/u/lea");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Lea Mendoza");
     await expect(page.getByRole("article").getByText("No projects on this page yet.")).toBeVisible();
-    await page.goto("/");
+    await authenticate(page);
+    await page.goto("/home");
     // :visible skips the hidden copy React keeps while streamed content swaps in.
     await expect(page.locator('[data-showcase-card="mira"]:visible')).toHaveCount(1);
     await expect(page.locator('[data-showcase-card="lea"]')).toHaveCount(0);
   });
 
   test("a showcase card opens that student's page", async ({ page }) => {
-    await page.goto("/");
+    await authenticate(page);
+    await page.goto("/home");
     const card = page.locator('[data-showcase-card="kenji"]').getByRole("link");
     await expect(card).toHaveAttribute("href", "/u/kenji");
     await expect(card).toContainText("Lab gate logger");
@@ -206,7 +212,7 @@ test.describe("profile", () => {
   test("an unknown handle explains itself and offers a way back", async ({ page }) => {
     await page.goto("/u/nobody-here");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("No page for this handle.");
-    await expect(page.getByRole("link", { name: "← Back to students" })).toHaveAttribute("href", "/");
+    await expect(page.getByRole("link", { name: "← Back to students" })).toHaveAttribute("href", "/home");
     // Streaming can leave more than one robots tag. Every one must say noindex.
     const robots = await page.locator('meta[name="robots"]').evaluateAll((tags) => tags.map((tag) => tag.getAttribute("content")));
     expect(robots.length).toBeGreaterThan(0);
@@ -331,8 +337,8 @@ test("logs out from the hamburger menu and clears the browser session", async ({
   await page.getByRole("button", { name: "Open navigation menu" }).click();
   await page.getByRole("button", { name: "[ 06 ] Log out" }).click();
 
-  await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByRole("link", { name: "Continue with Google" })).toBeVisible();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("heading", { name: "One link for every project you've built." })).toBeVisible();
   const cookies = await page.context().cookies();
   expect(cookies.find((cookie) => cookie.name === "session")).toBeUndefined();
 

@@ -1,4 +1,4 @@
-/** What the home showcase needs from the server. Plain data, safe to pass to client components. */
+/** What the signed-in `/home` showcase needs from the server. Plain data, safe to pass to client components. */
 export interface ShowcaseCard {
   handle: string;
   displayName: string;

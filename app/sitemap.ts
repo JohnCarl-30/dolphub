@@ -3,7 +3,7 @@ import { getOpenOpportunities } from "@/lib/opportunities";
 import { OPPORTUNITY_PAGES_LIVE, opportunitySitemapEntries, siteUrl } from "@/lib/seo";
 import { listIndexableProfiles } from "@/lib/seo-data";
 
-/** Home, plus real student pages that allow search engines. Dates come from the data, never from new Date(). */
+/** The public landing page, plus real student pages that allow search engines. Dates come from the data, never from new Date(). */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const origin = siteUrl();
   const profiles = await listIndexableProfiles();

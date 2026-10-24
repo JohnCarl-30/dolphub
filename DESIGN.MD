@@ -1,6 +1,6 @@
 # Dolphub design
 
-This is the design source of truth for Dolphub. Use it when building or reviewing the homepage, public profiles at `/u/<handle>`, dashboard, sign-in and verification screens, privacy, terms and support pages, shared chrome, and frontend tokens. It contains the visual foundation and Dolphub-specific adaptations in one place.
+This is the design source of truth for Dolphub. Use it when building or reviewing the public landing page at `/`, the signed-in showcase at `/home`, public profiles at `/u/<handle>`, dashboard, sign-in and verification screens, privacy, terms and support pages, shared chrome, and frontend tokens. It contains the visual foundation and Dolphub-specific adaptations in one place.
 
 The audience is PCU students in IT, CS, and Computer Engineering. Keep the interface direct: discover students, inspect their projects, publish a portfolio, and share one public link.
 
@@ -45,12 +45,12 @@ Reuse the tokens in [app/globals.css](app/globals.css). Do not introduce a secon
 
 - Use the header, main, and footer from [components/site-shell.tsx](components/site-shell.tsx).
 - Use `max-w-6xl` for the homepage and shared chrome, `max-w-3xl` for public profile content, and `max-w-md` for dashboard and authentication forms. Use `px-4`, increasing to `sm:px-6` on public pages where appropriate.
-- Keep header links numbered: `[ 00 ] Home` for `/` and `[ 01 ] Dashboard` for `/dashboard`. Show both beside the menu button from the `sm` breakpoint up; place them inside the burger menu on smaller screens.
+- Keep header links numbered: `[ 00 ] Home` leads signed-in students to `/home` and signed-out visitors to `/`; `[ 01 ] Dashboard` leads to `/dashboard`. Show both beside the menu button from the `sm` breakpoint up; place them inside the burger menu on smaller screens.
 - The burger menu is always available. `[ 02 ] Profile` for the current-user editor at `/profile` is its first desktop item and follows Home and Dashboard on smaller screens. Privacy & Security, Terms, and Support remain `[ 03 ]` through `[ 05 ]`. The menu closes on selection, outside interaction, or Escape, and returns focus to its trigger after Escape.
 - Signed-in menus begin with the student's portrait and identity, then end with `[ 06 ] Log out`. Signed-out menus keep the navigation-only version. The portrait is optional, with initials on paper as its fallback.
 - Preserve the compact mono footer and hairline shell borders. Use `Dolphub · Built for PCU tech students` and `© 2026 Dolphub contributors · MIT License` as the production footer copy, followed by Privacy & Security, Terms, and Support links.
 - Use slash section labels such as `/students`, `/u/{handle}`, `/publish`, `/dashboard`, and `/login`.
-- Follow the student showcase directly with a short numbered publishing sequence: sign in, add a project, and share `/u/your-handle`.
+- Keep the public landing page focused on what Dolphub is, about Dolphub, its vision, and configured featured student cards. Follow the signed-in student showcase directly with a short numbered publishing sequence: sign in, add a project, and share `/u/your-handle`.
 - Keep dashboard forms phone-first. Existing image uploads remain labeled slots until an image workflow is implemented.
 
 ### Informational pages

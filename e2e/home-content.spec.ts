@@ -1,10 +1,13 @@
 import { expect, test } from "@playwright/test";
+import { authenticate } from "./helpers";
+
+test.beforeEach(async ({ page }) => authenticate(page));
 
 // Posts come from e2e/seed-auth.ts. The admin tests may add a competition closing in 12 days while these run.
 
 test.describe("upcoming strip", () => {
   test("shows the next three open posts from the database, soonest closing first", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/home");
     const strip = page.getByRole("region", { name: "Upcoming" });
     const cards = strip.getByRole("listitem");
     await expect(cards).toHaveCount(3);
@@ -23,7 +26,7 @@ test.describe("upcoming strip", () => {
 
 test.describe("focus band", () => {
   test("puts the post closing within three days above the showcase", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/home");
     const band = page.getByRole("complementary", { name: "Team capture-the-flag" });
     await expect(band).toContainText("Closes tomorrow");
     await expect(band.getByRole("link", { name: /Register/ })).toHaveAttribute("href", "/opportunities/e2e-team-ctf-f7g8");
@@ -32,7 +35,7 @@ test.describe("focus band", () => {
 
 test.describe("newsletter signup", () => {
   test("validates, confirms, remembers in the tab, and resets", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/home");
     const section = page.getByRole("region", { name: "Get new posts by email" });
     const email = section.getByRole("textbox", { name: "Email" });
     const submit = section.getByRole("button", { name: "Sign up" });

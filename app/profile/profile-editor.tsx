@@ -272,7 +272,7 @@ export function ProfileEditor({ dashboard }: { dashboard: Dashboard & { profile:
           </p>
           {projects.length === 0 ? (
             <p className="text-sm leading-6 text-muted">
-              Add a project to appear in the home page showcase.
+              Add a project to appear in the home showcase.
             </p>
           ) : null}
           {projects.map((project, index) => {

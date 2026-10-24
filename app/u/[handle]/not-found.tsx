@@ -10,7 +10,7 @@ export default function NotFound() {
         down.
       </p>
       <Link
-        href="/"
+        href="/home"
         className="mt-8 inline-block font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:text-muted focus-visible:ring-2 focus-visible:ring-ink"
       >
         ← Back to students
