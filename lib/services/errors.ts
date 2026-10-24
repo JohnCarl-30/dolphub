@@ -33,3 +33,29 @@ export function isUniqueViolation(error: unknown): boolean {
   }
   return false;
 }
+
+/**
+ * True when a deployment is reading an optional table whose migration has not
+ * reached the database yet. Drizzle wraps the Postgres error in `cause`.
+ *
+ * Keep the relation name check: a missing core table is not safe to hide.
+ */
+export function isMissingRelation(error: unknown, relation: string): boolean {
+  let e: unknown = error;
+  for (let depth = 0; e && depth < 5; depth++) {
+    if (typeof e === "object") {
+      const record = e as { code?: unknown; message?: unknown; cause?: unknown };
+      if (
+        record.code === "42P01" &&
+        typeof record.message === "string" &&
+        record.message.toLowerCase().includes(relation.toLowerCase())
+      ) {
+        return true;
+      }
+      e = record.cause;
+      continue;
+    }
+    break;
+  }
+  return false;
+}

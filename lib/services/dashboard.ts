@@ -1,8 +1,8 @@
 import { asc, eq } from "drizzle-orm";
-import { images, profilePictures, profiles, projects } from "../db/schema";
+import { images, profiles, projects } from "../db/schema";
 import type { ServiceContext } from "./context";
 import { IMAGE_LIMITS } from "./images";
-import { listActiveCourses, type PublicImage } from "./profiles";
+import { listActiveCourses, listProfilePicturesOrEmpty, type PublicImage } from "./profiles";
 
 export interface DashboardProject {
   id: string;
@@ -58,7 +58,7 @@ export async function getOwnDashboard(ctx: ServiceContext, userId: string): Prom
       .from(images)
       .where(eq(images.profileId, profile.id))
       .orderBy(asc(images.sortOrder), asc(images.createdAt)),
-    ctx.db.select().from(profilePictures).where(eq(profilePictures.profileId, profile.id)),
+    listProfilePicturesOrEmpty(ctx.db, profile.id),
   ]);
   const picture = pictureRows[0];
 
