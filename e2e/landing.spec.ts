@@ -4,11 +4,11 @@ import { authenticate } from "./helpers";
 test("the public landing is the same for signed-out and signed-in visitors", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "One link for every project you've built." })).toBeVisible();
-  for (const heading of ["What is Dolphub?", "About Dolphub", "Vision of Dolphub", "Featured students"]) {
+  for (const heading of ["What Dolphub", "About Dolphub", "Vision Dolphub", "Featured projects"]) {
     await expect(page.getByRole("heading", { name: heading })).toBeVisible();
   }
   await expect(page.getByRole("link", { name: "Create your page →" })).toHaveAttribute("href", "/dashboard");
-  await expect(page.getByRole("link", { name: "Log in →" })).toHaveAttribute("href", "/login");
+  await expect(page.getByRole("link", { name: "Log in / Sign up →" })).toHaveAttribute("href", "/login");
   const canonical = page.locator('link[rel="canonical"]');
   await expect(canonical).toHaveCount(1);
   const canonicalUrl = new URL((await canonical.getAttribute("href"))!);
@@ -19,6 +19,18 @@ test("the public landing is the same for signed-out and signed-in visitors", asy
   await expect(page.getByRole("heading", { name: "One link for every project you've built." })).toBeVisible();
   await expect(page.getByRole("link", { name: "Create your page →" })).toHaveAttribute("href", "/dashboard");
 });
+
+for (const info of [
+  { path: "/what", title: "What is Dolphub?" },
+  { path: "/about", title: "About Dolphub" },
+  { path: "/vision", title: "Vision" },
+]) {
+  test(`${info.path} is public and has its own metadata`, async ({ page }) => {
+    await page.goto(info.path);
+    await expect(page.getByRole("heading", { level: 1, name: info.title })).toBeVisible();
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", new RegExp(`${info.path}$`));
+  });
+}
 
 test("the showcase requires sign-in and stays noindex without a robots block", async ({ page, request }) => {
   await page.goto("/home");

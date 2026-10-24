@@ -132,7 +132,7 @@ test("a new student creates a page, publishes a project, and removes it", async 
   await page.getByRole("button", { name: "Open navigation menu" }).click();
   const menu = page.getByRole("navigation", { name: "Site menu" });
   await expect(menu.getByRole("img", { name: `Profile picture of ${name}` })).toBeVisible();
-  await expect(menu.getByRole("button", { name: "[ 06 ] Log out" })).toBeVisible();
+  await expect(menu.getByRole("button", { name: "Log out" })).toBeVisible();
   await page.getByRole("button", { name: "Close navigation menu" }).click();
   const steps = page.getByRole("region", { name: "Your page is ready" });
   await expect(steps.getByText("3 of 3 done")).toBeVisible();

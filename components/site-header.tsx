@@ -15,14 +15,18 @@ export function SiteHeader() {
 }
 
 async function AuthenticatedSiteHeader() {
-  const homeHref = (await getCurrentUser()) ? "/home" : "/";
-  return <SiteHeaderContent homeHref={homeHref} />;
+  const signedIn = Boolean(await getCurrentUser());
+  return <SiteHeaderContent homeHref={signedIn ? "/home" : "/"} signedIn={signedIn} />;
 }
 
-function SiteHeaderContent({ homeHref }: { homeHref: "/" | "/home" }) {
+function SiteHeaderContent({ homeHref, signedIn }: { homeHref: "/" | "/home"; signedIn?: boolean }) {
   const nav = [
-    { href: homeHref, index: "00", label: "Home" },
-    { href: "/dashboard", index: "01", label: "Dashboard" },
+    { href: "/what", label: "What" },
+    { href: "/about", label: "About" },
+    { href: "/vision", label: "Vision" },
+    ...(signedIn
+      ? [{ href: homeHref, label: "Home" }, { href: "/dashboard", label: "Dashboard" }]
+      : [{ href: "/login", label: "Log in / Sign up" }]),
   ];
 
   return (
@@ -35,15 +39,15 @@ function SiteHeaderContent({ homeHref }: { homeHref: "/" | "/home" }) {
           <Image src="/dolphub-logo.svg" width={48} height={26} alt="" className="h-[26px] w-12 object-contain" />
           Dolphub
         </Link>
-        <div className="flex items-center gap-4">
-          <nav aria-label="Primary" className="hidden items-center gap-x-4 sm:flex">
+        <div className="flex items-center gap-3">
+          <nav aria-label="Primary" className="hidden items-center gap-x-3 lg:flex">
             {nav.map((item) => (
               <NavLink
                 key={item.href}
                 href={item.href}
                 className="font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink"
               >
-                [ {item.index} ] {item.label}
+                {item.label}
               </NavLink>
             ))}
           </nav>
@@ -52,6 +56,13 @@ function SiteHeaderContent({ homeHref }: { homeHref: "/" | "/home" }) {
           </Suspense>
         </div>
       </div>
+      <nav aria-label="Legal" className="border-t border-ink/10 px-4 py-2 font-mono text-[10px] uppercase tracking-wide text-muted sm:px-6">
+        <div className="mx-auto flex w-full max-w-6xl flex-wrap gap-x-4 gap-y-1">
+          <NavLink href="/privacy" className="outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink">Privacy &amp; Security</NavLink>
+          <NavLink href="/terms" className="outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink">Terms</NavLink>
+          <NavLink href="/support" className="outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink">Support</NavLink>
+        </div>
+      </nav>
     </header>
   );
 }

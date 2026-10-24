@@ -3,7 +3,7 @@
 import { updateTag } from "next/cache";
 import { ok, toActionError, type ActionResult } from "@/lib/actions/result";
 import { requireUser } from "@/lib/auth";
-import { GRID_TAG, profileTag } from "@/lib/cache-tags";
+import { FEATURED_PROJECTS_TAG, GRID_TAG, profileTag } from "@/lib/cache-tags";
 import { getServiceContext } from "@/lib/server";
 import { deleteImage, deleteProfilePicture } from "@/lib/services/images";
 import {
@@ -31,6 +31,7 @@ import {
 function refreshPublicPages(handle: string) {
   updateTag(profileTag(handle));
   updateTag(GRID_TAG);
+  updateTag(FEATURED_PROJECTS_TAG);
 }
 
 /** For live feedback while a student types a handle. */

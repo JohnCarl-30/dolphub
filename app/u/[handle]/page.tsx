@@ -2,8 +2,12 @@ import type { Metadata } from "next";
 import { JsonLd } from "@/lib/json-ld";
 import { notFound } from "next/navigation";
 import { getProfilePage } from "@/lib/profiles";
+import { getCurrentUser } from "@/lib/auth";
 import { isIndexable, missingProfileMetadata, profileMetadata, profilePageJsonLd, siteUrl } from "@/lib/seo";
 import { getSeoProfile } from "@/lib/seo-data";
+import { getServiceContext } from "@/lib/server";
+import { starredProjectIds } from "@/lib/services/project-stars";
+import { getProfileByUserId } from "@/lib/services/profiles";
 import { Suspense } from "react";
 import { ProfilePage } from "./profile-page";
 
@@ -43,14 +47,23 @@ async function ResolvedProfile({
   params: PageProps<"/u/[handle]">["params"];
 }) {
   const { handle } = await params;
-  const profile = await getProfilePage(handle);
+  const [profile, user] = await Promise.all([getProfilePage(handle), getCurrentUser()]);
   if (!profile) notFound();
+  const ownProfile = user ? await getProfileByUserId((await getServiceContext()).db, user.id) : null;
+  const starred = user
+    ? await starredProjectIds((await getServiceContext()).db, user.id, profile.projects.map((project) => project.id))
+    : new Set<string>();
   // Structured data only for pages search engines may index.
   const seo = await getSeoProfile(handle);
   return (
     <>
       {seo && isIndexable(seo) ? <JsonLd data={profilePageJsonLd(seo, siteUrl())} /> : null}
-      <ProfilePage profile={profile} />
+      <ProfilePage
+        profile={profile}
+        starredProjectIds={starred}
+        signedIn={Boolean(user)}
+        isOwner={ownProfile?.handle === profile.handle}
+      />
     </>
   );
 }

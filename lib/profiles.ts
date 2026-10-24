@@ -1,10 +1,10 @@
 import "server-only";
 import { cacheTag } from "next/cache";
 import { connection } from "next/server";
-import { GRID_TAG, profileTag } from "./cache-tags";
+import { FEATURED_PROJECTS_TAG, GRID_TAG, profileTag } from "./cache-tags";
 import { courseLabel } from "./course-labels";
 import { getServiceContext } from "./server";
-import { getPublicProfile, listActiveCourses, listGridProfiles, type PublicProfile } from "./services/profiles";
+import { getPublicProfile, listActiveCourses, listFeaturedProjects, listGridProfiles, type FeaturedProject, type PublicProfile } from "./services/profiles";
 import type { Showcase } from "./showcase-data";
 
 /*
@@ -57,4 +57,16 @@ async function cachedShowcase(): Promise<Showcase> {
 export async function getShowcase(): Promise<Showcase> {
   await connection();
   return cachedShowcase();
+}
+
+async function cachedFeaturedProjects(): Promise<FeaturedProject[]> {
+  "use cache";
+  cacheTag(FEATURED_PROJECTS_TAG);
+  return listFeaturedProjects(await getServiceContext());
+}
+
+/** The public landing's top projects. Ranking changes when a project is starred. */
+export async function getFeaturedProjects(): Promise<FeaturedProject[]> {
+  await connection();
+  return cachedFeaturedProjects();
 }

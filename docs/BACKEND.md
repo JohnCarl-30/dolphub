@@ -64,6 +64,7 @@ type ActionResult<T> =
 | `deleteProjectAction(projectId)` | | `null` |
 | `deleteImageAction(imageId)` | | `null` |
 | `deleteProfilePictureAction()` | | `null` |
+| `setProjectStarAction(projectId, starred)` | Project id and desired star state | `{ starCount, starred }` |
 
 Rules the actions enforce, so the frontend doesn't have to:
 
@@ -75,6 +76,7 @@ Rules the actions enforce, so the frontend doesn't have to:
 - **Course:** `courseId` may be a number or the text from a `<select>`, such as `"3"`.
 - **Handle:** cannot change after creation. When a typed handle is badly formed, the create form offers `suggestHandle` from `handles.ts`, which turns a name like "Juan Dela Cruz" into `juan-dela-cruz`.
 - **Refresh:** every successful write refreshes the student's public page and the home grid.
+- **Project stars:** a signed-in student can add or remove one star on another visible student's project. The public page shows only the total, never the identities of students who starred it. Star changes refresh that profile and the landing-project ranking.
 
 ### Using an action from a form
 

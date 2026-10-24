@@ -5,13 +5,6 @@ import { signOutAction } from "@/app/auth/actions";
 import { ProfileAvatar } from "./profile-avatar";
 import { NavLink } from "./nav-link";
 
-const MENU_LINKS = [
-  { href: "/profile", index: "02", label: "Profile" },
-  { href: "/privacy", index: "03", label: "Privacy & Security" },
-  { href: "/terms", index: "04", label: "Terms" },
-  { href: "/support", index: "05", label: "Support" },
-];
-
 const linkClass =
   "block border-b border-ink/10 px-4 py-3 font-mono text-[11px] uppercase tracking-wide outline-none transition-colors last:border-b-0 hover:bg-paper hover:text-ink focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink";
 
@@ -26,9 +19,14 @@ export function SiteMenu({
   const panelId = useId();
   const container = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
+  const signedIn = Boolean(account);
   const mobileHeaderLinks = [
-    { href: homeHref, index: "00", label: "Home" },
-    { href: "/dashboard", index: "01", label: "Dashboard" },
+    { href: "/what", label: "What" },
+    { href: "/about", label: "About" },
+    { href: "/vision", label: "Vision" },
+    ...(signedIn
+      ? [{ href: homeHref, label: "Home" }, { href: "/dashboard", label: "Dashboard" }, { href: "/profile", label: "Profile" }]
+      : [{ href: "/login", label: "Log in / Sign up" }]),
   ];
 
   useEffect(() => {
@@ -84,7 +82,7 @@ export function SiteMenu({
               </div>
             </div>
           ) : null}
-          <div className="border-b border-ink/10 sm:hidden">
+          <div>
             {mobileHeaderLinks.map((item) => (
               <NavLink
                 key={item.href}
@@ -92,26 +90,14 @@ export function SiteMenu({
                 className={linkClass}
                 onClick={() => setOpen(false)}
               >
-                [ {item.index} ] {item.label}
-              </NavLink>
-            ))}
-          </div>
-          <div>
-            {MENU_LINKS.map((item) => (
-              <NavLink
-                key={item.href}
-                href={item.href}
-                className={linkClass}
-                onClick={() => setOpen(false)}
-              >
-                [ {item.index} ] {item.label}
+                {item.label}
               </NavLink>
             ))}
           </div>
           {account ? (
             <form action={signOutAction} className="border-t border-ink/10">
               <button type="submit" className={`${linkClass} w-full text-left`}>
-                [ 06 ] Log out
+                Log out
               </button>
             </form>
           ) : null}
