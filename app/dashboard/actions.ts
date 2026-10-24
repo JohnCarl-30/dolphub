@@ -5,7 +5,7 @@ import { ok, toActionError, type ActionResult } from "@/lib/actions/result";
 import { requireUser } from "@/lib/auth";
 import { GRID_TAG, profileTag } from "@/lib/cache-tags";
 import { getServiceContext } from "@/lib/server";
-import { deleteImage } from "@/lib/services/images";
+import { deleteImage, deleteProfilePicture } from "@/lib/services/images";
 import {
   createProfile,
   isHandleAvailable,
@@ -120,5 +120,17 @@ export async function deleteImageAction(imageId: string): Promise<ActionResult> 
     return ok(null);
   } catch (error) {
     return toActionError(error, "Delete image");
+  }
+}
+
+/** Removes the signed-in student's optional public profile picture. */
+export async function deleteProfilePictureAction(): Promise<ActionResult> {
+  const user = await requireUser();
+  try {
+    const { handle } = await deleteProfilePicture(await getServiceContext(), user.id);
+    refreshPublicPages(handle);
+    return ok(null);
+  } catch (error) {
+    return toActionError(error, "Delete profile picture");
   }
 }

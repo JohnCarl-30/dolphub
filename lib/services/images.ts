@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { and, count, eq, inArray } from "drizzle-orm";
+import { and, count, eq, inArray, sql } from "drizzle-orm";
 import sharp from "sharp";
 import { z } from "zod";
-import { images } from "../db/schema";
+import { images, profilePictures } from "../db/schema";
 import { nowOf, type ServiceContext } from "./context";
 import { ServiceError } from "./errors";
 import { requireOwnProfile, touchProfile, type PublicImage } from "./profiles";
@@ -151,6 +151,67 @@ export async function addProjectImage(
   };
 }
 
+/**
+ * Replaces the signed-in student's optional public profile picture.
+ * The portrait is deliberately separate from the ten project-image limit.
+ */
+export async function setProfilePicture(
+  ctx: ServiceContext,
+  userId: string,
+  data: Uint8Array,
+): Promise<{ image: PublicImage; handle: string }> {
+  const profile = await requireOwnProfile(ctx.db, userId);
+  const processed = await processImage(data);
+  const key = `profiles/${profile.id}/profile-picture-${randomUUID()}.webp`;
+  await ctx.storage.put(key, processed.bytes, processed.contentType);
+
+  let previousKey: string | null = null;
+  let pictureId: string;
+  try {
+    const [previous] = await ctx.db
+      .select({ r2Key: profilePictures.r2Key })
+      .from(profilePictures)
+      .where(eq(profilePictures.profileId, profile.id));
+    previousKey = previous?.r2Key ?? null;
+    const [picture] = await ctx.db
+      .insert(profilePictures)
+      .values({
+        profileId: profile.id,
+        r2Key: key,
+        width: processed.width,
+        height: processed.height,
+        bytes: processed.bytes.byteLength,
+      })
+      .onConflictDoUpdate({
+        target: profilePictures.profileId,
+        set: {
+          r2Key: key,
+          width: processed.width,
+          height: processed.height,
+          bytes: processed.bytes.byteLength,
+          updatedAt: sql`now()`,
+        },
+      })
+      .returning({ id: profilePictures.id });
+    pictureId = picture!.id;
+    await touchProfile(ctx.db, profile.id);
+  } catch (error) {
+    await ctx.storage.delete(key).catch(() => undefined);
+    throw error;
+  }
+
+  if (previousKey && previousKey !== key) await ctx.storage.delete(previousKey).catch(() => undefined);
+  return {
+    image: {
+      id: pictureId,
+      url: ctx.storage.publicUrl(key),
+      width: processed.width,
+      height: processed.height,
+    },
+    handle: profile.handle,
+  };
+}
+
 /** Removes one of the user's images. The row goes first, then the R2 object, best effort. */
 export async function deleteImage(
   ctx: ServiceContext,
@@ -177,6 +238,28 @@ export async function deleteImage(
   }
 }
 
+/** Removes the signed-in student's profile picture without touching project images. */
+export async function deleteProfilePicture(
+  ctx: ServiceContext,
+  userId: string,
+): Promise<{ handle: string; failedKeys: string[] }> {
+  const profile = await requireOwnProfile(ctx.db, userId);
+  const [picture] = await ctx.db
+    .select()
+    .from(profilePictures)
+    .where(eq(profilePictures.profileId, profile.id));
+  if (!picture) throw new ServiceError("NOT_FOUND", "Profile picture not found");
+
+  await ctx.db.delete(profilePictures).where(eq(profilePictures.id, picture.id));
+  await touchProfile(ctx.db, profile.id);
+  try {
+    await ctx.storage.delete(picture.r2Key);
+    return { handle: profile.handle, failedKeys: [] };
+  } catch {
+    return { handle: profile.handle, failedKeys: [picture.r2Key] };
+  }
+}
+
 /**
  * Nightly cleanup: deletes R2 objects with no database row.
  * Objects younger than `minAgeMs` are skipped, because an upload in progress
@@ -196,11 +279,12 @@ export async function sweepOrphanedImages(
   const known = new Set<string>();
   const keys = stored.map((o) => o.key);
   for (let i = 0; i < keys.length; i += 500) {
-    const rows = await ctx.db
-      .select({ key: images.r2Key })
-      .from(images)
-      .where(inArray(images.r2Key, keys.slice(i, i + 500)));
-    for (const r of rows) known.add(r.key);
+    const slice = keys.slice(i, i + 500);
+    const [projectRows, pictureRows] = await Promise.all([
+      ctx.db.select({ key: images.r2Key }).from(images).where(inArray(images.r2Key, slice)),
+      ctx.db.select({ key: profilePictures.r2Key }).from(profilePictures).where(inArray(profilePictures.r2Key, slice)),
+    ]);
+    for (const r of [...projectRows, ...pictureRows]) known.add(r.key);
   }
 
   const deleted: string[] = [];
@@ -219,9 +303,9 @@ export async function sweepOrphanedImages(
 
 /** Image keys for one profile, for account deletion. */
 export async function listProfileImageKeys(ctx: ServiceContext, profileId: string) {
-  const rows = await ctx.db
-    .select({ key: images.r2Key })
-    .from(images)
-    .where(eq(images.profileId, profileId));
-  return rows.map((r) => r.key);
+  const [projectRows, pictureRows] = await Promise.all([
+    ctx.db.select({ key: images.r2Key }).from(images).where(eq(images.profileId, profileId)),
+    ctx.db.select({ key: profilePictures.r2Key }).from(profilePictures).where(eq(profilePictures.profileId, profileId)),
+  ]);
+  return [...projectRows, ...pictureRows].map((r) => r.key);
 }

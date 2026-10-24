@@ -18,6 +18,7 @@ const profile = {
   githubUsername: "octocat",
   contactEmail: null,
   coverImageId: null,
+  profilePicture: null,
   isHidden: false,
   hiddenReason: null,
   searchVisible: true,

@@ -87,3 +87,23 @@ export async function uploadPhoto(projectId: string, photo: Blob): Promise<Uploa
       : { ok: false, error: "Something went wrong. Please try again." };
   }
 }
+
+/** Sends a portrait to the dedicated profile-picture route. */
+export async function uploadProfilePicture(photo: Blob): Promise<UploadResult> {
+  const form = new FormData();
+  form.set("image", photo, photo instanceof File ? photo.name : "profile-picture.jpg");
+
+  let response: Response;
+  try {
+    response = await fetch("/api/profile-picture", { method: "POST", body: form });
+  } catch {
+    return { ok: false, error: "The upload didn't finish. Check your connection and try again." };
+  }
+  try {
+    return (await response.json()) as UploadResult;
+  } catch {
+    return response.status === 413
+      ? { ok: false, error: "Image is too large. Upload a file under 4 MB." }
+      : { ok: false, error: "Something went wrong. Please try again." };
+  }
+}

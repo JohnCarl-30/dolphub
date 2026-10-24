@@ -63,6 +63,7 @@ type ActionResult<T> =
 | `updateProjectAction(projectId, input)` | Only the changed fields, plus `sortOrder` | `null` |
 | `deleteProjectAction(projectId)` | | `null` |
 | `deleteImageAction(imageId)` | | `null` |
+| `deleteProfilePictureAction()` | | `null` |
 
 Rules the actions enforce, so the frontend doesn't have to:
 
@@ -99,13 +100,17 @@ React clears a form after an action runs. To keep what the student typed after a
 
 `app/profile/page.tsx` loads `getDashboard()`. Without a profile it shows the create form, which checks the handle as the student types. With one it shows the editor. On save, `lib/profile-form.ts` works out which profile fields changed and which projects to create, update or delete, and the editor sends only those. It records each step that succeeds, so retrying after an error never creates a project twice.
 
-Photos don't wait for "Save changes". `app/profile/project-photos.tsx` uploads a photo the moment it is chosen and removes one with `deleteImageAction`. A project needs saving before it can take photos, because the upload names the project id.
+Photos don't wait for "Save changes". `app/profile/project-photos.tsx` uploads a photo the moment it is chosen and removes one with `deleteImageAction`. A project needs saving before it can take photos, because the upload names the project id. `app/profile/profile-picture.tsx` separately uploads, replaces, or removes the one optional public portrait; it does not count toward the ten project-image limit.
 
 ### Photo upload at `/api/upload`
 
 Server actions accept 1 MB bodies, so photos go through a route instead. Send a multipart form with `projectId` and `image`. The answer has the same shape as an action result, `{ ok: true, data: { image } }` or `{ ok: false, error, field? }`, with the status from the error table below. The route also refuses requests whose `Origin` isn't `APP_URL` (403), signed-out visitors (401) and bodies over 4 MB (413). It expires the student's page and the home grid, so the photo shows on the next visit.
 
 Call it through `uploadPhoto` and `preparePhoto` in `lib/photo-upload.ts`. `preparePhoto` sends JPEG, PNG and WebP files under 3.5 MB as they are. Anything larger, or in another format such as HEIC, is redrawn as a JPEG no wider than 2400 px, with the camera's rotation applied. The route's logic lives in `lib/upload-route.ts`, so tests can run it with a fake context.
+
+### Profile-picture upload at `/api/profile-picture`
+
+Send the same multipart `image` field without a `projectId`. The response, origin checks, sign-in checks, input formats, size limits, WebP conversion, and cache refreshes match `/api/upload`. A profile has at most one picture; a new upload replaces the old stored object. The public picture appears only in profile identity views, not on showcase cards or preview metadata.
 
 Without R2 settings, photos are kept in server memory and served from `/dev-images/<key>`. They vanish when the server restarts. With R2 set, that route answers 404.
 

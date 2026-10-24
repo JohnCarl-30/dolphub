@@ -1,4 +1,5 @@
 import { ProjectList } from "@/components/project-list";
+import { ProfileAvatar } from "@/components/profile-avatar";
 import { REPORT_EMAIL } from "@/components/support-contacts";
 import type { PublicProfile } from "@/lib/services/profiles";
 
@@ -8,10 +9,15 @@ export function ProfilePage({ profile }: { profile: PublicProfile }) {
       <p className="font-mono text-[11px] uppercase tracking-wide text-muted">
         /u/{profile.handle}
       </p>
-      <h1 className="mt-3 text-5xl font-medium tracking-tight">{profile.displayName}</h1>
-      <p className="mt-2 font-mono text-[11px] uppercase tracking-wide text-muted">
-        {profile.courseName}
-      </p>
+      <div className="mt-3 flex items-start gap-4 sm:gap-6">
+        <ProfileAvatar name={profile.displayName} src={profile.profilePicture?.url} className="size-20 shrink-0 sm:size-24" />
+        <div className="min-w-0">
+          <h1 className="text-5xl font-medium tracking-tight">{profile.displayName}</h1>
+          <p className="mt-2 font-mono text-[11px] uppercase tracking-wide text-muted">
+            {profile.courseName}
+          </p>
+        </div>
+      </div>
       {profile.tagline ? (
         <p className="mt-6 max-w-xl text-lg leading-8 text-muted">{profile.tagline}</p>
       ) : null}

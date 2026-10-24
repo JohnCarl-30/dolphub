@@ -1,5 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Suspense } from "react";
+import { AuthenticatedSiteMenu } from "./authenticated-site-menu";
 import { NavLink } from "./nav-link";
 import { SiteMenu } from "./site-menu";
 
@@ -31,7 +33,9 @@ export function SiteHeader() {
               </NavLink>
             ))}
           </nav>
-          <SiteMenu />
+          <Suspense fallback={<SiteMenu />}>
+            <AuthenticatedSiteMenu />
+          </Suspense>
         </div>
       </div>
     </header>

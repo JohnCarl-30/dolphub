@@ -27,6 +27,7 @@ export default async function Page(props: PageProps<"/dashboard">) {
           courseName: courses.find((c) => c.id === profile.courseId)?.name ?? "",
           projectCount: projects.length,
           photoCount: imageCount,
+          profilePictureUrl: profile.profilePicture?.url ?? null,
         }
       : null;
     return <DashboardPage email={user.email} me={me} />;

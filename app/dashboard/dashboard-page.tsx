@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { ProfileAvatar } from "@/components/profile-avatar";
 import { courseLabel } from "@/lib/course-labels";
 import { getOpenOpportunities } from "@/lib/opportunities";
 import { KIND_NAMES } from "@/lib/opportunity-display";
@@ -14,6 +15,7 @@ export type DashboardMe = {
   courseName: string;
   projectCount: number;
   photoCount: number;
+  profilePictureUrl: string | null;
 } | null;
 
 /** How many open posts the dashboard lists before pointing to /opportunities. */
@@ -23,13 +25,6 @@ const OPPORTUNITY_PREVIEW = 3;
 export function DashboardPage({ email, me }: { email: string; me: DashboardMe }) {
   // Before a page exists, the card uses the sign-in address's name part.
   const name = me?.displayName ?? email.split("@")[0]!;
-  const initials = name
-    .split(/[\s._-]+/)
-    .filter(Boolean)
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 
   const steps = [
     { label: "Create your page", hint: "Pick a handle and add your name and course.", done: me !== null },
@@ -54,7 +49,7 @@ export function DashboardPage({ email, me }: { email: string; me: DashboardMe })
       <div className="grid items-start gap-4 lg:grid-cols-[14rem_minmax(0,1fr)_16rem]">
         <aside data-testid="identity-rail" aria-label="Your profile" className="border border-ink/10 bg-background">
           <div className="flex items-center gap-3 p-4 lg:block">
-            <Avatar initials={initials} className="size-12 lg:size-16" />
+            <ProfileAvatar name={name} src={me?.profilePictureUrl} className="size-12 lg:size-16" />
             <div className="min-w-0 lg:mt-4">
               <h2 className="truncate text-lg font-medium tracking-tight">{name}</h2>
               {me ? (
@@ -149,7 +144,6 @@ export function DashboardPage({ email, me }: { email: string; me: DashboardMe })
     </section>
   );
 }
-
 async function OpenOpportunities() {
   const posts = (await getOpenOpportunities()).slice(0, OPPORTUNITY_PREVIEW);
   const now = new Date();
@@ -171,13 +165,5 @@ async function OpenOpportunities() {
         </li>
       ))}
     </ol>
-  );
-}
-
-function Avatar({ initials, className }: { initials: string; className: string }) {
-  return (
-    <span aria-hidden="true" className={`grid place-items-center border border-ink/15 bg-paper font-mono text-xs font-medium tracking-wide ${className}`}>
-      {initials}
-    </span>
   );
 }

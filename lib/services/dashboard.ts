@@ -1,5 +1,5 @@
 import { asc, eq } from "drizzle-orm";
-import { images, profiles, projects } from "../db/schema";
+import { images, profilePictures, profiles, projects } from "../db/schema";
 import type { ServiceContext } from "./context";
 import { IMAGE_LIMITS } from "./images";
 import { listActiveCourses, type PublicImage } from "./profiles";
@@ -25,6 +25,8 @@ export interface Dashboard {
     githubUsername: string | null;
     contactEmail: string | null;
     coverImageId: string | null;
+    /** Optional public portrait, separate from project images. */
+    profilePicture: PublicImage | null;
     /** When true, show the owner a notice. Visitors cannot see the page. */
     isHidden: boolean;
     hiddenReason: string | null;
@@ -45,7 +47,7 @@ export async function getOwnDashboard(ctx: ServiceContext, userId: string): Prom
     return { profile: null, projects: [], imageCount: 0, imageLimit: IMAGE_LIMITS.maxImagesPerProfile, courses };
   }
 
-  const [projectRows, imageRows] = await Promise.all([
+  const [projectRows, imageRows, pictureRows] = await Promise.all([
     ctx.db
       .select()
       .from(projects)
@@ -56,7 +58,9 @@ export async function getOwnDashboard(ctx: ServiceContext, userId: string): Prom
       .from(images)
       .where(eq(images.profileId, profile.id))
       .orderBy(asc(images.sortOrder), asc(images.createdAt)),
+    ctx.db.select().from(profilePictures).where(eq(profilePictures.profileId, profile.id)),
   ]);
+  const picture = pictureRows[0];
 
   return {
     profile: {
@@ -68,6 +72,14 @@ export async function getOwnDashboard(ctx: ServiceContext, userId: string): Prom
       githubUsername: profile.githubUsername,
       contactEmail: profile.contactEmail,
       coverImageId: profile.coverImageId,
+      profilePicture: picture
+        ? {
+            id: picture.id,
+            url: ctx.storage.publicUrl(picture.r2Key),
+            width: picture.width,
+            height: picture.height,
+          }
+        : null,
       isHidden: profile.isHidden,
       hiddenReason: profile.hiddenReason,
       searchVisible: profile.searchVisible,

@@ -37,6 +37,7 @@ Reuse the tokens in [app/globals.css](app/globals.css). Do not introduce a secon
 - Start body copy at 16px with a 24px line height; allow more leading for introductory or longer copy. Keep secondary descriptions readable rather than compressing them into metadata.
 - Use medium-weight, tightly tracked headings. The homepage uses `text-5xl sm:text-7xl`; public profile names use `text-5xl`. Headings must fit a phone without horizontal document overflow.
 - Keep metadata compact, uppercase, and lightly tracked. Header and filter labels currently use 11px mono text.
+- Profile pictures use square, sharp-cornered frames with `object-cover` and centered framing. They appear in the account menu, dashboard identity rail, and public profile, but never replace project covers on showcase cards.
 
 ## Layout and components
 
@@ -46,6 +47,7 @@ Reuse the tokens in [app/globals.css](app/globals.css). Do not introduce a secon
 - Use `max-w-6xl` for the homepage and shared chrome, `max-w-3xl` for public profile content, and `max-w-md` for dashboard and authentication forms. Use `px-4`, increasing to `sm:px-6` on public pages where appropriate.
 - Keep header links numbered: `[ 00 ] Home` for `/` and `[ 01 ] Dashboard` for `/dashboard`. Show both beside the menu button from the `sm` breakpoint up; place them inside the burger menu on smaller screens.
 - The burger menu is always available. `[ 02 ] Profile` for the current-user editor at `/profile` is its first desktop item and follows Home and Dashboard on smaller screens. Privacy & Security, Terms, and Support remain `[ 03 ]` through `[ 05 ]`. The menu closes on selection, outside interaction, or Escape, and returns focus to its trigger after Escape.
+- Signed-in menus begin with the student's portrait and identity, then end with `[ 06 ] Log out`. Signed-out menus keep the navigation-only version. The portrait is optional, with initials on paper as its fallback.
 - Preserve the compact mono footer and hairline shell borders. Use `Dolphub · Built for PCU tech students` and `© 2026 Dolphub contributors · MIT License` as the production footer copy, followed by Privacy & Security, Terms, and Support links.
 - Use slash section labels such as `/students`, `/u/{handle}`, `/publish`, `/dashboard`, and `/login`.
 - Follow the student showcase directly with a short numbered publishing sequence: sign in, add a project, and share `/u/your-handle`.

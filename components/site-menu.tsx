@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { signOutAction } from "@/app/auth/actions";
+import { ProfileAvatar } from "./profile-avatar";
 import { NavLink } from "./nav-link";
 
 const MOBILE_HEADER_LINKS = [
@@ -18,7 +20,11 @@ const MENU_LINKS = [
 const linkClass =
   "block border-b border-ink/10 px-4 py-3 font-mono text-[11px] uppercase tracking-wide outline-none transition-colors last:border-b-0 hover:bg-paper hover:text-ink focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink";
 
-export function SiteMenu() {
+export function SiteMenu({
+  account,
+}: {
+  account?: { name: string; handle: string | null; profilePictureUrl: string | null };
+}) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
   const container = useRef<HTMLDivElement>(null);
@@ -66,6 +72,17 @@ export function SiteMenu() {
           aria-label="Site menu"
           className="absolute right-0 top-[calc(100%+0.75rem)] z-50 w-[min(18rem,calc(100vw-2rem))] border border-ink/10 bg-background shadow-[0_16px_40px_rgb(14_16_18_/_0.14)]"
         >
+          {account ? (
+            <div className="flex items-center gap-3 border-b border-ink/10 p-4">
+              <ProfileAvatar name={account.name} src={account.profilePictureUrl} className="size-10 shrink-0" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{account.name}</p>
+                <p className="truncate font-mono text-[10px] uppercase tracking-wide text-muted">
+                  {account.handle ? `/u/${account.handle}` : "Signed in"}
+                </p>
+              </div>
+            </div>
+          ) : null}
           <div className="border-b border-ink/10 sm:hidden">
             {MOBILE_HEADER_LINKS.map((item) => (
               <NavLink
@@ -90,6 +107,13 @@ export function SiteMenu() {
               </NavLink>
             ))}
           </div>
+          {account ? (
+            <form action={signOutAction} className="border-t border-ink/10">
+              <button type="submit" className={`${linkClass} w-full text-left`}>
+                [ 06 ] Log out
+              </button>
+            </form>
+          ) : null}
         </nav>
       ) : null}
     </div>

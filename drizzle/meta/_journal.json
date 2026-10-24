@@ -43,6 +43,13 @@
       "when": 1792258673195,
       "tag": "0005_profile_links",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792810938704,
+      "tag": "0006_profile-pictures",
+      "breakpoints": true
     }
   ]
 }

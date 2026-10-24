@@ -5,7 +5,7 @@ import { IMAGE_LIMITS } from "./services/images";
 import { createProfile } from "./services/profiles";
 import { createProject } from "./services/projects";
 import { createTestContext, type TestEnv } from "./test/helpers";
-import { createUploadRoute } from "./upload-route";
+import { createProfilePictureRoute, createUploadRoute } from "./upload-route";
 
 const APP = "https://dolphub.tech";
 
@@ -107,5 +107,58 @@ describe("upload route", () => {
     const over = await POST(upload(formWith(projectId, new Blob([bytes], { type: "image/png" }))));
     expect(over.status).toBe(409);
     expect((await over.json()).error).toMatch(/up to 10 images/);
+  });
+});
+
+describe("profile-picture upload route", () => {
+  let env: TestEnv;
+  let user: { id: string } | null;
+  let refreshed: string[];
+  let POST: ReturnType<typeof createProfilePictureRoute>;
+
+  beforeEach(async () => {
+    env = await createTestContext();
+    const u = await env.createUser();
+    user = u;
+    refreshed = [];
+    POST = createProfilePictureRoute({
+      context: async () => env.ctx,
+      currentUser: async () => user,
+      appUrl: APP,
+      refresh: (handle) => refreshed.push(handle),
+    });
+    await createProfile(env.db, u.id, { handle: "portrait", displayName: "Portrait", courseId: env.courseId });
+  });
+
+  function portrait(image: Blob | string) {
+    const form = new FormData();
+    form.set("image", image);
+    return form;
+  }
+
+  it("stores and replaces the student's public portrait", async () => {
+    const first = await POST(upload(portrait(new Blob([await png()], { type: "image/png" }))));
+    expect(first.status).toBe(201);
+    const firstBody = await first.json();
+    expect(firstBody.data.image.url).toMatch(/profile-picture-.+\.webp$/);
+
+    const second = await POST(upload(portrait(new Blob([await png()], { type: "image/png" }))));
+    expect(second.status).toBe(201);
+    expect((await second.json()).data.image.id).toBe(firstBody.data.image.id);
+    expect(refreshed).toEqual(["portrait", "portrait"]);
+    expect(env.storage.objects.size).toBe(1);
+  });
+
+  it("refuses cross-origin, signed-out, malformed, and oversized portrait uploads", async () => {
+    const photo = new Blob([await png()], { type: "image/png" });
+    expect((await POST(upload(portrait(photo), { origin: "https://evil.example" }))).status).toBe(403);
+    user = null;
+    expect((await POST(upload(portrait(photo)))).status).toBe(401);
+
+    user = await env.createUser();
+    await createProfile(env.db, user.id, { handle: "second", displayName: "Second", courseId: env.courseId });
+    expect((await POST(upload(portrait("")))).status).toBe(400);
+    const huge = new Blob([new Uint8Array(IMAGE_LIMITS.maxUploadBytes + 1)], { type: "image/jpeg" });
+    expect((await POST(upload(portrait(huge)))).status).toBe(413);
   });
 });
