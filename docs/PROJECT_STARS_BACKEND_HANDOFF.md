@@ -12,6 +12,8 @@ The site now degrades only when PostgreSQL reports `42P01` for `project_stars`:
 
 This protection is temporary. Apply the migration as soon as possible.
 
+Frontend error boundaries separately keep the shared shell and unaffected landing content usable when a Server Component fails. They show a generic Retry state and never expose SQL messages or production digests. They cannot reconstruct projects or profiles that the backend did not return; migration, data fallback, logging, and `starsAvailable` remain backend responsibilities.
+
 ## Apply migration 0007
 
 1. In Neon, select the same production branch used by Vercel. Do not paste `DATABASE_URL` into chat, commits, terminal history, or Vercel logs.

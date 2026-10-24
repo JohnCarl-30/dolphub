@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- uploaded image URLs are already optimized by the upload pipeline. */
 import Link from "next/link";
 import { Suspense } from "react";
+import { ContentErrorBoundary } from "@/components/content-error-boundary";
 import { getFeaturedProjects } from "@/lib/profiles";
 
 const PAGES = [
@@ -27,7 +28,12 @@ export function LandingPage() {
     </div></section>
     <section aria-labelledby="featured-projects" className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
       <p className="font-mono text-[11px] uppercase tracking-wide text-muted">/featured</p><h2 id="featured-projects" className="mt-3 text-3xl font-medium tracking-tight">Featured projects</h2>
-      <Suspense fallback={<p className="mt-4 font-mono text-[11px] uppercase tracking-wide text-muted">Loading featured projects…</p>}><FeaturedProjects /></Suspense>
+      <ContentErrorBoundary
+        title="Featured projects are temporarily unavailable."
+        description="Please try again shortly. You can still explore what Dolphub is building."
+      >
+        <Suspense fallback={<p className="mt-4 font-mono text-[11px] uppercase tracking-wide text-muted">Loading featured projects…</p>}><FeaturedProjects /></Suspense>
+      </ContentErrorBoundary>
     </section>
   </div>;
 }

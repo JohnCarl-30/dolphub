@@ -52,6 +52,7 @@ Reuse the tokens in [app/globals.css](app/globals.css). Do not introduce a secon
 - Preserve the compact mono footer and hairline shell borders. Use `Dolphub · Built for PCU tech students` and `© 2026 Dolphub contributors · MIT License` as the production footer copy, followed by Privacy & Security, Terms, and Support links.
 - Use slash section labels such as `/students`, `/u/{handle}`, `/publish`, `/dashboard`, and `/login`.
 - Keep the public landing page focused on compact links to What, About, and Vision, then up to three featured projects. Rank those projects by public star count, fill zero-star slots with recent projects, and show at most one project per student.
+- Keep streamed-data failures local. A failed featured-project request replaces only that section with a neutral explanation and Retry control; a failed public profile shows its own page-sized fallback. Unexpected route failures retain the shared shell and offer Retry and Home without exposing server messages or error digests.
 - Keep dashboard forms phone-first. Existing image uploads remain labeled slots until an image workflow is implemented.
 
 ### Informational pages
