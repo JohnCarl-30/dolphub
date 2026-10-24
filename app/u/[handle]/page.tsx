@@ -50,7 +50,7 @@ async function ResolvedProfile({
   const [profile, user] = await Promise.all([getProfilePage(handle), getCurrentUser()]);
   if (!profile) notFound();
   const ownProfile = user ? await getProfileByUserId((await getServiceContext()).db, user.id) : null;
-  const starred = user
+  const starred = user && profile.starsAvailable
     ? await starredProjectIds((await getServiceContext()).db, user.id, profile.projects.map((project) => project.id))
     : new Set<string>();
   // Structured data only for pages search engines may index.

@@ -36,8 +36,19 @@ export function ProfilePage({
       <section className="mt-14">
         <p className="font-mono text-[11px] uppercase tracking-wide text-muted">/projects</p>
         <h2 className="mt-2 text-2xl font-medium tracking-tight">Projects</h2>
+        {!profile.starsAvailable ? (
+          <p role="status" className="mt-3 font-mono text-[11px] uppercase tracking-wide text-muted">
+            Stars temporarily unavailable
+          </p>
+        ) : null}
         <div className="mt-6">
-          <ProjectList projects={profile.projects} starredProjectIds={starredProjectIds} signedIn={signedIn} isOwner={isOwner} />
+          <ProjectList
+            projects={profile.projects}
+            starredProjectIds={starredProjectIds}
+            signedIn={signedIn}
+            isOwner={isOwner}
+            starsAvailable={profile.starsAvailable}
+          />
         </div>
       </section>
 

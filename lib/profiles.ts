@@ -5,6 +5,8 @@ import { FEATURED_PROJECTS_TAG, GRID_TAG, profileTag } from "./cache-tags";
 import { courseLabel } from "./course-labels";
 import { getServiceContext } from "./server";
 import { getPublicProfile, listActiveCourses, listFeaturedProjects, listGridProfiles, type FeaturedProject, type PublicProfile } from "./services/profiles";
+import { isMissingRelation } from "./services/errors";
+import { logError } from "./log";
 import type { Showcase } from "./showcase-data";
 
 /*
@@ -26,7 +28,14 @@ async function cachedProfile(handle: string): Promise<PublicProfile | null> {
 /** Everything /u/<handle> shows. Null when missing, hidden, or being deleted: call notFound() then. */
 export async function getProfilePage(handle: string): Promise<PublicProfile | null> {
   await connection();
-  return cachedProfile(handle.trim().toLowerCase());
+  const normalizedHandle = handle.trim().toLowerCase();
+  try {
+    return await cachedProfile(normalizedHandle);
+  } catch (error) {
+    if (!isMissingRelation(error, "project_stars")) throw error;
+    logError("Public profile stars unavailable", error);
+    return getPublicProfile(await getServiceContext(), normalizedHandle, { includeStars: false });
+  }
 }
 
 /** The 100-card ceiling is far above the semester target of 50 pages. Add paging before it matters. */
@@ -59,14 +68,28 @@ export async function getShowcase(): Promise<Showcase> {
   return cachedShowcase();
 }
 
-async function cachedFeaturedProjects(): Promise<FeaturedProject[]> {
+export interface FeaturedProjectsResult {
+  projects: FeaturedProject[];
+  starsAvailable: boolean;
+}
+
+async function cachedFeaturedProjects(): Promise<FeaturedProjectsResult> {
   "use cache";
   cacheTag(FEATURED_PROJECTS_TAG);
-  return listFeaturedProjects(await getServiceContext());
+  return { projects: await listFeaturedProjects(await getServiceContext()), starsAvailable: true };
 }
 
 /** The public landing's top projects. Ranking changes when a project is starred. */
-export async function getFeaturedProjects(): Promise<FeaturedProject[]> {
+export async function getFeaturedProjects(): Promise<FeaturedProjectsResult> {
   await connection();
-  return cachedFeaturedProjects();
+  try {
+    return await cachedFeaturedProjects();
+  } catch (error) {
+    if (!isMissingRelation(error, "project_stars")) throw error;
+    logError("Featured project stars unavailable", error);
+    return {
+      projects: await listFeaturedProjects(await getServiceContext(), 3, { includeStars: false }),
+      starsAvailable: false,
+    };
+  }
 }

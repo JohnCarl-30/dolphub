@@ -176,7 +176,8 @@ export interface PublicProject {
   description: string;
   demoUrl: string | null;
   sourceUrl: string | null;
-  starCount: number;
+  /** Null when the project-stars migration has not reached this database yet. */
+  starCount: number | null;
   images: PublicImage[];
 }
 
@@ -193,6 +194,8 @@ export interface PublicProfile {
   profilePicture: PublicImage | null;
   coverImage: PublicImage | null;
   projects: PublicProject[];
+  /** False only while the optional project-stars storage is temporarily unavailable. */
+  starsAvailable: boolean;
   /** False when the student opted out of search engines. Pages then get noindex. */
   searchVisible: boolean;
   /** Use as a version stamp on preview image URLs. */
@@ -206,7 +209,9 @@ const visible = and(eq(profiles.isHidden, false), isNull(users.deletedAt));
 export async function getPublicProfile(
   ctx: ServiceContext,
   rawHandle: string,
+  options: { includeStars?: boolean } = {},
 ): Promise<PublicProfile | null> {
+  const includeStars = options.includeStars ?? true;
   const handle = rawHandle.trim().toLowerCase();
   const [row] = await ctx.db
     .select({ profile: profiles, courseName: courses.name })
@@ -231,7 +236,7 @@ export async function getPublicProfile(
     listProfilePicturesOrEmpty(ctx.db, profile.id),
   ]);
 
-  const starRows = projectRows.length
+  const starRows = includeStars && projectRows.length
     ? await ctx.db
         .select({ projectId: projectStars.projectId, count: sql<number>`count(*)::int` })
         .from(projectStars)
@@ -253,7 +258,7 @@ export async function getPublicProfile(
     description: p.description,
     demoUrl: p.demoUrl,
     sourceUrl: p.sourceUrl,
-    starCount: starsByProject.get(p.id) ?? 0,
+    starCount: includeStars ? (starsByProject.get(p.id) ?? 0) : null,
     images: imageRows.filter((i) => i.projectId === p.id).map(toPublic),
   }));
 
@@ -281,6 +286,7 @@ export async function getPublicProfile(
       : null,
     coverImage,
     projects: publicProjects,
+    starsAvailable: includeStars,
     searchVisible: profile.searchVisible,
     updatedAt: profile.updatedAt,
   };
@@ -292,7 +298,8 @@ export interface FeaturedProject {
   description: string;
   demoUrl: string | null;
   sourceUrl: string | null;
-  starCount: number;
+  /** Null when the project-stars migration has not reached this database yet. */
+  starCount: number | null;
   handle: string;
   displayName: string;
   courseName: string;
@@ -303,23 +310,43 @@ export interface FeaturedProject {
  * Public landing projects: stars descending then newest first. Only each
  * student's highest-ranked project is kept, so the showcase represents more people.
  */
-export async function listFeaturedProjects(ctx: ServiceContext, limit = 3): Promise<FeaturedProject[]> {
-  const rows = await ctx.db
-    .select({
-      project: projects,
-      handle: profiles.handle,
-      displayName: profiles.displayName,
-      courseName: courses.name,
-      starCount: sql<number>`count(${projectStars.userId})::int`,
-    })
-    .from(projects)
-    .innerJoin(profiles, eq(profiles.id, projects.profileId))
-    .innerJoin(users, eq(users.id, profiles.userId))
-    .innerJoin(courses, eq(courses.id, profiles.courseId))
-    .leftJoin(projectStars, eq(projectStars.projectId, projects.id))
-    .where(visible)
-    .groupBy(projects.id, profiles.id, courses.id)
-    .orderBy(desc(sql`count(${projectStars.userId})`), desc(projects.createdAt));
+export async function listFeaturedProjects(
+  ctx: ServiceContext,
+  limit = 3,
+  options: { includeStars?: boolean } = {},
+): Promise<FeaturedProject[]> {
+  const includeStars = options.includeStars ?? true;
+  const rows = includeStars
+    ? await ctx.db
+        .select({
+          project: projects,
+          handle: profiles.handle,
+          displayName: profiles.displayName,
+          courseName: courses.name,
+          starCount: sql<number>`count(${projectStars.userId})::int`,
+        })
+        .from(projects)
+        .innerJoin(profiles, eq(profiles.id, projects.profileId))
+        .innerJoin(users, eq(users.id, profiles.userId))
+        .innerJoin(courses, eq(courses.id, profiles.courseId))
+        .leftJoin(projectStars, eq(projectStars.projectId, projects.id))
+        .where(visible)
+        .groupBy(projects.id, profiles.id, courses.id)
+        .orderBy(desc(sql`count(${projectStars.userId})`), desc(projects.createdAt))
+    : await ctx.db
+        .select({
+          project: projects,
+          handle: profiles.handle,
+          displayName: profiles.displayName,
+          courseName: courses.name,
+          starCount: sql<null>`null`,
+        })
+        .from(projects)
+        .innerJoin(profiles, eq(profiles.id, projects.profileId))
+        .innerJoin(users, eq(users.id, profiles.userId))
+        .innerJoin(courses, eq(courses.id, profiles.courseId))
+        .where(visible)
+        .orderBy(desc(projects.createdAt));
 
   const chosen = rows.filter((row, index, all) =>
     all.findIndex((candidate) => candidate.project.profileId === row.project.profileId) === index,

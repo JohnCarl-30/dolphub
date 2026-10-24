@@ -77,6 +77,7 @@ Rules the actions enforce, so the frontend doesn't have to:
 - **Handle:** cannot change after creation. When a typed handle is badly formed, the create form offers `suggestHandle` from `handles.ts`, which turns a name like "Juan Dela Cruz" into `juan-dela-cruz`.
 - **Refresh:** every successful write refreshes the student's public page and the home grid.
 - **Project stars:** a signed-in student can add or remove one star on another visible student's project. The public page shows only the total, never the identities of students who starred it. Star changes refresh that profile and the landing-project ranking.
+- **Project-stars migration fallback:** while `project_stars` is missing during a deployment, public pages remain available with nullable star counts and no star controls. This only handles PostgreSQL `42P01` for that table; apply migration 0007 immediately using [the backend handoff](./PROJECT_STARS_BACKEND_HANDOFF.md).
 
 ### Using an action from a form
 
@@ -285,7 +286,7 @@ In pages and actions, use the helpers in `lib/auth.ts`:
 | `createProfile(db, userId, input)` | Handle, name, course, optional tagline, Messenger link, GitHub username and contact email. Handle is permanent |
 | `updateProfile(db, userId, patch)` | Name, tagline, course, Messenger link, GitHub username, contact email, cover image. Rejects a handle change |
 | `getProfileByUserId(db, userId)` | The dashboard's own profile, or null |
-| `getPublicProfile(ctx, handle)` | Everything `/u/<handle>` shows, with image URLs and the preview cover. Null when missing, hidden, or being deleted. `updatedAt` is the preview image version |
+| `getPublicProfile(ctx, handle)` | Everything `/u/<handle>` shows, with image URLs and the preview cover. Null when missing, hidden, or being deleted. `starCount` is `null` and `starsAvailable` is false only when the project-stars migration is missing. `updatedAt` is the preview image version |
 | `listGridProfiles(ctx, { limit, after })` | Showcase grid: visible profiles with a project, newest first. Pass the last card's `createdAt` and `id` as `after` for the next page |
 
 ### Projects (`projects.ts`)

@@ -6,11 +6,13 @@ export function ProjectList({
   starredProjectIds = new Set<string>(),
   signedIn = false,
   isOwner = false,
+  starsAvailable = true,
 }: {
   projects: PublicProject[];
   starredProjectIds?: Set<string>;
   signedIn?: boolean;
   isOwner?: boolean;
+  starsAvailable?: boolean;
 }) {
   if (projects.length === 0) {
     return (
@@ -35,13 +37,15 @@ export function ProjectList({
             <h3 className="text-xl font-medium tracking-tight">{project.title}</h3>
             <p className="text-sm leading-6 text-muted">{project.description}</p>
             <div className="flex flex-wrap gap-4 font-mono text-[11px] uppercase tracking-wide">
-              <ProjectStar
-                projectId={project.id}
-                count={project.starCount}
-                starred={starredProjectIds.has(project.id)}
-                canStar={signedIn && !isOwner}
-                signedIn={signedIn}
-              />
+              {starsAvailable && project.starCount !== null ? (
+                <ProjectStar
+                  projectId={project.id}
+                  count={project.starCount}
+                  starred={starredProjectIds.has(project.id)}
+                  canStar={signedIn && !isOwner}
+                  signedIn={signedIn}
+                />
+              ) : null}
               {project.demoUrl ? (
                 <a
                   href={project.demoUrl}

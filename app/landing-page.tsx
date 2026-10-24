@@ -33,12 +33,15 @@ export function LandingPage() {
 }
 
 async function FeaturedProjects() {
-  const projects = await getFeaturedProjects();
+  const { projects, starsAvailable } = await getFeaturedProjects();
   if (projects.length === 0) return <p className="mt-4 max-w-xl text-base leading-7 text-muted">Featured projects will appear here as students publish their work.</p>;
-  return <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{projects.map((project, index) => <li key={project.id}>
-    <Link href={`/u/${project.handle}`} className="press flex h-full flex-col border border-ink/10 bg-paper outline-none hover:border-ink focus-visible:ring-2 focus-visible:ring-ink">
-      {project.imageUrl ? <img src={project.imageUrl} alt="" className="aspect-[16/10] w-full border-b border-ink/10 object-cover" /> : <div className="flex aspect-[16/10] items-center justify-center border-b border-ink/10 bg-white font-mono text-[11px] uppercase tracking-wide text-muted">No image yet</div>}
-      <div className="flex flex-1 flex-col gap-3 p-5"><p className="font-mono text-[11px] uppercase tracking-wide text-muted">{String(index + 1).padStart(2, "0")} · ★ {project.starCount}</p><h3 className="text-2xl font-medium tracking-tight">{project.title}</h3>{project.description ? <p className="text-sm leading-6 text-muted">{project.description}</p> : null}<p className="mt-auto font-mono text-[11px] uppercase tracking-wide text-muted">{project.displayName} · /u/{project.handle} →</p></div>
-    </Link>
-  </li>)}</ol>;
+  return <>
+    {!starsAvailable ? <p role="status" className="mt-4 font-mono text-[11px] uppercase tracking-wide text-muted">Stars temporarily unavailable · showing recent work</p> : null}
+    <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{projects.map((project, index) => <li key={project.id}>
+      <Link href={`/u/${project.handle}`} className="press flex h-full flex-col border border-ink/10 bg-paper outline-none hover:border-ink focus-visible:ring-2 focus-visible:ring-ink">
+        {project.imageUrl ? <img src={project.imageUrl} alt="" className="aspect-[16/10] w-full border-b border-ink/10 object-cover" /> : <div className="flex aspect-[16/10] items-center justify-center border-b border-ink/10 bg-white font-mono text-[11px] uppercase tracking-wide text-muted">No image yet</div>}
+        <div className="flex flex-1 flex-col gap-3 p-5"><p className="font-mono text-[11px] uppercase tracking-wide text-muted">{String(index + 1).padStart(2, "0")} · {starsAvailable && project.starCount !== null ? `★ ${project.starCount}` : "Stars temporarily unavailable"}</p><h3 className="text-2xl font-medium tracking-tight">{project.title}</h3>{project.description ? <p className="text-sm leading-6 text-muted">{project.description}</p> : null}<p className="mt-auto font-mono text-[11px] uppercase tracking-wide text-muted">{project.displayName} · /u/{project.handle} →</p></div>
+      </Link>
+    </li>)}</ol>
+  </>;
 }

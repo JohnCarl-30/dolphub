@@ -21,6 +21,7 @@ export function ProjectStar({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [state, setState] = useState({ count, starred });
+  const [error, setError] = useState<string | null>(null);
 
   if (!canStar) {
     if (signedIn) return <span>★ {count}</span>;
@@ -32,24 +33,30 @@ export function ProjectStar({
   }
 
   return (
-    <button
-      type="button"
-      disabled={pending}
-      aria-pressed={state.starred}
-      aria-label={state.starred ? "Remove star from project" : "Star project"}
-      className="outline-none transition-colors hover:text-muted disabled:cursor-wait focus-visible:ring-2 focus-visible:ring-ink"
-      onClick={() => {
-        const next = !state.starred;
-        startTransition(async () => {
-          const result = await setProjectStarAction(projectId, next);
-          if (result.ok) {
-            setState({ count: result.data.starCount, starred: result.data.starred });
-            router.refresh();
-          }
-        });
-      }}
-    >
-      ★ {state.count} · {state.starred ? "Starred" : "Star"}
-    </button>
+    <>
+      <button
+        type="button"
+        disabled={pending}
+        aria-pressed={state.starred}
+        aria-label={state.starred ? "Remove star from project" : "Star project"}
+        className="outline-none transition-colors hover:text-muted disabled:cursor-wait focus-visible:ring-2 focus-visible:ring-ink"
+        onClick={() => {
+          const next = !state.starred;
+          setError(null);
+          startTransition(async () => {
+            const result = await setProjectStarAction(projectId, next);
+            if (result.ok) {
+              setState({ count: result.data.starCount, starred: result.data.starred });
+              router.refresh();
+            } else {
+              setError(result.error);
+            }
+          });
+        }}
+      >
+        ★ {state.count} · {state.starred ? "Starred" : "Star"}
+      </button>
+      {error ? <span role="status">{error}</span> : null}
+    </>
   );
 }

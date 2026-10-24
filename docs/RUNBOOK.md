@@ -51,7 +51,7 @@ There is no password admin on the live site. The `admin@pcu.edu.ph` / `password`
 
 - **Deploy.** Merging a pull request into `main` deploys to production. CI must pass first.
 - **Roll back.** In Vercel, open Deployments, pick the last good one, and choose Promote to Production. This takes a minute and does not touch the database.
-- **Schema changes.** Run `npm run db:migrate` against Neon before merging code that needs the new tables. A rollback does not undo a migration, so check that the old code still works with the new schema.
+- **Schema changes.** Run `npm run db:migrate` against Neon before merging code that needs the new tables. A rollback does not undo a migration, so check that the old code still works with the new schema. If public pages show React digest `2605960530` after the project-stars release, follow [the project-stars production handoff](./PROJECT_STARS_BACKEND_HANDOFF.md); the page fallback is temporary protection, not a substitute for migration.
 - **Environment variables.** Changes on Vercel only apply after a redeploy. The app refuses to start if Resend, R2, Neon or an https `APP_URL` is missing, so a failed deploy after editing them usually means a typo.
 
 ## Nightly cleanup
