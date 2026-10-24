@@ -42,7 +42,7 @@ This protection is temporary. Apply the migration as soon as possible.
 ## Runtime verification
 
 1. Open `/` in a signed-out browser. Featured projects must render without a React 441 error.
-2. Open `/u/fns`. The profile and its projects must render with public star counts.
+2. Open any published `/u/<handle>` page that has projects. The profile and its projects must render with public star counts.
 3. Sign in as a different student and star then unstar a project. Confirm the count changes and the landing ranking refreshes.
 4. Open the project owner’s session and confirm self-starring is refused.
 5. In Vercel Runtime Logs, confirm no new digest `2605960530`, `42P01`, or `project_stars` errors appear after the migration.
