@@ -20,13 +20,13 @@ export function SiteMenu({
   const container = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const signedIn = Boolean(account);
-  const mobileHeaderLinks = [
+  const mobileLinks = [
     { href: "/what", label: "What" },
     { href: "/about", label: "About" },
     { href: "/vision", label: "Vision" },
     ...(signedIn
       ? [{ href: homeHref, label: "Home" }, { href: "/dashboard", label: "Dashboard" }, { href: "/profile", label: "Profile" }]
-      : [{ href: "/login", label: "Log in / Sign up" }]),
+      : []),
   ];
 
   useEffect(() => {
@@ -57,7 +57,7 @@ export function SiteMenu({
         aria-expanded={open}
         aria-controls={panelId}
         aria-label={open ? "Close navigation menu" : "Open navigation menu"}
-        className="press flex size-10 items-center justify-center border border-ink/10 bg-background outline-none transition-colors hover:bg-paper focus-visible:ring-2 focus-visible:ring-ink"
+        className="press flex size-10 items-center justify-center rounded-full border border-ink/10 bg-white/55 outline-none transition-colors hover:bg-white/80 focus-visible:ring-2 focus-visible:ring-ink"
         onClick={() => setOpen((current) => !current)}
       >
         <svg viewBox="0 0 24 24" aria-hidden="true" className="size-5" fill="none">
@@ -69,7 +69,7 @@ export function SiteMenu({
         <nav
           id={panelId}
           aria-label="Site menu"
-          className="absolute right-0 top-[calc(100%+0.75rem)] z-50 w-[min(18rem,calc(100vw-2rem))] border border-ink/10 bg-background shadow-[0_16px_40px_rgb(14_16_18_/_0.14)]"
+          className="glass-popover absolute right-0 top-[calc(100%+0.75rem)] z-50 w-[min(18rem,calc(100vw-2rem))] border border-white/50 shadow-[0_16px_40px_rgb(14_16_18_/_0.14)]"
         >
           {account ? (
             <div className="flex items-center gap-3 border-b border-ink/10 p-4">
@@ -82,8 +82,8 @@ export function SiteMenu({
               </div>
             </div>
           ) : null}
-          <div>
-            {mobileHeaderLinks.map((item) => (
+          <div className="lg:hidden">
+            {mobileLinks.map((item) => (
               <NavLink
                 key={item.href}
                 href={item.href}
@@ -94,6 +94,19 @@ export function SiteMenu({
               </NavLink>
             ))}
           </div>
+          {account ? (
+            <div className="hidden lg:block">
+              <NavLink href="/profile" className={linkClass} onClick={() => setOpen(false)}>
+                Profile
+              </NavLink>
+            </div>
+          ) : null}
+          {!signedIn ? (
+            <div className="flex gap-2 border-t border-ink/10 p-3">
+              <NavLink href="/login" className="press inline-flex min-h-10 flex-1 items-center justify-center rounded-full border border-ink/15 bg-white/55 px-3 font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:bg-white/80 focus-visible:ring-2 focus-visible:ring-ink" onClick={() => setOpen(false)}>Log in</NavLink>
+              <NavLink href="/login" className="press inline-flex min-h-10 flex-1 items-center justify-center rounded-full border border-ink bg-ink px-3 font-mono text-[11px] uppercase tracking-wide text-white outline-none transition-colors hover:bg-ink/85 focus-visible:ring-2 focus-visible:ring-ink" onClick={() => setOpen(false)}>Sign up</NavLink>
+            </div>
+          ) : null}
           {account ? (
             <form action={signOutAction} className="border-t border-ink/10">
               <button type="submit" className={`${linkClass} w-full text-left`}>

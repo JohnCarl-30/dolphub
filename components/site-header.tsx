@@ -20,43 +20,61 @@ async function AuthenticatedSiteHeader() {
 }
 
 function SiteHeaderContent({ homeHref, signedIn }: { homeHref: "/" | "/home"; signedIn?: boolean }) {
-  const nav = [
+  const publicNav = [
     { href: "/what", label: "What" },
     { href: "/about", label: "About" },
     { href: "/vision", label: "Vision" },
-    ...(signedIn
-      ? [{ href: homeHref, label: "Home" }, { href: "/dashboard", label: "Dashboard" }]
-      : [{ href: "/login", label: "Log in / Sign up" }]),
   ];
 
   return (
-    <header className="border-b border-ink/10">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+    <header className="glass-chrome sticky top-0 z-40">
+      <div className="mx-auto grid w-full max-w-6xl grid-cols-[1fr_auto] items-center gap-3 px-4 py-3 sm:px-6 lg:grid-cols-[1fr_auto_1fr]">
         <Link
           href={homeHref}
-          className="flex shrink-0 items-center gap-2 font-mono text-xs tracking-wide uppercase outline-none transition-colors hover:text-muted focus-visible:ring-2 focus-visible:ring-ink"
+          className="flex shrink-0 items-center gap-2 font-mono text-xs tracking-wide uppercase outline-none transition-colors hover:text-muted focus-visible:ring-2 focus-visible:ring-ink lg:justify-self-start"
         >
           <Image src="/dolphub-logo.svg" width={48} height={26} alt="" className="h-[26px] w-12 object-contain" />
           Dolphub
         </Link>
-        <div className="flex items-center gap-3">
-          <nav aria-label="Primary" className="hidden items-center gap-x-3 lg:flex">
-            {nav.map((item) => (
+        <nav aria-label="Primary" className="hidden items-center justify-self-center gap-x-5 lg:flex">
+          {publicNav.map((item) => (
+            <NavLink
+              key={item.href}
+              href={item.href}
+              className="font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink"
+            >
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+        <div className="flex items-center justify-self-end gap-2">
+          {signedIn ? (
+            <nav aria-label="Account" className="hidden items-center gap-x-4 lg:flex">
+              <NavLink href={homeHref} className="font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink">Home</NavLink>
+              <NavLink href="/dashboard" className="font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink">Dashboard</NavLink>
+            </nav>
+          ) : (
+            <div className="hidden items-center gap-2 sm:flex">
               <NavLink
-                key={item.href}
-                href={item.href}
-                className="font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink"
+                href="/login"
+                className="press inline-flex min-h-9 items-center rounded-full border border-ink/15 bg-white/55 px-4 font-mono text-[11px] uppercase tracking-wide text-ink outline-none transition-colors hover:bg-white/80 focus-visible:ring-2 focus-visible:ring-ink"
               >
-                {item.label}
+                Log in
               </NavLink>
-            ))}
-          </nav>
+              <NavLink
+                href="/login"
+                className="press inline-flex min-h-9 items-center rounded-full border border-ink bg-ink px-4 font-mono text-[11px] uppercase tracking-wide text-white outline-none transition-colors hover:bg-ink/85 focus-visible:ring-2 focus-visible:ring-ink"
+              >
+                Sign up
+              </NavLink>
+            </div>
+          )}
           <Suspense fallback={<SiteMenu />}>
             <AuthenticatedSiteMenu homeHref={homeHref} />
           </Suspense>
         </div>
       </div>
-      <nav aria-label="Legal" className="border-t border-ink/10 px-4 py-2 font-mono text-[10px] uppercase tracking-wide text-muted sm:px-6">
+      <nav aria-label="Legal" className="border-t border-white/45 px-4 py-2 font-mono text-[10px] uppercase tracking-wide text-muted sm:px-6">
         <div className="mx-auto flex w-full max-w-6xl flex-wrap gap-x-4 gap-y-1">
           <NavLink href="/privacy" className="outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink">Privacy &amp; Security</NavLink>
           <NavLink href="/terms" className="outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink">Terms</NavLink>
