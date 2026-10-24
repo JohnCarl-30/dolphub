@@ -39,7 +39,7 @@ test.describe("home", () => {
     await expect(home).toHaveAttribute("aria-current", "page");
     await expect(dashboard).toHaveAttribute("href", "/dashboard");
     await expect(dashboard).not.toHaveAttribute("aria-current", "page");
-    await expect(page.getByRole("link", { name: "Profile" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Profile" })).toBeVisible();
     await expect(page.getByText("Dolphub · Built for PCU tech students", { exact: true })).toBeVisible();
     await expect(
       page.getByText("© 2026 Dolphub contributors · MIT License", { exact: true }),
@@ -56,33 +56,42 @@ test.describe("home", () => {
 });
 
 test.describe("site menu", () => {
-  test("keeps primary links visible on desktop and closes with Escape or an outside click", async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 800 });
+  const publicDestinations = ["What", "About", "Vision", "Privacy & Security", "Terms", "Support"];
+
+  test("keeps every public destination on one desktop row and hides the burger", async ({ page }) => {
+    for (const width of [1440, 1024]) {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto("/");
+
+      const primary = page.getByRole("navigation", { name: "Primary" });
+      await expect(primary.getByRole("link")).toHaveText(publicDestinations);
+      await expect(page.getByRole("button", { name: "Open navigation menu" })).toHaveCount(0);
+      await expect(page.getByRole("navigation", { name: "Legal" })).toHaveCount(0);
+      await expectNoHorizontalOverflow(page);
+
+      const linkRows = await primary.getByRole("link").evaluateAll((links) =>
+        links.map((link) => Math.round(link.getBoundingClientRect().top)),
+      );
+      expect(new Set(linkRows).size).toBe(1);
+      const center = await primary.evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        return rect.left + rect.width / 2;
+      });
+      expect(Math.abs(center - width / 2)).toBeLessThan(1);
+    }
+  });
+
+  test("keeps signed-in account actions accessible inline on desktop", async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 800 });
     await authenticate(page);
     await page.goto("/home");
 
-    await expect(page.getByRole("navigation", { name: "Primary" }).getByRole("link")).toHaveText(["What", "About", "Vision"]);
+    await expect(page.getByRole("navigation", { name: "Primary" }).getByRole("link")).toHaveText(publicDestinations);
     await expect(page.getByRole("link", { name: "Home" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Dashboard" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Profile" })).toHaveCount(0);
-
-    const open = page.getByRole("button", { name: "Open navigation menu" });
-    await open.click();
-    await expect(page.getByRole("button", { name: "Close navigation menu" })).toHaveAttribute(
-      "aria-expanded",
-      "true",
-    );
-    const menu = page.getByRole("navigation", { name: "Site menu" });
-    await expect(menu.locator("a:visible")).toHaveText(["Profile"]);
-
-    await page.keyboard.press("Escape");
-    const reopened = page.getByRole("button", { name: "Open navigation menu" });
-    await expect(menu).toHaveCount(0);
-    await expect(reopened).toBeFocused();
-
-    await reopened.click();
-    await page.getByRole("heading", { level: 1 }).click();
-    await expect(page.getByRole("navigation", { name: "Site menu" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Profile" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Log out" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Open navigation menu" })).toHaveCount(0);
   });
 
   test("centers public links and separates signed-out authentication pills", async ({ page }) => {
@@ -90,7 +99,7 @@ test.describe("site menu", () => {
     await page.goto("/");
 
     const primary = page.getByRole("navigation", { name: "Primary" });
-    await expect(primary.getByRole("link")).toHaveText(["What", "About", "Vision"]);
+    await expect(primary.getByRole("link")).toHaveText(publicDestinations);
     const center = await primary.evaluate((element) => {
       const rect = element.getBoundingClientRect();
       return rect.left + rect.width / 2;
@@ -105,17 +114,39 @@ test.describe("site menu", () => {
     await expect(signup).toHaveClass(/rounded-full/);
   });
 
-  test("keeps signed-out authentication actions separate on phones", async ({ page }) => {
-    await page.setViewportSize({ width: 320, height: 640 });
-    await page.goto("/");
-    await page.getByRole("button", { name: "Open navigation menu" }).click();
-    const menu = page.getByRole("navigation", { name: "Site menu" });
-    await expect(menu.getByRole("link", { name: "Log in", exact: true })).toHaveAttribute("href", "/login");
-    await expect(menu.getByRole("link", { name: "Sign up", exact: true })).toHaveAttribute("href", "/login");
+  test("uses the burger below desktop and only repeats authentication actions when hidden", async ({ page }) => {
+    for (const width of [768, 375]) {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto("/");
+
+      await expect(page.getByRole("navigation", { name: "Primary" })).not.toBeVisible();
+      const open = page.getByRole("button", { name: "Open navigation menu" });
+      await expect(open).toHaveAttribute("aria-expanded", "false");
+      await expect(open).toHaveAttribute("aria-controls", /.+/);
+      await open.focus();
+      await page.keyboard.press("Enter");
+
+      const menu = page.getByRole("navigation", { name: "Site menu" });
+      await expect(menu.locator("a:visible").filter({ hasText: /^(What|About|Vision|Privacy & Security|Terms|Support)$/ })).toHaveText(publicDestinations);
+      await expect(page.getByRole("button", { name: "Close navigation menu" })).toHaveAttribute("aria-expanded", "true");
+
+      if (width === 768) {
+        await expect(page.getByRole("link", { name: "Log in", exact: true })).toBeVisible();
+        await expect(menu.getByRole("link", { name: "Log in", exact: true })).toHaveCount(0);
+        await expect(menu.getByRole("link", { name: "Sign up", exact: true })).toHaveCount(0);
+      } else {
+        await expect(menu.getByRole("link", { name: "Log in", exact: true })).toHaveAttribute("href", "/login");
+        await expect(menu.getByRole("link", { name: "Sign up", exact: true })).toHaveAttribute("href", "/login");
+      }
+
+      await page.keyboard.press("Escape");
+      await expect(menu).toHaveCount(0);
+      await expect(page.getByRole("button", { name: "Open navigation menu" })).toBeFocused();
+    }
   });
 
   test("puts every destination in the phone menu and closes after navigation", async ({ page }) => {
-    await page.setViewportSize({ width: 320, height: 640 });
+    await page.setViewportSize({ width: 375, height: 800 });
     await authenticate(page);
     await page.goto("/home");
 
@@ -125,9 +156,8 @@ test.describe("site menu", () => {
     await page.getByRole("button", { name: "Open navigation menu" }).click();
 
     const menu = page.getByRole("navigation", { name: "Site menu" });
-    await expect(menu.locator("a:visible")).toHaveText(["What", "About", "Vision", "Home", "Dashboard", "Profile"]);
-    await page.getByRole("button", { name: "Close navigation menu" }).click();
-    await page.getByRole("navigation", { name: "Legal" }).getByRole("link", { name: "Privacy & Security" }).click();
+    await expect(menu.locator("a:visible")).toHaveText([...publicDestinations, "Home", "Dashboard", "Profile"]);
+    await menu.getByRole("link", { name: "Privacy & Security" }).click();
 
     await expect(page).toHaveURL(/\/privacy$/);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Privacy & Security");
@@ -136,6 +166,17 @@ test.describe("site menu", () => {
       "false",
     );
     await expect(page.getByRole("navigation", { name: "Site menu" })).toHaveCount(0);
+  });
+
+  test("closes an open menu when resized to desktop", async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 800 });
+    await page.goto("/");
+    await page.getByRole("button", { name: "Open navigation menu" }).click();
+    await expect(page.getByRole("navigation", { name: "Site menu" })).toBeVisible();
+
+    await page.setViewportSize({ width: 1024, height: 800 });
+    await expect(page.getByRole("navigation", { name: "Site menu" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Open navigation menu" })).toHaveCount(0);
   });
 });
 
@@ -263,7 +304,6 @@ test.describe("dashboard", () => {
       "aria-current",
       "page",
     );
-    await page.getByRole("button", { name: "Open navigation menu" }).click();
     await expect(page.getByRole("link", { name: "Profile", exact: true })).not.toHaveAttribute(
       "aria-current",
       "page",
@@ -306,8 +346,8 @@ test.describe("profile editor", () => {
   test.beforeEach(async ({ page }) => authenticate(page));
 
   test("marks Profile as current and preserves editor validation", async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 800 });
     await page.goto("/profile");
-    await page.getByRole("button", { name: "Open navigation menu" }).click();
     await expect(page.getByRole("link", { name: "Profile" })).toHaveAttribute(
       "aria-current",
       "page",
@@ -361,6 +401,7 @@ test.describe("login", () => {
 });
 
 test("logs out from the hamburger menu and clears the browser session", async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 768, height: 800 });
   await authenticate(page, `logout-${testInfo.project.name}`);
   await page.goto("/dashboard");
   await page.getByRole("button", { name: "Open navigation menu" }).click();
