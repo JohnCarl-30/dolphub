@@ -2,7 +2,7 @@ import type { ActionResult } from "./actions/result";
 import { logError } from "./log";
 import type { ServiceContext } from "./services/context";
 import { ServiceError, type ServiceErrorCode } from "./services/errors";
-import { addProjectImage, IMAGE_LIMITS } from "./services/images";
+import { addProjectImage, IMAGE_LIMITS, setProfilePicture } from "./services/images";
 import type { PublicImage } from "./services/profiles";
 
 export interface UploadRouteDeps {
@@ -79,6 +79,49 @@ export function createUploadRoute(deps: UploadRouteDeps) {
     } catch (error) {
       if (error instanceof ServiceError) return fail(error.message, STATUS[error.code], error.field);
       logError("Upload image", error);
+      return fail("Something went wrong. Please try again.", 500);
+    }
+  };
+}
+
+/**
+ * POST /api/profile-picture: multipart form with only `image`.
+ * A profile picture is a separate one-per-profile image, not a project image.
+ */
+export function createProfilePictureRoute(deps: UploadRouteDeps) {
+  const origin = new URL(deps.appUrl).origin;
+
+  return async function POST(request: Request): Promise<Response> {
+    if (request.headers.get("origin") !== origin) return fail("Upload from Dolphub itself.", 403);
+
+    const user = await deps.currentUser();
+    if (!user) return fail("Your session ended. Sign in again to add a profile picture.", 401);
+
+    const declared = Number(request.headers.get("content-length") ?? 0);
+    if (declared > IMAGE_LIMITS.maxUploadBytes + FORM_OVERHEAD_BYTES) {
+      return fail("Image is too large. Upload a file under 4 MB.", 413, "image");
+    }
+
+    let form: FormData;
+    try {
+      form = await request.formData();
+    } catch {
+      return fail("Send the picture as a form upload.", 400);
+    }
+    const file = form.get("image");
+    if (!(file instanceof Blob) || file.size === 0) return fail("Choose a picture to upload.", 400, "image");
+    if (file.size > IMAGE_LIMITS.maxUploadBytes) {
+      return fail("Image is too large. Upload a file under 4 MB.", 413, "image");
+    }
+
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const { image, handle } = await setProfilePicture(await deps.context(), user.id, bytes);
+      deps.refresh(handle);
+      return reply({ ok: true, data: { image } }, 201);
+    } catch (error) {
+      if (error instanceof ServiceError) return fail(error.message, STATUS[error.code], error.field);
+      logError("Upload profile picture", error);
       return fail("Something went wrong. Please try again.", 500);
     }
   };

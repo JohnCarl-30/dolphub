@@ -20,6 +20,7 @@ import {
 import type { Dashboard } from "@/lib/services/dashboard";
 import type { PublicImage } from "@/lib/services/profiles";
 import { Field, FormMessages, focusField, inputClass, submitClass } from "./fields";
+import { ProfilePicture } from "./profile-picture";
 import { ProjectPhotos } from "./project-photos";
 
 type Profile = NonNullable<Dashboard["profile"]>;
@@ -135,6 +136,8 @@ export function ProfileEditor({ dashboard }: { dashboard: Dashboard & { profile:
       >
         View /u/{profile.handle} →
       </Link>
+
+      <ProfilePicture name={profile.displayName} initialPicture={profile.profilePicture} />
 
       {profile.isHidden ? (
         <div role="note" className="mt-6 border border-red-700/40 bg-white px-4 py-3 text-sm leading-6">

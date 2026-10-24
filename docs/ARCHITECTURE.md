@@ -38,7 +38,7 @@ The metric is one count query shown on the admin page. No tracking script, no co
 2. **One link per student, no subdomains.** Each page lives at `/u/<handle>`, and that link is what students share in bios, resumes and chats. There are no subdomains and no fees.
 3. **Tech students only.** Signup is gated by PCU email domain. Course comes from a fixed tech-only list the owner maintains. Non-tech students are stopped at the course step with a "not supported yet" message.
 4. **Pages stay after graduation.** A recovery email will be added before the first graduating class. It is not needed at launch.
-5. **Images.** Max 10 per student, max 500 KB each after compression. The browser compresses first, which is required because of the Vercel 4.5 MB body limit. The server then checks type, size and the per-student count, and re-encodes with sharp. Only R2 keys are stored in Postgres, never image bytes.
+5. **Images.** Max 10 project images per student, plus one optional profile picture, max 500 KB each after compression. The browser compresses first, which is required because of the Vercel 4.5 MB body limit. The server then checks type and size, and re-encodes with sharp. Only R2 keys are stored in Postgres, never image bytes.
 6. **Contact by link.** Messenger is the main way to reach a student. A student can also add a GitHub username and a public contact email, both optional and empty by default. The email is never taken from the sign-in address and never goes into structured data, previews or logs. No prices or payments handled by the platform.
 7. **Projects need links.** Each project has optional demo and source code URLs, which must be valid `https` links.
 8. **Public pages are static.** `/u/<handle>` uses ISR and revalidates when the owner saves, so visitors never wait on a Neon cold start.
@@ -68,6 +68,7 @@ Defined in `lib/db/schema.ts`.
 - `profiles`: id, user_id (one per user), handle (unique, lowercase, permanent), display_name, tagline (up to 100 chars), course_id, messenger_url, github_username (nullable), contact_email (nullable, public, lowercase), cover_image_id (nullable), is_hidden, hidden_reason, search_visible (default true), created_at, updated_at
 - `projects`: id, profile_id, title, description, demo_url, source_url, sort_order, created_at, updated_at
 - `images`: id, project_id, profile_id (for the per-student cap), r2_key, width, height, bytes, sort_order, created_at
+- `profile_pictures`: id, profile_id (unique), r2_key, width, height, bytes, created_at, updated_at
 - `app_settings`: one row holding signups_frozen
 - `admin_audit_log`: actor_user_id, action, target (an id, never a name), reason, created_at
 - `login_tokens`: email, token_hash, expires_at, used_at, created_at
@@ -89,6 +90,7 @@ Added after launch: `profiles.recovery_email`, `profiles.in_directory` (opt-in f
 | `/dashboard` | Signed out: a sign-in landing with Google and the email link. Signed in: the student's page card, a checklist of next steps (page, project, photo) and the three open opportunities closing soonest |
 | `/profile` | Owner edits profile and projects, phone-first. Signed-in only |
 | `/api/upload` | Validates, re-encodes and stores an image in R2 |
+| `/api/profile-picture` | Validates, re-encodes and replaces the signed-in student's optional public profile picture |
 | `/admin` | Profile count metric, hide profile, freeze signups |
 
 Added later: `/api/mcp/admin` for the admin MCP server, and `/api/mcp` for the public directory MCP server.

@@ -14,6 +14,7 @@ export const E2E_SESSION_TOKEN = "dolphub-e2e-session-token";
 export const E2E_USER_EMAIL = "feed-test@pcu.edu.ph";
 export const E2E_ADMIN_SESSION_TOKEN = "dolphub-e2e-admin-session-token";
 export const E2E_ADMIN_EMAIL = "admin-test@pcu.edu.ph";
+export const E2E_LOGOUT_PROJECTS = ["desktop", "phone"];
 /** One account without a profile per Playwright project, for e2e/profile-editor.spec.ts. */
 export const E2E_NEWCOMER_PROJECTS = ["desktop", "phone"];
 
@@ -44,6 +45,7 @@ async function main() {
   await seedStudents(db);
   await seedFeedStudentProfile(db, user.id);
   await seedNewcomers(db);
+  await seedLogoutUsers(db);
   await client.close();
 }
 
@@ -197,6 +199,16 @@ async function seedNewcomers(db: E2eDb) {
     const [newcomer] = await db.select({ id: users.id }).from(users).where(eq(users.email, email));
     await db.delete(profiles).where(eq(profiles.userId, newcomer!.id));
     await storeSession(db, newcomer!.id, `dolphub-e2e-newcomer-${project}`);
+  }
+}
+
+/** Isolated accounts for logout tests, so signing out cannot invalidate another parallel test's session. */
+async function seedLogoutUsers(db: E2eDb) {
+  for (const project of E2E_LOGOUT_PROJECTS) {
+    const email = `logout-${project}@pcu.edu.ph`;
+    await db.insert(users).values({ email }).onConflictDoNothing({ target: users.email });
+    const [user] = await db.select({ id: users.id }).from(users).where(eq(users.email, email));
+    await storeSession(db, user!.id, `dolphub-e2e-logout-${project}`);
   }
 }
 

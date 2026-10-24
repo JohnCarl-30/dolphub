@@ -70,6 +70,25 @@ export const profiles = pgTable(
   (t) => [index("profiles_created_at_idx").on(t.createdAt)],
 );
 
+/** One optional public portrait for each student's profile. Image bytes live in R2. */
+export const profilePictures = pgTable(
+  "profile_pictures",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    profileId: uuid("profile_id")
+      .notNull()
+      .unique()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    r2Key: text("r2_key").notNull().unique(),
+    width: integer("width").notNull(),
+    height: integer("height").notNull(),
+    bytes: integer("bytes").notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index("profile_pictures_profile_id_idx").on(t.profileId)],
+);
+
 export const projects = pgTable(
   "projects",
   {

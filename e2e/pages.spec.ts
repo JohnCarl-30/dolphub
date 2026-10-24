@@ -317,6 +317,21 @@ test.describe("login", () => {
   });
 });
 
+test("logs out from the hamburger menu and clears the browser session", async ({ page }, testInfo) => {
+  await authenticate(page, `logout-${testInfo.project.name}`);
+  await page.goto("/dashboard");
+  await page.getByRole("button", { name: "Open navigation menu" }).click();
+  await page.getByRole("button", { name: "[ 06 ] Log out" }).click();
+
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page.getByRole("link", { name: "Continue with Google" })).toBeVisible();
+  const cookies = await page.context().cookies();
+  expect(cookies.find((cookie) => cookie.name === "session")).toBeUndefined();
+
+  await page.goto("/profile");
+  await expect(page).toHaveURL(/\/login$/);
+});
+
 for (const path of ["/", "/u/mira", "/dashboard", "/profile", "/login", "/privacy", "/terms", "/support"]) {
   test.describe(path, () => {
     test("every control has a name and the first few tab stops show a ring", async ({ page }) => {

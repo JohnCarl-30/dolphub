@@ -1,9 +1,9 @@
 import sharp from "sharp";
 import { beforeEach, describe, expect, it } from "vitest";
-import { adminAuditLog, images, profiles, projects, users } from "../db/schema";
+import { adminAuditLog, images, profilePictures, profiles, projects, users } from "../db/schema";
 import { createTestContext, PCU_DOMAINS, type TestEnv } from "../test/helpers";
 import { deleteAccount, deleteAccountByHandle, getStats, hideProfile, listProfilesForAdmin, setSignupsFrozen, unhideProfile } from "./admin";
-import { addProjectImage } from "./images";
+import { addProjectImage, setProfilePicture } from "./images";
 import { createProfile, getPublicProfile } from "./profiles";
 import { createProject } from "./projects";
 import { signInOrRegister } from "./signup";
@@ -72,7 +72,8 @@ describe("admin", () => {
     const { project } = await createProject(env.db, studentId, { title: "App" });
     const img = await sharp({ create: { width: 10, height: 10, channels: 3, background: "#000" } }).png().toBuffer();
     await addProjectImage(env.ctx, studentId, project.id, img);
-    expect(env.storage.objects.size).toBe(1);
+    await setProfilePicture(env.ctx, studentId, img);
+    expect(env.storage.objects.size).toBe(2);
 
     await expect(
       deleteAccount(env.ctx, { actorUserId: adminId, targetUserId: studentId, confirm: false }),
@@ -85,7 +86,7 @@ describe("admin", () => {
     const result = await deleteAccount(env.ctx, { actorUserId: adminId, targetUserId: studentId, confirm: true });
     expect(result).toEqual({ handle: "juan", failedKeys: [] });
     expect(env.storage.objects.size).toBe(0);
-    for (const table of [profiles, projects, images]) {
+    for (const table of [profiles, projects, images, profilePictures]) {
       expect(await env.db.select().from(table)).toHaveLength(0);
     }
     expect((await env.db.select().from(users)).map((u) => u.id)).toEqual([adminId, other.id]);

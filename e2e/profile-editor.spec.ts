@@ -49,9 +49,17 @@ test("a new student creates a page, publishes a project, and removes it", async 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Your page");
   await expect(page.getByRole("link", { name: `View /u/${handle} →` })).toHaveAttribute("href", `/u/${handle}`);
 
+  // The dedicated portrait saves immediately and does not require a project.
+  const portrait = await sharp({ create: { width: 480, height: 640, channels: 3, background: "#f5a623" } })
+    .png()
+    .toBuffer();
+  await page.getByLabel("Upload profile picture").setInputFiles({ name: "portrait.png", mimeType: "image/png", buffer: portrait });
+  await expect(page.getByRole("img", { name: `Profile picture of ${name}` })).toBeVisible();
+
   // A page with no project exists but stays off the showcase.
   await page.goto(`/u/${handle}`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(name);
+  await expect(page.getByRole("img", { name: `Profile picture of ${name}` })).toBeVisible();
   await expect(page.getByRole("article").getByText("No projects on this page yet.")).toBeVisible();
 
   // Add a project. A bad link is caught by the server and pointed at.
@@ -120,6 +128,12 @@ test("a new student creates a page, publishes a project, and removes it", async 
   // The dashboard now shows the page, with every step done.
   await page.goto("/dashboard");
   await expect(rail.getByRole("heading", { name })).toBeVisible();
+  await expect(rail.getByRole("img", { name: `Profile picture of ${name}` })).toBeVisible();
+  await page.getByRole("button", { name: "Open navigation menu" }).click();
+  const menu = page.getByRole("navigation", { name: "Site menu" });
+  await expect(menu.getByRole("img", { name: `Profile picture of ${name}` })).toBeVisible();
+  await expect(menu.getByRole("button", { name: "[ 06 ] Log out" })).toBeVisible();
+  await page.getByRole("button", { name: "Close navigation menu" }).click();
   const steps = page.getByRole("region", { name: "Your page is ready" });
   await expect(steps.getByText("3 of 3 done")).toBeVisible();
   await expect(steps.getByRole("link", { name: `dolphub.tech/u/${handle}` })).toHaveAttribute("href", `/u/${handle}`);
@@ -140,7 +154,8 @@ test("a new student creates a page, publishes a project, and removes it", async 
 
   await page.goto(`/u/${handle}`);
   await expect(page.getByRole("article").getByText("No projects on this page yet.")).toBeVisible();
-  await expect(page.getByRole("article").getByRole("img")).toHaveCount(0);
+  await expect(page.getByRole("article").getByRole("img", { name: `Profile picture of ${name}` })).toBeVisible();
+  await expect(page.getByRole("article").getByRole("img", { name: /Screenshot of/ })).toHaveCount(0);
   const robots = await page
     .locator('meta[name="robots"]')
     .evaluateAll((tags) => tags.map((tag) => tag.getAttribute("content")));

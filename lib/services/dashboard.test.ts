@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { createTestContext, type TestEnv } from "../test/helpers";
 import { hideProfile } from "./admin";
 import { getOwnDashboard } from "./dashboard";
-import { addProjectImage } from "./images";
+import { addProjectImage, setProfilePicture } from "./images";
 import { createProfile } from "./profiles";
 import { createProject } from "./projects";
 
@@ -29,10 +29,12 @@ describe("getOwnDashboard", () => {
     await createProject(env.db, u.id, { title: "Second" });
     const png = await sharp({ create: { width: 8, height: 8, channels: 3, background: "#000" } }).png().toBuffer();
     await addProjectImage(env.ctx, u.id, first.project.id, png);
+    await setProfilePicture(env.ctx, u.id, png);
     await hideProfile(env.ctx, admin.id, "ana", "Under review");
 
     const d = await getOwnDashboard(env.ctx, u.id);
     expect(d.profile).toMatchObject({ handle: "ana", isHidden: true, hiddenReason: "Under review", searchVisible: true });
+    expect(d.profile?.profilePicture?.url).toMatch(/profile-picture-.+\.webp$/);
     expect(d.projects.map((p) => p.title)).toEqual(["First", "Second"]);
     expect(d.projects[0]!.images).toHaveLength(1);
     expect(d.projects[0]!.images[0]!.url).toMatch(/^https:\/\/images\.test\/profiles\//);

@@ -6,10 +6,13 @@ const E2E_PORT = Number(process.env.E2E_PORT ?? 3100);
 
 /**
  * Signs in as a seeded account from e2e/seed-auth.ts: the student (who has a
- * page), the admin, or a newcomer with no page yet. Newcomers are per
+ * page), the admin, a newcomer, or an isolated logout account. Newcomers are per
  * Playwright project, so pass the project name: "newcomer-desktop".
  */
-export async function authenticate(page: Page, as: "student" | "admin" | `newcomer-${string}` = "student") {
+export async function authenticate(
+  page: Page,
+  as: "student" | "admin" | `newcomer-${string}` | `logout-${string}` = "student",
+) {
   const token =
     as === "admin" ? E2E_ADMIN_SESSION_TOKEN : as === "student" ? E2E_SESSION_TOKEN : `dolphub-e2e-${as}`;
   await page.context().addCookies([

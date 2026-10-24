@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, exists, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { Db } from "../db";
-import { courses, images, profiles, projects, users } from "../db/schema";
+import { courses, images, profilePictures, profiles, projects, users } from "../db/schema";
 import type { ServiceContext } from "./context";
 import { ServiceError, isUniqueViolation } from "./errors";
 import { validateHandle } from "./handles";
@@ -171,6 +171,8 @@ export interface PublicProfile {
   githubUsername: string | null;
   /** Shown to anyone who opens the page. Keep it out of structured data, previews and logs. */
   contactEmail: string | null;
+  /** Optional public portrait. It is separate from project images and page covers. */
+  profilePicture: PublicImage | null;
   coverImage: PublicImage | null;
   projects: PublicProject[];
   /** False when the student opted out of search engines. Pages then get noindex. */
@@ -197,16 +199,22 @@ export async function getPublicProfile(
   if (!row) return null;
   const { profile } = row;
 
-  const projectRows = await ctx.db
-    .select()
-    .from(projects)
-    .where(eq(projects.profileId, profile.id))
-    .orderBy(asc(projects.sortOrder), asc(projects.createdAt));
-  const imageRows = await ctx.db
-    .select()
-    .from(images)
-    .where(eq(images.profileId, profile.id))
-    .orderBy(asc(images.sortOrder), asc(images.createdAt));
+  const [projectRows, imageRows, pictureRows] = await Promise.all([
+    ctx.db
+      .select()
+      .from(projects)
+      .where(eq(projects.profileId, profile.id))
+      .orderBy(asc(projects.sortOrder), asc(projects.createdAt)),
+    ctx.db
+      .select()
+      .from(images)
+      .where(eq(images.profileId, profile.id))
+      .orderBy(asc(images.sortOrder), asc(images.createdAt)),
+    ctx.db
+      .select()
+      .from(profilePictures)
+      .where(eq(profilePictures.profileId, profile.id)),
+  ]);
 
   const toPublic = (i: typeof images.$inferSelect): PublicImage => ({
     id: i.id,
@@ -228,6 +236,7 @@ export async function getPublicProfile(
   const coverImage = chosen
     ? toPublic(chosen)
     : (publicProjects.find((p) => p.images.length > 0)?.images[0] ?? null);
+  const picture = pictureRows[0];
 
   return {
     handle: profile.handle,
@@ -237,6 +246,14 @@ export async function getPublicProfile(
     messengerUrl: profile.messengerUrl,
     githubUsername: profile.githubUsername,
     contactEmail: profile.contactEmail,
+    profilePicture: picture
+      ? {
+          id: picture.id,
+          url: ctx.storage.publicUrl(picture.r2Key),
+          width: picture.width,
+          height: picture.height,
+        }
+      : null,
     coverImage,
     projects: publicProjects,
     searchVisible: profile.searchVisible,

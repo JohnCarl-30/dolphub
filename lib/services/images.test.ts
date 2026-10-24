@@ -2,7 +2,15 @@ import { randomBytes } from "node:crypto";
 import sharp from "sharp";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createTestContext, type TestEnv } from "../test/helpers";
-import { addProjectImage, deleteImage, IMAGE_LIMITS, processImage, sweepOrphanedImages } from "./images";
+import {
+  addProjectImage,
+  deleteImage,
+  deleteProfilePicture,
+  IMAGE_LIMITS,
+  processImage,
+  setProfilePicture,
+  sweepOrphanedImages,
+} from "./images";
 import { createProfile, getPublicProfile, updateProfile } from "./profiles";
 import { createProject, deleteProject } from "./projects";
 
@@ -110,6 +118,7 @@ describe("project images", () => {
 
   it("sweeps only old objects that have no database row", async () => {
     await addProjectImage(env.ctx, userId, projectId, await smallJpeg());
+    await setProfilePicture(env.ctx, userId, await smallJpeg());
     const old = new Date(Date.now() - 2 * 60 * 60 * 1000);
     await env.storage.put("profiles/x/orphan-old.webp", new Uint8Array([1]), "image/webp");
     env.storage.objects.get("profiles/x/orphan-old.webp")!.lastModified = old;
@@ -119,6 +128,44 @@ describe("project images", () => {
 
     const result = await sweepOrphanedImages(env.ctx);
     expect(result.deleted).toEqual(["profiles/x/orphan-old.webp"]);
-    expect(env.storage.objects.size).toBe(2);
+    expect(env.storage.objects.size).toBe(3);
+  });
+});
+
+describe("profile pictures", () => {
+  let env: TestEnv;
+  let userId: string;
+
+  beforeEach(async () => {
+    env = await createTestContext();
+    userId = (await env.createUser()).id;
+    await createProfile(env.db, userId, { handle: "ava", displayName: "Ava", courseId: env.courseId });
+  });
+
+  it("stores one portrait separately from project-image capacity and shows it publicly", async () => {
+    const image = await setProfilePicture(env.ctx, userId, await smallJpeg());
+    const page = await getPublicProfile(env.ctx, "ava");
+    expect(image.image.url).toMatch(/profile-picture-.+\.webp$/);
+    expect(page?.profilePicture).toMatchObject({ id: image.image.id, width: 64, height: 48 });
+    expect(env.storage.objects.size).toBe(1);
+  });
+
+  it("replaces and removes the portrait without leaving stored objects behind", async () => {
+    const first = await setProfilePicture(env.ctx, userId, await smallJpeg());
+    const second = await setProfilePicture(env.ctx, userId, await smallJpeg());
+    expect(first.image.id).toBe(second.image.id);
+    expect(env.storage.objects.size).toBe(1);
+    expect((await deleteProfilePicture(env.ctx, userId)).failedKeys).toEqual([]);
+    expect((await getPublicProfile(env.ctx, "ava"))?.profilePicture).toBeNull();
+    expect(env.storage.objects.size).toBe(0);
+  });
+
+  it("does not let another student replace or remove a portrait", async () => {
+    await setProfilePicture(env.ctx, userId, await smallJpeg());
+    const other = await env.createUser();
+    await createProfile(env.db, other.id, { handle: "other-avatar", displayName: "Other", courseId: env.courseId });
+    await expect(setProfilePicture(env.ctx, other.id, await smallJpeg())).resolves.toMatchObject({ handle: "other-avatar" });
+    await expect(deleteProfilePicture(env.ctx, other.id)).resolves.toMatchObject({ handle: "other-avatar" });
+    expect((await getPublicProfile(env.ctx, "ava"))?.profilePicture).not.toBeNull();
   });
 });
