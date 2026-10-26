@@ -1,12 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Suspense } from "react";
-import { signOutAction } from "@/app/auth/actions";
 import { getCurrentUser } from "@/lib/auth";
 import { AuthenticatedSiteMenu } from "./authenticated-site-menu";
 import { NavLink } from "./nav-link";
 import { SiteMenu } from "./site-menu";
-import { PUBLIC_NAV_LINKS } from "./site-navigation";
 
 export function SiteHeader() {
   return (
@@ -32,30 +30,15 @@ function SiteHeaderContent({ homeHref, signedIn }: { homeHref: "/" | "/home"; si
           <Image src="/dolphub-logo.svg" width={48} height={26} alt="" className="h-[26px] w-12 object-contain" />
           Dolphub
         </Link>
-        <nav aria-label="Primary" className="hidden shrink-0 items-center justify-self-center gap-x-5 whitespace-nowrap lg:flex">
-          {PUBLIC_NAV_LINKS.map((item) => (
-            <NavLink
-              key={item.href}
-              href={item.href}
-              className="font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink"
-            >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
+        {signedIn ? (
+          <nav aria-label="Account" className="hidden shrink-0 items-center justify-self-center gap-x-5 whitespace-nowrap lg:flex">
+            <NavLink href={homeHref} className="font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink">Home</NavLink>
+            <NavLink href="/dashboard" className="font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink">Dashboard</NavLink>
+            <NavLink href="/profile" className="font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink">Profile</NavLink>
+          </nav>
+        ) : <div aria-hidden="true" className="hidden lg:block" />}
         <div className="flex items-center justify-self-end gap-2">
-          {signedIn ? (
-            <nav aria-label="Account" className="hidden items-center gap-x-3 whitespace-nowrap lg:flex">
-              <NavLink href={homeHref} className="font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink">Home</NavLink>
-              <NavLink href="/dashboard" className="font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink">Dashboard</NavLink>
-              <NavLink href="/profile" className="font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink">Profile</NavLink>
-              <form action={signOutAction}>
-                <button type="submit" className="font-mono text-[11px] uppercase tracking-wide text-muted outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink">
-                  Log out
-                </button>
-              </form>
-            </nav>
-          ) : (
+          {!signedIn ? (
             <div className="hidden items-center gap-2 sm:flex">
               <NavLink
                 href="/login"
@@ -70,7 +53,7 @@ function SiteHeaderContent({ homeHref, signedIn }: { homeHref: "/" | "/home"; si
                 Sign up
               </NavLink>
             </div>
-          )}
+          ) : null}
           <Suspense fallback={<SiteMenu />}>
             <AuthenticatedSiteMenu homeHref={homeHref} />
           </Suspense>
