@@ -85,7 +85,7 @@ export function NewsletterSignup() {
         </div>
 
         {saved ? (
-          <div role="status" className="rise self-start border border-ink/10 bg-paper p-4">
+          <div role="status" className="rise self-start border border-ink/10 bg-white p-4">
             <p className="font-medium">You are on the list</p>
             <p className="mt-1 text-sm leading-6 text-muted">
               We will email {saved.email} about{" "}
