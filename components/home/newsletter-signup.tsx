@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useId, useState, useTransition } from "react";
+import { subscribeAction, unsubscribeAction } from "@/app/home/actions";
+import type { NewsletterSubscription } from "@/lib/services/newsletter";
 import type { OpportunityKind } from "@/lib/services/opportunities";
 import { contactEmail } from "@/lib/services/validation";
 
@@ -11,28 +13,14 @@ const NEWSLETTER_TOPICS: { id: OpportunityKind; label: string }[] = [
   { id: "program", label: "Programs" },
 ];
 
-const STORAGE_KEY = "dolphub-mock-newsletter";
-
-type Saved = { email: string; topics: OpportunityKind[] };
-
-/** Mock signup: validates like the server would and remembers the choice in this tab only. */
-export function NewsletterSignup() {
+/** Signs the student up for the weekly opportunities email. `initial` is their saved signup, if any. */
+export function NewsletterSignup({ initial }: { initial: NewsletterSubscription | null }) {
   const id = useId();
-  const [email, setEmail] = useState("");
-  const [topics, setTopics] = useState<OpportunityKind[]>(["internship", "event"]);
+  const [email, setEmail] = useState(initial?.email ?? "");
+  const [topics, setTopics] = useState<OpportunityKind[]>(initial?.topics ?? ["internship", "event"]);
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState<Saved | null>(null);
-
-  useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(STORAGE_KEY);
-      // Session storage only exists in the browser, after hydration.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (raw) setSaved(JSON.parse(raw) as Saved);
-    } catch {
-      /* A missing or corrupt entry just shows the form. */
-    }
-  }, []);
+  const [saved, setSaved] = useState<NewsletterSubscription | null>(initial);
+  const [pending, startTransition] = useTransition();
 
   function toggle(topic: OpportunityKind) {
     setTopics((current) =>
@@ -42,6 +30,7 @@ export function NewsletterSignup() {
 
   function onSubmit(event: React.FormEvent) {
     event.preventDefault();
+    // Checked here first for an instant message; the server checks again.
     const parsed = contactEmail.safeParse(email);
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? "Enter a valid email address");
@@ -51,23 +40,27 @@ export function NewsletterSignup() {
       setError("Pick at least one kind of post to hear about.");
       return;
     }
-    const next = { email: parsed.data, topics };
-    try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      /* Keep the in-memory state. */
-    }
-    setError(null);
-    setSaved(next);
+    startTransition(async () => {
+      const result = await subscribeAction({ email: parsed.data, topics });
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setError(null);
+      setSaved(result.data);
+    });
   }
 
-  function reset() {
-    try {
-      sessionStorage.removeItem(STORAGE_KEY);
-    } catch {
-      /* Nothing stored. */
-    }
-    setSaved(null);
+  function unsubscribe() {
+    startTransition(async () => {
+      const result = await unsubscribeAction();
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setError(null);
+      setSaved(null);
+    });
   }
 
   return (
@@ -79,8 +72,8 @@ export function NewsletterSignup() {
             Get new posts by email
           </h2>
           <p className="mt-3 max-w-xl text-sm leading-6 text-muted">
-            One short email on Mondays with the internships and events posted that week. Nothing
-            is sent in this mock.
+            One short email on Mondays with the internships and events posted that week. Change
+            your topics or stop at any time.
           </p>
         </div>
 
@@ -94,13 +87,29 @@ export function NewsletterSignup() {
                 .join(", ")}
               .
             </p>
-            <button
-              type="button"
-              onClick={reset}
-              className="mt-2 text-sm underline underline-offset-4 outline-none transition-colors hover:text-muted focus-visible:ring-2 focus-visible:ring-ink"
-            >
-              Use a different email
-            </button>
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+              <button
+                type="button"
+                onClick={() => setSaved(null)}
+                disabled={pending}
+                className="text-sm underline underline-offset-4 outline-none transition-colors hover:text-muted focus-visible:ring-2 focus-visible:ring-ink disabled:opacity-60"
+              >
+                Change email or topics
+              </button>
+              <button
+                type="button"
+                onClick={unsubscribe}
+                disabled={pending}
+                className="text-sm underline underline-offset-4 outline-none transition-colors hover:text-muted focus-visible:ring-2 focus-visible:ring-ink disabled:opacity-60"
+              >
+                Unsubscribe
+              </button>
+            </div>
+            {error ? (
+              <p role="alert" className="rise mt-2 text-sm text-ink">
+                {error}
+              </p>
+            ) : null}
           </div>
         ) : (
           <form onSubmit={onSubmit} noValidate className="viewport-reveal flex flex-col gap-5">
@@ -144,7 +153,8 @@ export function NewsletterSignup() {
                 />
                 <button
                   type="submit"
-                  className="press h-12 border border-ink bg-ink px-6 font-mono text-[11px] uppercase tracking-wide text-white outline-none hover:border-ink/85 hover:bg-ink/85 focus-visible:ring-2 focus-visible:ring-ink"
+                  disabled={pending}
+                  className="press h-12 disabled:opacity-60 border border-ink bg-ink px-6 font-mono text-[11px] uppercase tracking-wide text-white outline-none hover:border-ink/85 hover:bg-ink/85 focus-visible:ring-2 focus-visible:ring-ink"
                 >
                   Sign up
                 </button>

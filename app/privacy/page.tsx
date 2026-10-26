@@ -45,6 +45,7 @@ export default function PrivacyPage() {
             email address.
           </li>
           <li>Project stars you add or remove while signed in. Dolphub shows project totals publicly, not who starred them.</li>
+          <li>If you sign up for the opportunities email, the address and topics you choose. Unsubscribing or deleting your account removes them.</li>
           <li>
             Security records such as hashed sign-in and session tokens, a keyed hash of the requesting
             network, and standard request information processed by the hosting platform.

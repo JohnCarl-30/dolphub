@@ -128,6 +128,19 @@ export const projectStars = pgTable(
   ],
 );
 
+/** One newsletter subscription per account, removed with the account. Nothing is sent yet. */
+export const newsletterSubscriptions = pgTable("newsletter_subscriptions", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  /** Where to send, which may differ from the sign-in address. Stored lowercase. */
+  email: text("email").notNull(),
+  /** Opportunity kinds to hear about. */
+  topics: text("topics").array().notNull(),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
 /** Image bytes live in R2. Only the key and size are stored here. */
 export const images = pgTable(
   "images",

@@ -34,7 +34,9 @@ test.describe("focus band", () => {
 });
 
 test.describe("newsletter signup", () => {
-  test("validates, confirms, remembers in the tab, and resets", async ({ page }) => {
+  test("validates, saves to the account, survives a reload, and unsubscribes", async ({ page }, testInfo) => {
+    // Its own account per project, so desktop and phone runs never share a subscription.
+    await authenticate(page, `newcomer-${testInfo.project.name}`);
     await page.goto("/home");
     const section = page.getByRole("region", { name: "Get new posts by email" });
     const email = section.getByRole("textbox", { name: "Email" });
@@ -56,9 +58,20 @@ test.describe("newsletter signup", () => {
     await expect(status).toContainText("mira.s@example.com");
     await expect(status).toContainText("competitions");
 
+    // Stored on the server now, not in the tab.
     await page.reload();
     await expect(section.getByRole("status")).toContainText("mira.s@example.com");
-    await section.getByRole("button", { name: "Use a different email" }).click();
-    await expect(section.getByRole("textbox", { name: "Email" })).toBeVisible();
+
+    await section.getByRole("button", { name: "Change email or topics" }).click();
+    await expect(email).toHaveValue("mira.s@example.com");
+    await expect(section.getByRole("button", { name: "Competitions" })).toHaveAttribute("aria-pressed", "true");
+    await section.getByRole("button", { name: "Programs" }).click();
+    await submit.click();
+    await expect(status).toContainText("competitions, programs");
+
+    await section.getByRole("button", { name: "Unsubscribe" }).click();
+    await expect(submit).toBeVisible();
+    await page.reload();
+    await expect(section.getByRole("button", { name: "Sign up" })).toBeVisible();
   });
 });

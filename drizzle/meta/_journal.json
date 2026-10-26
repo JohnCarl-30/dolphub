@@ -57,6 +57,13 @@
       "when": 1792840230524,
       "tag": "0007_youthful_rhino",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793003378462,
+      "tag": "0008_newsletter",
+      "breakpoints": true
     }
   ]
 }

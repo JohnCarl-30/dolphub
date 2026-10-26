@@ -8,6 +8,7 @@ import { FocusBand } from "@/components/home/focus-band";
 import { NewsletterSignup } from "@/components/home/newsletter-signup";
 import { UpcomingStrip } from "@/components/home/upcoming-strip";
 import { useNow } from "@/components/home/use-now";
+import type { NewsletterSubscription } from "@/lib/services/newsletter";
 import { focusOpportunity, upcomingOpportunities, type OpportunityPreview } from "@/lib/opportunity-display";
 import { Suspense, use, useMemo, useRef, useState, type RefObject } from "react";
 const STEPS = [
@@ -31,10 +32,13 @@ const STEPS = [
 export function HomePage({
   showcase,
   opportunities,
+  subscription,
 }: {
   showcase: Promise<Showcase>;
   /** Open posts from the database, soonest closing first. */
   opportunities: Promise<OpportunityPreview[]>;
+  /** The student's newsletter signup, or null. */
+  subscription: NewsletterSubscription | null;
 }) {
   const { environment, network, setShowcaseActive } = useParticleNetwork();
   const now = useNow();
@@ -104,7 +108,7 @@ export function HomePage({
         <Suspense fallback={<UpcomingStrip posts={null} now={null} />}>
           <LoadedUpcomingStrip opportunities={opportunities} now={now} />
         </Suspense>
-        <NewsletterSignup />
+        <NewsletterSignup initial={subscription} />
     </div>
   );
 }
