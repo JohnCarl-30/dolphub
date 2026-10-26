@@ -56,7 +56,7 @@ function UpcomingCard({ post, now }: { post: OpportunityPreview; now: Date }) {
   return (
     <Link
       href={opportunityPath(post.slug)}
-      className="press group flex h-full flex-col border border-ink/10 bg-paper px-4 py-5 outline-none transition-colors hover:border-ink/40 focus-visible:ring-2 focus-visible:ring-ink"
+      className="press group flex h-full flex-col border border-ink/10 bg-white px-4 py-5 outline-none transition-colors hover:border-ink/40 focus-visible:ring-2 focus-visible:ring-ink"
     >
       <p className="flex items-baseline justify-between gap-4 font-mono text-[11px] uppercase tracking-wide">
         <span className="text-muted">{KIND_NAMES[post.kind]}</span>

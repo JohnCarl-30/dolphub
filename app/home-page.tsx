@@ -90,7 +90,7 @@ export function HomePage({
           </h2>
           <ol className="mt-8 grid gap-4 sm:grid-cols-3">
             {STEPS.map((step, index) => (
-              <li key={step.index} className="viewport-reveal border border-ink/10 px-4 py-5" style={revealStyle(index)}>
+              <li key={step.index} className="viewport-reveal border border-ink/10 bg-white px-4 py-5" style={revealStyle(index)}>
                 <p className="font-mono text-[11px] uppercase tracking-wide text-muted">
                   {step.index}
                 </p>

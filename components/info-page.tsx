@@ -14,7 +14,7 @@ export function InfoPage({
   children: ReactNode;
 }) {
   return (
-    <article className="mx-auto w-full max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
+    <article className="mx-auto w-full max-w-3xl border-x border-ink/10 bg-white px-4 py-12 sm:px-6 sm:py-16">
       <header className="border-b border-ink/10 pb-8">
         <p className={`${motion ? "intro-reveal " : ""}font-mono text-[11px] uppercase tracking-wide text-muted`}>{path}</p>
         <h1 className={`${motion ? "intro-reveal " : ""}mt-3 text-4xl font-medium tracking-tight sm:text-5xl`} style={motion ? ({ "--i": 1 } as React.CSSProperties) : undefined}>{title}</h1>

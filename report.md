@@ -32,3 +32,11 @@ Implemented a restrained motion upgrade for Dolphub's public discovery pages. Th
 - Desktop visual inspection passed; Playwright also verified phone layout and horizontal-overflow behavior.
 - A direct standalone `npm run build` remained blocked by the local Turbopack worker-port restriction. The production build used by the full Playwright harness completed successfully.
 - The full unit command entered the repository's existing PGlite/Vitest hang and was stopped after producing no test results; the changed unit suite passed independently.
+
+## Follow-up: opaque text card surfaces
+
+Added white backgrounds to student showcase cards, opportunity cards, publishing steps, the empty showcase state, and the saved newsletter state so the decorative motion nodes do not compete with readable card content. Particle components, motion hooks, animation utilities, and motion tokens were not changed.
+
+## Follow-up: informational page and footer surfaces
+
+Added an opaque white card surface to the shared informational-page content and an opaque white background to the shared footer. This applies across all pages using those shared components; the motion network remains unchanged.

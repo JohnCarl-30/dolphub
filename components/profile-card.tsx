@@ -16,7 +16,7 @@ export function ProfileCard({
   return (
     <Link
       href={`/u/${profile.handle}`}
-      className={`press group flex h-full flex-col border border-ink/10 bg-paper outline-none hover:border-ink focus-visible:ring-2 focus-visible:ring-ink ${preview ? "showcase-card" : ""}`}
+      className={`press group flex h-full flex-col border border-ink/10 bg-white outline-none hover:border-ink focus-visible:ring-2 focus-visible:ring-ink ${preview ? "showcase-card" : ""}`}
     >
       <div className="flex items-center justify-between px-4 py-3 font-mono text-[11px] uppercase tracking-wide text-muted">
         <span>{number}</span>
@@ -58,7 +58,7 @@ export function ProfileCard({
 
 export function FirstCard() {
   return (
-    <div className="flex min-h-64 flex-col justify-between border border-dashed border-ink/30 bg-paper px-4 py-5">
+    <div className="flex min-h-64 flex-col justify-between border border-dashed border-ink/30 bg-white px-4 py-5">
       <p className="font-mono text-[11px] uppercase tracking-wide text-muted">000</p>
       <div>
         <h2 className="text-2xl font-medium tracking-tight">Be the first</h2>
