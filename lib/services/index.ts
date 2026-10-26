@@ -16,3 +16,4 @@ export * from "./admin";
 export * from "./opportunities";
 export * from "./auth";
 export * from "./dashboard";
+export * from "./newsletter";

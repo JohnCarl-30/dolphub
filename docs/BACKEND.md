@@ -307,6 +307,18 @@ In pages and actions, use the helpers in `lib/auth.ts`:
 
 Browsers compress photos before upload, through `preparePhoto`. Vercel rejects request bodies over 4.5 MB, and phone photos are often bigger.
 
+### Newsletter (`newsletter.ts`)
+
+The signup on `/home`. One row per account in `newsletter_subscriptions`, deleted with the account. Nothing is emailed yet; the weekly send is a later step.
+
+| Function | Does |
+|---|---|
+| `subscribeToNewsletter(db, userId, { email, topics })` | Saves the address (any domain, stored lowercase) and at least one opportunity kind. A second call replaces both |
+| `unsubscribeFromNewsletter(db, userId)` | Removes the row |
+| `getNewsletterSubscription(db, userId)` | The saved signup, or null. Also null before migration `0008` runs |
+
+The form calls `subscribeAction` and `unsubscribeAction` in `app/home/actions.ts`.
+
 ### Admin (`admin.ts`)
 
 Every function takes the acting user's id and refuses non-admins. Every write is recorded in `admin_audit_log`.
