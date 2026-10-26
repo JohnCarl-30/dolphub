@@ -58,15 +58,14 @@ test.describe("home", () => {
 test.describe("site menu", () => {
   const publicDestinations = ["What", "About", "Vision", "Privacy & Security", "Terms", "Support"];
 
-  test("moves public destinations into the desktop burger", async ({ page }) => {
+  test("shows public destinations inline for signed-out desktop visitors", async ({ page }) => {
     for (const width of [1440, 1024]) {
       await page.setViewportSize({ width, height: 800 });
       await page.goto("/");
 
-      await expect(page.getByRole("navigation", { name: "Primary" })).toHaveCount(0);
-      await page.getByRole("button", { name: "Open navigation menu" }).click();
-      const menu = page.getByRole("navigation", { name: "Site menu" });
-      await expect(menu.getByRole("link")).toHaveText(publicDestinations);
+      const primary = page.getByRole("navigation", { name: "Primary" });
+      await expect(primary.getByRole("link")).toHaveText(publicDestinations);
+      await expect(page.getByRole("button", { name: "Open navigation menu" })).toHaveCount(0);
       await expectNoHorizontalOverflow(page);
     }
   });
@@ -94,8 +93,9 @@ test.describe("site menu", () => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/");
 
-    await expect(page.getByRole("navigation", { name: "Primary" })).toHaveCount(0);
-    await expect(page.getByRole("button", { name: "Open navigation menu" })).toBeVisible();
+    const primary = page.getByRole("navigation", { name: "Primary" });
+    await expect(primary.getByRole("link")).toHaveText(publicDestinations);
+    await expect(page.getByRole("button", { name: "Open navigation menu" })).toHaveCount(0);
 
     const login = page.getByRole("link", { name: "Log in", exact: true });
     const signup = page.getByRole("link", { name: "Sign up", exact: true });
@@ -161,6 +161,7 @@ test.describe("site menu", () => {
 
   test("keeps an open menu available when resized to desktop", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 800 });
+    await authenticate(page);
     await page.goto("/");
     await page.getByRole("button", { name: "Open navigation menu" }).click();
     await expect(page.getByRole("navigation", { name: "Site menu" })).toBeVisible();

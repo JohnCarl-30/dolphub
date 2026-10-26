@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { AuthenticatedSiteMenu } from "./authenticated-site-menu";
 import { NavLink } from "./nav-link";
 import { SiteMenu } from "./site-menu";
+import { PUBLIC_NAV_LINKS } from "./site-navigation";
 
 export function SiteHeader() {
   return (
@@ -30,13 +31,23 @@ function SiteHeaderContent({ homeHref, signedIn }: { homeHref: "/" | "/home"; si
           <Image src="/dolphub-logo.svg" width={48} height={26} alt="" className="h-[26px] w-12 object-contain" />
           Dolphub
         </Link>
-        {signedIn ? (
-          <nav aria-label="Account" className="hidden shrink-0 items-center justify-self-center gap-x-5 whitespace-nowrap lg:flex">
-            <NavLink href={homeHref} className="font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink">Home</NavLink>
-            <NavLink href="/dashboard" className="font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink">Dashboard</NavLink>
-            <NavLink href="/profile" className="font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink">Profile</NavLink>
-          </nav>
-        ) : <div aria-hidden="true" className="hidden lg:block" />}
+        <nav aria-label={signedIn ? "Account" : "Primary"} className="hidden shrink-0 items-center justify-self-center gap-x-5 whitespace-nowrap lg:flex">
+          {signedIn ? (
+            <>
+              <NavLink href={homeHref} className="font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink">Home</NavLink>
+              <NavLink href="/dashboard" className="font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink">Dashboard</NavLink>
+              <NavLink href="/profile" className="font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink">Profile</NavLink>
+            </>
+          ) : PUBLIC_NAV_LINKS.map((item) => (
+            <NavLink
+              key={item.href}
+              href={item.href}
+              className="font-mono text-[11px] uppercase tracking-wide outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink"
+            >
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
         <div className="flex items-center justify-self-end gap-2">
           {!signedIn ? (
             <div className="hidden items-center gap-2 sm:flex">
