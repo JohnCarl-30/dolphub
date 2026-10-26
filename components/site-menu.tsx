@@ -46,7 +46,7 @@ export function SiteMenu({
   }, [open]);
 
   return (
-    <div ref={container} className="relative">
+    <div ref={container} className={`relative ${signedIn ? "" : "lg:hidden"}`}>
       <button
         ref={trigger}
         type="button"
