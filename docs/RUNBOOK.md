@@ -51,8 +51,32 @@ There is no password admin on the live site. The `admin@pcu.edu.ph` / `password`
 
 - **Deploy.** Merging a pull request into `main` deploys to production. CI must pass first.
 - **Roll back.** In Vercel, open Deployments, pick the last good one, and choose Promote to Production. This takes a minute and does not touch the database.
-- **Schema changes.** Run `npm run db:migrate` against Neon before merging code that needs the new tables. A rollback does not undo a migration, so check that the old code still works with the new schema. If public pages show React digest `2605960530` after the project-stars release, follow [the project-stars production handoff](./PROJECT_STARS_BACKEND_HANDOFF.md); the page fallback is temporary protection, not a substitute for migration.
+- **Schema changes.** Take a backup first (see [Restore the database](#restore-the-database)), then run `npm run db:migrate` against Neon before merging code that needs the new tables. A rollback does not undo a migration, so check that the old code still works with the new schema. If public pages show React digest `2605960530` after the project-stars release, follow [the project-stars production handoff](./PROJECT_STARS_BACKEND_HANDOFF.md); the page fallback is temporary protection, not a substitute for migration.
 - **Environment variables.** Changes on Vercel only apply after a redeploy. The app refuses to start if Resend, R2, Neon or an https `APP_URL` is missing, so a failed deploy after editing them usually means a typo.
+
+## Uptime check
+
+`https://dolphub.tech/api/health` answers 200 `{"ok":true}` when the site can reach Neon, and 503 when it can't. Point a free monitor such as UptimeRobot at it, checking every 5 minutes and emailing you on failure. A 503 while the home page loads usually means Neon is down or `DATABASE_URL` changed. Check the Neon status page, then the Vercel logs for `Health check: database unreachable`.
+
+## Restore the database
+
+**Before a risky change**, such as a migration or a bulk delete, save a copy:
+
+```bash
+export DATABASE_URL=...   # from .env.local
+pg_dump "$DATABASE_URL" --no-owner -Fc -f dolphub-$(date +%F).dump
+```
+
+Keep the file off the repo. To load it into an empty database: `pg_restore --no-owner -d "$TARGET_URL" dolphub-YYYY-MM-DD.dump`.
+
+**After a mistake**, Neon can rewind the database to an earlier moment. The free plan keeps only a short window of history, so act the same day. Check the window under the project's Settings.
+
+1. In the Neon console, open the project, then Backup & Restore (Restore on older consoles).
+2. Pick the `main` branch and a time just before the mistake. Preview the data at that time first if the console offers it.
+3. Restore. Neon keeps the replaced state as a backup branch, so the restore itself can be undone.
+4. Run `npm run db:migrate` if the restore went back past a migration, and redeploy if the code needs the newer schema.
+
+Images live in R2, not Neon, so a restore doesn't bring back deleted photos.
 
 ## Nightly cleanup
 
