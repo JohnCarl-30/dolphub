@@ -80,9 +80,14 @@ export function cardScrollPosition({
   return start + inverseShowcase(offset / travel) * travel;
 }
 
-export function networkPosition(pageProgress: number, trackProgress: number, width: number, height: number) {
+export function particleDepth(pageProgress: number, height: number) {
+  const eased = easeShowcase(pageProgress);
   return {
-    x: -0.12 * width * easeShowcase(trackProgress),
-    y: (0.08 - 0.16 * easeShowcase(pageProgress)) * height,
+    y: (0.08 - 0.16 * eased) * height,
+    scale: 1 + 0.025 * eased,
   };
+}
+
+export function showcaseParticleOffset(trackProgress: number, width: number): number {
+  return -0.12 * width * easeShowcase(trackProgress);
 }

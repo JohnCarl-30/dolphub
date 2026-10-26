@@ -72,9 +72,9 @@ export function NewsletterSignup() {
 
   return (
     <section aria-labelledby={`${id}-heading`} className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
-      <p className="font-mono text-[11px] uppercase tracking-wide text-muted">/newsletter</p>
+      <p className="viewport-reveal font-mono text-[11px] uppercase tracking-wide text-muted">/newsletter</p>
       <div className="mt-3 grid gap-8 lg:grid-cols-2 lg:gap-12">
-        <div>
+        <div className="viewport-reveal">
           <h2 id={`${id}-heading`} className="text-3xl font-medium tracking-tight">
             Get new posts by email
           </h2>
@@ -103,7 +103,7 @@ export function NewsletterSignup() {
             </button>
           </div>
         ) : (
-          <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
+          <form onSubmit={onSubmit} noValidate className="viewport-reveal flex flex-col gap-5">
             <fieldset>
               <legend className="font-mono text-[11px] uppercase tracking-wide text-muted">What to hear about</legend>
               <div className="mt-3 flex flex-wrap gap-2">

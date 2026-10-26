@@ -1,6 +1,7 @@
 "use client";
 
 import { StudentShowcase } from "@/components/student-showcase";
+import { revealStyle } from "@/components/animations/reveal";
 import { cardsInCourse, type Showcase } from "@/lib/showcase-data";
 import { useParticleNetwork } from "@/components/particles/particle-network-provider";
 import { FocusBand } from "@/components/home/focus-band";
@@ -43,17 +44,17 @@ export function HomePage({
     <div ref={homepage} className="homepage relative isolate">
         {/* The entrance is CSS so it runs off the main thread while the particle chunk loads. */}
         <section data-hero className="mx-auto w-full max-w-6xl px-4 pb-8 pt-10 sm:px-6 sm:pt-14">
-          <p className="rise font-mono text-[11px] uppercase tracking-wide text-muted">
+          <p className="intro-reveal font-mono text-[11px] uppercase tracking-wide text-muted">
             /students
           </p>
           <h1
-            className="rise mt-3 max-w-3xl text-5xl font-medium tracking-tight sm:text-7xl"
+            className="intro-reveal mt-3 max-w-3xl text-5xl font-medium tracking-tight sm:text-7xl"
             style={{ "--i": 1 } as React.CSSProperties}
           >
             PCU tech pages, one link each.
           </h1>
           <p
-            className="rise mt-6 max-w-xl text-base leading-7 text-muted"
+            className="intro-reveal mt-6 max-w-xl text-base leading-7 text-muted"
             style={{ "--i": 2 } as React.CSSProperties}
           >
             Dolphub is a public portfolio for IT, CS, and Computer Engineering
@@ -81,15 +82,15 @@ export function HomePage({
           aria-label="Publishing steps"
           className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6"
         >
-          <p className="font-mono text-[11px] uppercase tracking-wide text-muted">
+          <p className="viewport-reveal font-mono text-[11px] uppercase tracking-wide text-muted">
             /publish
           </p>
-          <h2 className="mt-3 text-3xl font-medium tracking-tight">
+          <h2 className="viewport-reveal mt-3 text-3xl font-medium tracking-tight">
             How a page gets published
           </h2>
           <ol className="mt-8 grid gap-4 sm:grid-cols-3">
-            {STEPS.map((step) => (
-              <li key={step.index} className="border border-ink/10 px-4 py-5">
+            {STEPS.map((step, index) => (
+              <li key={step.index} className="viewport-reveal border border-ink/10 px-4 py-5" style={revealStyle(index)}>
                 <p className="font-mono text-[11px] uppercase tracking-wide text-muted">
                   {step.index}
                 </p>

@@ -16,10 +16,10 @@ export function ProfilePage({
 }) {
   return (
     <article className="mx-auto w-full max-w-3xl px-4 py-12 sm:px-6">
-      <p className="font-mono text-[11px] uppercase tracking-wide text-muted">
+      <p className="intro-reveal font-mono text-[11px] uppercase tracking-wide text-muted">
         /u/{profile.handle}
       </p>
-      <div className="mt-3 flex items-start gap-4 sm:gap-6">
+      <div className="intro-reveal mt-3 flex items-start gap-4 sm:gap-6" style={{ "--i": 1 } as React.CSSProperties}>
         <ProfileAvatar name={profile.displayName} src={profile.profilePicture?.url} className="size-20 shrink-0 sm:size-24" />
         <div className="min-w-0">
           <h1 className="text-5xl font-medium tracking-tight">{profile.displayName}</h1>
@@ -29,13 +29,13 @@ export function ProfilePage({
         </div>
       </div>
       {profile.tagline ? (
-        <p className="mt-6 max-w-xl text-lg leading-8 text-muted">{profile.tagline}</p>
+        <p className="intro-reveal mt-6 max-w-xl text-lg leading-8 text-muted" style={{ "--i": 2 } as React.CSSProperties}>{profile.tagline}</p>
       ) : null}
       <ContactLinks profile={profile} />
 
       <section className="mt-14">
         <p className="font-mono text-[11px] uppercase tracking-wide text-muted">/projects</p>
-        <h2 className="mt-2 text-2xl font-medium tracking-tight">Projects</h2>
+        <h2 className="viewport-reveal mt-2 text-2xl font-medium tracking-tight">Projects</h2>
         {!profile.starsAvailable ? (
           <p role="status" className="mt-3 font-mono text-[11px] uppercase tracking-wide text-muted">
             Stars temporarily unavailable
@@ -52,7 +52,7 @@ export function ProfilePage({
         </div>
       </section>
 
-      <p className="mt-12 border-t border-ink/10 pt-5 text-sm leading-6 text-muted">
+      <p className="viewport-reveal mt-12 border-t border-ink/10 pt-5 text-sm leading-6 text-muted">
         Fake page, copied work, or something that should not be here?{" "}
         <a
           href={`mailto:${REPORT_EMAIL}?subject=${encodeURIComponent(`Report a student page: ${profile.handle}`)}`}
@@ -78,11 +78,11 @@ function ContactLinks({ profile }: { profile: PublicProfile }) {
   const email = profile.contactEmail;
 
   if (!profile.messengerUrl && !github && !email) {
-    return <p className="mt-8 text-sm text-muted">No contact links on this page.</p>;
+    return <p className="intro-reveal mt-8 text-sm text-muted" style={{ "--i": 3 } as React.CSSProperties}>No contact links on this page.</p>;
   }
 
   return (
-    <ul className="mt-8 flex flex-wrap gap-3">
+    <ul className="intro-reveal mt-8 flex flex-wrap gap-3" style={{ "--i": 3 } as React.CSSProperties}>
       {profile.messengerUrl ? (
         <li>
           <a href={profile.messengerUrl} target="_blank" rel="noopener noreferrer" className={primaryLink}>

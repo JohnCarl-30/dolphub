@@ -2,16 +2,17 @@ import { closingLabel, formatManilaDate, formatManilaTime } from "@/lib/opportun
 import { actionLabel, KIND_NAMES, whereLabel, type OpportunityPreview } from "@/lib/opportunity-display";
 import { opportunityPath } from "@/lib/seo";
 import Link from "next/link";
+import { revealStyle } from "@/components/animations/reveal";
 
 /** The next three open posts, soonest closing first. `posts` is null while the clock loads. */
 export function UpcomingStrip({ posts, now }: { posts: OpportunityPreview[] | null; now: Date | null }) {
   return (
     <section aria-labelledby="upcoming-heading" className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
-      <p className="font-mono text-[11px] uppercase tracking-wide text-muted">/upcoming</p>
-      <h2 id="upcoming-heading" className="mt-3 text-3xl font-medium tracking-tight">
+      <p className="viewport-reveal font-mono text-[11px] uppercase tracking-wide text-muted">/upcoming</p>
+      <h2 id="upcoming-heading" className="viewport-reveal mt-3 text-3xl font-medium tracking-tight">
         Upcoming
       </h2>
-      <p className="mt-3 max-w-xl text-sm leading-6 text-muted">
+      <p className="viewport-reveal mt-3 max-w-xl text-sm leading-6 text-muted">
         Internships, events, competitions and programs, soonest closing first.
       </p>
 
@@ -28,7 +29,9 @@ export function UpcomingStrip({ posts, now }: { posts: OpportunityPreview[] | nu
           <ol className="grid gap-4 md:grid-cols-3">
             {posts.map((post, index) => (
               <li key={post.slug} className="rise" style={{ "--i": index } as React.CSSProperties}>
-                <UpcomingCard post={post} now={now} />
+                <div className="viewport-reveal h-full" style={revealStyle(index)}>
+                  <UpcomingCard post={post} now={now} />
+                </div>
               </li>
             ))}
           </ol>

@@ -64,6 +64,12 @@ p {
   animation-delay: calc(var(--i, 0) * 50ms);
 }
 
+/* Slow discovery-page entrance. Operational feedback continues to use rise. */
+@utility intro-reveal {
+  animation: intro-reveal 1100ms var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 125ms);
+}
+
 @keyframes rise {
   from {
     opacity: 0;
@@ -77,6 +83,34 @@ p {
   }
 }
 
+@keyframes intro-reveal {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(30px);
+  }
+}
+
+@keyframes viewport-reveal {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translateY(24px);
+  }
+}
+
+/* Progressive enhancement: without view timelines, content stays fully visible. */
+@supports (animation-timeline: view()) {
+  .viewport-reveal {
+    animation-name: viewport-reveal;
+    animation-duration: 1ms;
+    animation-fill-mode: both;
+    animation-timing-function: var(--ease-out);
+    animation-timeline: view(block);
+    animation-range: entry var(--reveal-start, 5%) cover var(--reveal-end, 30%);
+  }
+}
+
 /* Decorative fallback remains available before JS, on error, and with reduced motion. */
 .particle-layer {
   overflow: clip;
@@ -87,11 +121,17 @@ p {
 }
 
 .home-network {
+  --particle-depth-y: 0px;
+  --particle-depth-scale: 1;
+  --particle-showcase-x: 0px;
   position: absolute;
   inset: -15%;
   background-image: radial-gradient(circle, var(--ink) 0.65px, transparent 0.85px);
   background-size: 48px 48px;
   mask-image: linear-gradient(to bottom, rgb(0 0 0 / 12%), transparent 90%);
+  transform: translate3d(var(--particle-showcase-x), var(--particle-depth-y), 0)
+    scale(var(--particle-depth-scale));
+  transform-origin: center;
   will-change: transform;
 }
 
@@ -211,6 +251,18 @@ p {
   .rise {
     animation: fade 200ms ease both;
     animation-delay: 0ms;
+  }
+
+  .intro-reveal {
+    animation: fade 200ms ease both;
+    animation-delay: 0ms;
+  }
+
+  .viewport-reveal {
+    animation: none;
+    opacity: 1;
+    filter: none;
+    transform: none;
   }
 
   .press:active {
