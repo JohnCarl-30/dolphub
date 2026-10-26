@@ -368,3 +368,7 @@ Both wait for the request and then read a cached copy, so builds never touch the
 `vercel.json` schedules a GET every day at 19:00 UTC, 3 a.m. in Manila. Vercel runs schedules on production deployments only, and sends `Authorization: Bearer <CRON_SECRET>`. The route refuses any other request (401), and every request while `CRON_SECRET` is unset (503).
 
 It runs `sweepOrphanedImages`, then `purgeExpiredAuthRecords`. Each runs even when the other fails. The answer counts what went: `{ ok, images: { deleted, failed }, auth: { loginTokens, sessions } }`, with `null` for a job that failed and status 500 when anything failed. The route's logic lives in `lib/cleanup-route.ts`. To run it by hand: `curl -H "Authorization: Bearer $CRON_SECRET" https://dolphub.tech/api/cron/cleanup`.
+
+## Health check at `/api/health`
+
+Runs `select 1` against the database. It answers 200 `{ ok: true }`, or 503 `{ ok: false }` and logs the error when the database can't be reached. The answer is never cached. The uptime monitor in the runbook points here.
