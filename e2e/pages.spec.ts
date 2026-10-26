@@ -58,53 +58,44 @@ test.describe("home", () => {
 test.describe("site menu", () => {
   const publicDestinations = ["What", "About", "Vision", "Privacy & Security", "Terms", "Support"];
 
-  test("keeps every public destination on one desktop row and hides the burger", async ({ page }) => {
+  test("moves public destinations into the desktop burger", async ({ page }) => {
     for (const width of [1440, 1024]) {
       await page.setViewportSize({ width, height: 800 });
       await page.goto("/");
 
-      const primary = page.getByRole("navigation", { name: "Primary" });
-      await expect(primary.getByRole("link")).toHaveText(publicDestinations);
-      await expect(page.getByRole("button", { name: "Open navigation menu" })).toHaveCount(0);
-      await expect(page.getByRole("navigation", { name: "Legal" })).toHaveCount(0);
+      await expect(page.getByRole("navigation", { name: "Primary" })).toHaveCount(0);
+      await page.getByRole("button", { name: "Open navigation menu" }).click();
+      const menu = page.getByRole("navigation", { name: "Site menu" });
+      await expect(menu.getByRole("link")).toHaveText(publicDestinations);
       await expectNoHorizontalOverflow(page);
-
-      const linkRows = await primary.getByRole("link").evaluateAll((links) =>
-        links.map((link) => Math.round(link.getBoundingClientRect().top)),
-      );
-      expect(new Set(linkRows).size).toBe(1);
-      const center = await primary.evaluate((element) => {
-        const rect = element.getBoundingClientRect();
-        return rect.left + rect.width / 2;
-      });
-      expect(Math.abs(center - width / 2)).toBeLessThan(1);
     }
   });
 
-  test("keeps signed-in account actions accessible inline on desktop", async ({ page }) => {
+  test("centers signed-in account actions and keeps logout in the desktop burger", async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 800 });
     await authenticate(page);
     await page.goto("/home");
 
-    await expect(page.getByRole("navigation", { name: "Primary" }).getByRole("link")).toHaveText(publicDestinations);
-    await expect(page.getByRole("link", { name: "Home" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Dashboard" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Profile" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Log out" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Open navigation menu" })).toHaveCount(0);
+    const account = page.getByRole("navigation", { name: "Account" });
+    await expect(account.getByRole("link")).toHaveText(["Home", "Dashboard", "Profile"]);
+    const center = await account.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return rect.left + rect.width / 2;
+    });
+    expect(Math.abs(center - 512)).toBeLessThan(1);
+
+    await page.getByRole("button", { name: "Open navigation menu" }).click();
+    const menu = page.getByRole("navigation", { name: "Site menu" });
+    await expect(menu.getByRole("link")).toHaveText(publicDestinations);
+    await expect(menu.getByRole("button", { name: "Log out" })).toBeVisible();
   });
 
   test("centers public links and separates signed-out authentication pills", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/");
 
-    const primary = page.getByRole("navigation", { name: "Primary" });
-    await expect(primary.getByRole("link")).toHaveText(publicDestinations);
-    const center = await primary.evaluate((element) => {
-      const rect = element.getBoundingClientRect();
-      return rect.left + rect.width / 2;
-    });
-    expect(Math.abs(center - 640)).toBeLessThan(1);
+    await expect(page.getByRole("navigation", { name: "Primary" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Open navigation menu" })).toBeVisible();
 
     const login = page.getByRole("link", { name: "Log in", exact: true });
     const signup = page.getByRole("link", { name: "Sign up", exact: true });
@@ -168,15 +159,15 @@ test.describe("site menu", () => {
     await expect(page.getByRole("navigation", { name: "Site menu" })).toHaveCount(0);
   });
 
-  test("closes an open menu when resized to desktop", async ({ page }) => {
+  test("keeps an open menu available when resized to desktop", async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 800 });
     await page.goto("/");
     await page.getByRole("button", { name: "Open navigation menu" }).click();
     await expect(page.getByRole("navigation", { name: "Site menu" })).toBeVisible();
 
     await page.setViewportSize({ width: 1024, height: 800 });
-    await expect(page.getByRole("navigation", { name: "Site menu" })).toHaveCount(0);
-    await expect(page.getByRole("button", { name: "Open navigation menu" })).toHaveCount(0);
+    await expect(page.getByRole("navigation", { name: "Site menu" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Close navigation menu" })).toBeVisible();
   });
 });
 

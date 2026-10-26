@@ -21,12 +21,9 @@ export function SiteMenu({
   const container = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const signedIn = Boolean(account);
-  const mobileLinks = [
-    ...PUBLIC_NAV_LINKS,
-    ...(signedIn
-      ? [{ href: homeHref, label: "Home" }, { href: "/dashboard", label: "Dashboard" }, { href: "/profile", label: "Profile" }]
-      : []),
-  ];
+  const accountLinks = signedIn
+    ? [{ href: homeHref, label: "Home" }, { href: "/dashboard", label: "Dashboard" }, { href: "/profile", label: "Profile" }]
+    : [];
 
   useEffect(() => {
     if (!open) return;
@@ -48,19 +45,8 @@ export function SiteMenu({
     };
   }, [open]);
 
-  useEffect(() => {
-    const desktop = window.matchMedia("(min-width: 64rem)");
-    const closeAtDesktop = () => {
-      if (desktop.matches) setOpen(false);
-    };
-
-    closeAtDesktop();
-    desktop.addEventListener("change", closeAtDesktop);
-    return () => desktop.removeEventListener("change", closeAtDesktop);
-  }, []);
-
   return (
-    <div ref={container} className="relative lg:hidden">
+    <div ref={container} className="relative">
       <button
         ref={trigger}
         type="button"
@@ -93,7 +79,7 @@ export function SiteMenu({
             </div>
           ) : null}
           <div>
-            {mobileLinks.map((item) => (
+            {PUBLIC_NAV_LINKS.map((item) => (
               <NavLink
                 key={item.href}
                 href={item.href}
@@ -103,6 +89,20 @@ export function SiteMenu({
                 {item.label}
               </NavLink>
             ))}
+            {accountLinks.length > 0 ? (
+              <div className="lg:hidden">
+                {accountLinks.map((item) => (
+                  <NavLink
+                    key={item.href}
+                    href={item.href}
+                    className={linkClass}
+                    onClick={() => setOpen(false)}
+                  >
+                    {item.label}
+                  </NavLink>
+                ))}
+              </div>
+            ) : null}
           </div>
           {!signedIn ? (
             <div className="flex gap-2 border-t border-ink/10 p-3 sm:hidden">
