@@ -40,3 +40,7 @@ Added white backgrounds to student showcase cards, opportunity cards, publishing
 ## Follow-up: informational page and footer surfaces
 
 Added an opaque white card surface to the shared informational-page content and an opaque white background to the shared footer. This applies across all pages using those shared components; the motion network remains unchanged.
+
+## Follow-up: sticky footer layout
+
+Updated the shared root shell to use a `dvh` flex column with a `1 0 auto` main and non-shrinking footer. Added browser coverage for the landing page, informational pages, desktop heights of 600/900/1400 pixels, and a 390-pixel mobile viewport. The footer remains in normal document flow and the fixed wireframe layer remains behind the full page.
