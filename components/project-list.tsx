@@ -1,5 +1,6 @@
 import type { PublicProject } from "@/lib/services/profiles";
 import { ProjectStar } from "./project-star";
+import { revealStyle } from "./animations/reveal";
 
 export function ProjectList({
   projects,
@@ -25,8 +26,8 @@ export function ProjectList({
       {projects.map((project, index) => (
         <li
           key={project.id}
-          className="rise border border-ink/10 bg-paper"
-          style={{ "--i": Math.min(index, 8) } as React.CSSProperties}
+          className="viewport-reveal border border-ink/10 bg-paper"
+          style={revealStyle(index)}
         >
           <div className="flex items-center justify-between px-4 py-3 font-mono text-[11px] uppercase tracking-wide text-muted">
             <span>{String(index + 1).padStart(2, "0")}</span>

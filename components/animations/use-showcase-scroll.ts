@@ -3,8 +3,7 @@
 import { useEffect, useEffectEvent, useRef, type RefObject } from "react";
 import {
   cardScrollPosition,
-  clampProgress,
-  networkPosition,
+  showcaseParticleOffset,
   showcaseGeometry,
   showcaseLayout,
   showcasePosition,
@@ -68,11 +67,8 @@ export function useShowcaseScroll({
     let layout: ShowcaseLayout = "list";
     let start = 0;
     let travel = 0;
-    let pageStart = 0;
-    let pageTravel = 1;
     let viewportWidth = 0;
     let screenWidth = 0;
-    let screenHeight = 0;
     let offset = 0;
     let active = false;
     let measureNeeded = true;
@@ -95,13 +91,8 @@ export function useShowcaseScroll({
         active = position.active;
         notifyActive(active);
       }
-      if (!motionAllowed) {
-        layer.style.transform = "";
-      } else if (!hidden) {
-        const pageProgress = clampProgress((scrollY - pageStart) / pageTravel);
-        const networkOffset = networkPosition(pageProgress, position.progress, screenWidth, screenHeight);
-        layer.style.transform = `translate3d(${networkOffset.x}px, ${networkOffset.y}px, 0)`;
-      }
+      const networkX = motionAllowed && !hidden ? showcaseParticleOffset(position.progress, screenWidth) : 0;
+      layer.style.setProperty("--particle-showcase-x", `${networkX}px`);
     };
 
     const revealCard = (element: HTMLElement) => {
@@ -128,7 +119,6 @@ export function useShowcaseScroll({
       const frameHeight = sticky.clientHeight;
       viewportWidth = windowElement.clientWidth;
       screenWidth = window.innerWidth;
-      screenHeight = window.innerHeight;
       const geometry = showcaseGeometry(cards.scrollWidth, viewportWidth, frameHeight);
       layout = showcaseLayout({
         motionAllowed,
@@ -141,8 +131,6 @@ export function useShowcaseScroll({
       wrapper.style.height = layout === "scroll" ? `${geometry.height}px` : "";
       travel = geometry.travel;
       start = wrapper.getBoundingClientRect().top + window.scrollY;
-      pageStart = home.getBoundingClientRect().top + window.scrollY;
-      pageTravel = Math.max(1, home.offsetHeight - window.innerHeight);
       cardBounds = Array.from(cards.querySelectorAll<HTMLElement>("[data-showcase-card]")).map((element) => ({
         element,
         left: element.offsetLeft,
@@ -201,6 +189,7 @@ export function useShowcaseScroll({
       window.removeEventListener("orientationchange", resize);
       document.fonts.removeEventListener("loadingdone", resize);
       reveal.current = () => {};
+      layer.style.removeProperty("--particle-showcase-x");
       notifyActive(false);
     };
   }, [homepage, network, section, frame, controls, viewport, track, progress, fill, profiles, motionAllowed, listPreferred, hidden]);

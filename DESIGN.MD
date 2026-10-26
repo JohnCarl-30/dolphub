@@ -95,13 +95,18 @@ Use the existing CSS utilities and motion tokens in [app/globals.css](app/global
 | On-screen movement easing | `cubic-bezier(0.77, 0, 0.175, 1)` via `--ease-in-out` |
 | Color and border transitions | Plain `ease`, default duration 160ms |
 | Press feedback | `press`: scale to 0.97 while active over 160ms |
-| Content entrance | `rise`: fade and rise 16px over 400ms |
-| Entrance stagger | `--i`: 50ms intervals, index capped at 8 |
+| Operational entrance | `rise`: fade and rise 16px over 400ms |
+| Discovery intro | `intro-reveal`: fade, rise 30px and un-blur from 8px over 1.1s |
+| Discovery intro stagger | `--i`: 125ms intervals |
+| Discovery section reveal | `viewport-reveal`: progressively fade, rise 24px and un-blur from 6px while entering the viewport |
 
-- Use `press` for buttons, link-buttons, and interactive cards; use `rise` for newly arrived content such as filter results and saved notices. Use `transition-colors` for hover color changes.
+- Use `press` for buttons, link-buttons, and interactive cards; use `rise` for newly arrived operational content such as filter results, errors, and saved notices. Use `transition-colors` for hover color changes.
+- Use `intro-reveal` only for the opening content on `/`, `/home`, `/what`, `/about`, `/vision`, `/opportunities`, opportunity details, and public student profiles. Use `viewport-reveal` for substantial sections and cards on those discovery pages. Legal, support, authentication, dashboard, editor, and admin content stays direct.
+- Viewport reveals are progressive enhancement behind `@supports (animation-timeline: view())`. Their base style must stay fully visible, so unsupported browsers receive the same content without animation. Card range offsets are capped so long lists do not become progressively slower.
 - Keep control transitions under 300ms and avoid `ease-in`. Keyboard focus corrections, view anchoring, and skip navigation are immediate.
-- With reduced motion, `rise` becomes a 200ms fade without staggering, press feedback uses opacity instead of scaling, and the showcase becomes an unpinned list without track transforms or a progress bar.
+- With reduced motion, `rise` and `intro-reveal` become a 200ms fade without staggering, `viewport-reveal` is disabled, press feedback uses opacity instead of scaling, and the showcase becomes an unpinned list without track transforms or a progress bar.
 - Keep the particle network decorative and out of the accessibility tree. It follows page and showcase scrolling with bounded background displacement. Autonomous drift pauses during pinned traversal and while the document is hidden.
+- The shared particle provider owns the discovery page's vertical depth and subtle scale, while the showcase owns only its horizontal offset. Compose those values through CSS custom properties on the persistent layer; neither controller may replace the other's transform. Clear the depth values on route changes and keep the added response disabled outside discovery routes.
 - The shared particle layer is `pointer-events: none` so cards and controls remain clickable. Keep tsParticles `detectsOn: "window"`: hover repulsion reads pointer movement from `window`, not canvas hit-testing, so repulsion remains active even though the canvas is click-through. The provider lives in the shared shell and persists across client-side route changes.
 - Before JavaScript, on particle failure, and with reduced motion, retain the static dot fallback. Reduced motion disables the animated particle canvas and homepage background transforms. The background must not intercept clicks or cover content.
 - Preserve visible ink focus treatment: the global 2px outline with a 2px offset, or the existing `focus-visible:ring-2 focus-visible:ring-ink` treatment on controls and cards.

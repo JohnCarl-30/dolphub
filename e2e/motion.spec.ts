@@ -21,26 +21,57 @@ test.describe("motion tokens", () => {
 });
 
 test.describe("hero entrance", () => {
-  test("label, heading and copy rise in with a stagger and end at rest", async ({ page }) => {
+  test("label, heading and copy rise and un-blur with a measured stagger", async ({ page }) => {
     await page.goto("/home");
     const hero = page.locator("[data-hero]");
-    const parts = hero.locator(".rise");
+    const parts = hero.locator(".intro-reveal");
     await expect(parts).toHaveCount(3);
-    const delays = await parts.evaluateAll((elements) =>
-      elements.map((element) => getComputedStyle(element).animationDelay),
-    );
-    expect(delays).toEqual(["0s", "0.05s", "0.1s"]);
-    const names = await parts.evaluateAll((elements) =>
-      elements.map((element) => getComputedStyle(element).animationName),
-    );
-    expect(new Set(names)).toEqual(new Set(["rise"]));
+    const motion = await parts.evaluateAll((elements) => elements.map((element) => {
+      const style = getComputedStyle(element);
+      const effect = element.getAnimations()[0]?.effect;
+      const first = effect instanceof KeyframeEffect ? effect.getKeyframes()[0] : null;
+      return { delay: style.animationDelay, duration: style.animationDuration, name: style.animationName, first };
+    }));
+    expect(motion.map(({ delay }) => delay)).toEqual(["0s", "0.125s", "0.25s"]);
+    expect(new Set(motion.map(({ duration }) => duration))).toEqual(new Set(["1.1s"]));
+    expect(new Set(motion.map(({ name }) => name))).toEqual(new Set(["intro-reveal"]));
+    expect(motion[0]?.first).toMatchObject({ opacity: "0", filter: "blur(8px)", transform: "translateY(30px)" });
     // Once settled, the content sits exactly where static content would.
     await expect(async () => {
       for (const part of await parts.all()) {
         expect(await part.evaluate((element) => getComputedStyle(element).opacity)).toBe("1");
+        expect(["none", "blur(0px)"]).toContain(await part.evaluate((element) => getComputedStyle(element).filter));
         expect(await scaleOf(part)).toBe(1);
       }
     }).toPass();
+  });
+});
+
+test.describe("viewport reveals", () => {
+  test("progressively reveals discovery sections without a hidden base style", async ({ page }) => {
+    await page.goto("/about");
+    const section = page.locator(".viewport-reveal").first();
+    await expect(section).toBeAttached();
+    const motion = await section.evaluate((element) => {
+      const style = getComputedStyle(element);
+      const animation = element.getAnimations()[0];
+      const first = animation?.effect instanceof KeyframeEffect ? animation.effect.getKeyframes()[0] : null;
+      return {
+        supported: CSS.supports("animation-timeline: view()"),
+        timeline: style.getPropertyValue("animation-timeline"),
+        first,
+        inlineOpacity: (element as HTMLElement).style.opacity,
+        inlineFilter: (element as HTMLElement).style.filter,
+        inlineTransform: (element as HTMLElement).style.transform,
+      };
+    });
+    expect(motion.inlineOpacity).toBe("");
+    expect(motion.inlineFilter).toBe("");
+    expect(motion.inlineTransform).toBe("");
+    if (motion.supported) {
+      expect(motion.timeline).not.toBe("auto");
+      expect(motion.first).toMatchObject({ opacity: "0", filter: "blur(6px)", transform: "translateY(24px)" });
+    }
   });
 });
 
@@ -90,10 +121,15 @@ test.describe("reduced motion", () => {
     const heading = page.getByRole("heading", { level: 1 });
     const animation = await heading.evaluate((element) => {
       const style = getComputedStyle(element);
-      return { name: style.animationName, delay: style.animationDelay };
+      return { name: style.animationName, delay: style.animationDelay, filter: style.filter, transform: style.transform };
     });
     expect(animation.name).toBe("fade");
     expect(animation.delay).toBe("0s");
+    expect(animation.filter).toBe("none");
+    expect(animation.transform).toBe("none");
+    const reveal = page.locator(".viewport-reveal").first();
+    await expect(reveal).toBeVisible();
+    expect(await reveal.evaluate((element) => getComputedStyle(element).animationName)).toBe("none");
     await expect(page.getByText("List view · reduced motion")).toBeVisible();
     await expect(page.locator(".showcase:visible")).toHaveAttribute("data-layout", "list");
     await expect(page.locator(".home-network canvas")).toHaveCount(0);
@@ -175,9 +211,29 @@ test.describe("site-wide particle network", () => {
     await expect(page).toHaveURL(/\/privacy$/);
     await expect(page.locator('[data-particle-layer] [data-particle-host="true"]')).toHaveCount(1);
     expect(await handle!.evaluate((element) => element.isConnected && element === document.querySelector('[data-particle-host="true"] canvas'))).toBe(true);
+    await expect.poll(() => page.locator(".home-network").evaluate((element) => ({
+      y: (element as HTMLElement).style.getPropertyValue("--particle-depth-y"),
+      scale: (element as HTMLElement).style.getPropertyValue("--particle-depth-scale"),
+    }))).toEqual({ y: "", scale: "" });
     await page.locator('a[href="/home"]').first().click();
     await expect(page).toHaveURL(/\/home$/);
     expect(await handle!.evaluate((element) => element.isConnected && element === document.querySelector('[data-particle-host="true"] canvas'))).toBe(true);
+  });
+
+  test("composes discovery-page depth from native scroll", async ({ page }) => {
+    await page.goto("/home");
+    const layer = page.locator(".home-network");
+    const values = () => layer.evaluate((element) => ({
+      y: parseFloat((element as HTMLElement).style.getPropertyValue("--particle-depth-y")),
+      scale: parseFloat((element as HTMLElement).style.getPropertyValue("--particle-depth-scale")),
+    }));
+    await expect.poll(values).toMatchObject({ scale: 1 });
+    const before = await values();
+    await page.evaluate(() => window.scrollTo({ top: Math.min(1200, document.documentElement.scrollHeight - innerHeight), behavior: "instant" }));
+    await expect.poll(values).not.toEqual(before);
+    const after = await values();
+    expect(after.scale).toBeGreaterThanOrEqual(1);
+    expect(after.scale).toBeLessThanOrEqual(1.025);
   });
 
   /**

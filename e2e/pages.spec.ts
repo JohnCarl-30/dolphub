@@ -248,13 +248,16 @@ test.describe("profile", () => {
       "href",
       "mailto:johncarlsantos30@gmail.com?subject=Report%20a%20student%20page%3A%20mira",
     );
-    const projects = page.locator("ol > li.rise");
+    const projects = page.locator("ol > li.viewport-reveal");
     expect(await projects.count()).toBeGreaterThan(1);
-    const delays = await projects.evaluateAll((elements) =>
-      elements.map((element) => getComputedStyle(element).animationDelay),
+    const ranges = await projects.evaluateAll((elements) =>
+      elements.map((element) => ({
+        start: (element as HTMLElement).style.getPropertyValue("--reveal-start"),
+        end: (element as HTMLElement).style.getPropertyValue("--reveal-end"),
+      })),
     );
-    expect(delays[0]).toBe("0s");
-    expect(delays[1]).toBe("0.05s");
+    expect(ranges[0]).toEqual({ start: "5%", end: "30%" });
+    expect(ranges[1]).toEqual({ start: "7.5%", end: "32.5%" });
   });
 
   test("a page without projects still opens, and stays off the home showcase", async ({ page }) => {

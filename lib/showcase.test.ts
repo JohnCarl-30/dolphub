@@ -3,7 +3,8 @@ import {
   cardScrollPosition,
   easeShowcase,
   inverseShowcase,
-  networkPosition,
+  particleDepth,
+  showcaseParticleOffset,
   showcaseGeometry,
   showcaseLayout,
   showcasePosition,
@@ -75,15 +76,20 @@ describe("showcase fallback policy", () => {
 describe("coordinated background motion", () => {
   it("stays inside the 15% overscan on both axes", () => {
     for (const p of [-1, 0, 0.1, 0.5, 0.9, 1, 2]) {
-      const { x, y } = networkPosition(p, p, 1000, 800);
+      const { y, scale } = particleDepth(p, 800);
+      const x = showcaseParticleOffset(p, 1000);
       expect(x).toBeGreaterThanOrEqual(-120);
       expect(x).toBeLessThanOrEqual(0);
       expect(Math.abs(y)).toBeLessThanOrEqual(64);
+      expect(scale).toBeGreaterThanOrEqual(1);
+      expect(scale).toBeLessThanOrEqual(1.025);
     }
   });
   it("uses the same easing for the track and background", () => {
-    const { x, y } = networkPosition(0.5, 0.25, 1000, 800);
+    const { y, scale } = particleDepth(0.5, 800);
+    const x = showcaseParticleOffset(0.25, 1000);
     expect(y).toBe(0);
     expect(x / -120).toBe(showcasePosition(250, 0, 1000).eased);
+    expect(scale).toBe(1.0125);
   });
 });

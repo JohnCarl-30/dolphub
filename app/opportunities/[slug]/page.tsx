@@ -69,21 +69,21 @@ async function OpportunityDetail({ params }: { params: PageProps<"/opportunities
   return (
     <article className="mx-auto w-full max-w-3xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
       {ld ? <JsonLd data={ld} /> : null}
-      <Link href={OPPORTUNITIES_PATH} className={`font-mono text-[11px] uppercase tracking-wide ${inlineLink}`}>
+      <Link href={OPPORTUNITIES_PATH} className={`intro-reveal font-mono text-[11px] uppercase tracking-wide ${inlineLink}`}>
         <span aria-hidden="true">← </span>All opportunities
       </Link>
 
-      <p className="mt-8 flex flex-wrap items-baseline gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-wide">
+      <p className="intro-reveal mt-8 flex flex-wrap items-baseline gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-wide" style={{ "--i": 1 } as React.CSSProperties}>
         <span className="text-muted">/opportunities/{post.kind}</span>
         <span className="text-ink">{closingLabel(post.closesAt, now)}</span>
       </p>
-      <h1 className="mt-3 text-4xl font-medium tracking-tight [overflow-wrap:anywhere] sm:text-5xl">{post.title}</h1>
-      <p className="mt-3 text-base leading-7 text-muted">
+      <h1 className="intro-reveal mt-3 text-4xl font-medium tracking-tight [overflow-wrap:anywhere] sm:text-5xl" style={{ "--i": 2 } as React.CSSProperties}>{post.title}</h1>
+      <p className="intro-reveal mt-3 text-base leading-7 text-muted" style={{ "--i": 3 } as React.CSSProperties}>
         {KIND_NAMES[post.kind]} · {post.organization}
       </p>
 
       {post.isClosed ? (
-        <div role="status" className="mt-8 border border-ink px-4 py-5">
+        <div role="status" className="viewport-reveal mt-8 border border-ink px-4 py-5">
           <p className="font-medium">This opportunity has closed</p>
           <p className="mt-1 text-sm leading-6 text-muted">
             It is no longer taking applications.{" "}
@@ -95,9 +95,9 @@ async function OpportunityDetail({ params }: { params: PageProps<"/opportunities
         </div>
       ) : null}
 
-      <p className="mt-8 whitespace-pre-line text-base leading-7">{post.summary}</p>
+      <p className="viewport-reveal mt-8 whitespace-pre-line text-base leading-7">{post.summary}</p>
 
-      <dl className="mt-8 grid gap-px border border-ink/10 bg-ink/10 sm:grid-cols-2">
+      <dl className="viewport-reveal mt-8 grid gap-px border border-ink/10 bg-ink/10 sm:grid-cols-2">
         {facts.map((fact) => (
           <div key={fact.label} className="bg-background px-4 py-4">
             <dt className="font-mono text-[11px] uppercase tracking-wide text-muted">{fact.label}</dt>
@@ -108,7 +108,7 @@ async function OpportunityDetail({ params }: { params: PageProps<"/opportunities
 
       {post.isClosed ? null : !user ? (
         // The apply link is for signed-in students only, so it never reaches a signed-out page.
-        <section aria-labelledby="sign-in-heading" className="mt-8 border border-ink/10 bg-paper px-4 py-5">
+        <section aria-labelledby="sign-in-heading" className="viewport-reveal mt-8 border border-ink/10 bg-paper px-4 py-5">
           <h2 id="sign-in-heading" className="font-medium">
             Sign in to {action.toLowerCase()}
           </h2>
@@ -120,7 +120,7 @@ async function OpportunityDetail({ params }: { params: PageProps<"/opportunities
           </div>
         </section>
       ) : (
-        <div className="mt-8">
+        <div className="viewport-reveal mt-8">
           <a
             href={post.url}
             target="_blank"
@@ -136,7 +136,7 @@ async function OpportunityDetail({ params }: { params: PageProps<"/opportunities
         </div>
       )}
 
-      <p className="mt-12 border-t border-ink/10 pt-5 text-sm leading-6 text-muted">
+      <p className="viewport-reveal mt-12 border-t border-ink/10 pt-5 text-sm leading-6 text-muted">
         Broken link, wrong date, or asked to pay to apply?{" "}
         <a href={`mailto:${REPORT_EMAIL}?subject=${encodeURIComponent(reportSubject)}`} className={inlineLink}>
           Report a problem with this post

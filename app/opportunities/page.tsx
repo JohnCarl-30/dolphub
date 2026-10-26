@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { KindFilter } from "@/components/opportunities/kind-filter";
 import { OpportunityCard } from "@/components/opportunities/opportunity-card";
+import { revealStyle } from "@/components/animations/reveal";
 import { getOpenOpportunities } from "@/lib/opportunities";
 import { opportunitiesListMetadata } from "@/lib/seo";
 import { KIND_LABELS, OPPORTUNITY_KINDS, type OpportunityKind } from "@/lib/services/opportunities";
@@ -11,15 +12,15 @@ export const metadata: Metadata = opportunitiesListMetadata();
 export default function Page({ searchParams }: PageProps<"/opportunities">) {
   return (
     <section aria-labelledby="opportunities-heading" className="mx-auto w-full max-w-6xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
-      <p className="rise font-mono text-[11px] uppercase tracking-wide text-muted">/opportunities</p>
+      <p className="intro-reveal font-mono text-[11px] uppercase tracking-wide text-muted">/opportunities</p>
       <h1
         id="opportunities-heading"
-        className="rise mt-3 max-w-3xl text-5xl font-medium tracking-tight sm:text-7xl"
+        className="intro-reveal mt-3 max-w-3xl text-5xl font-medium tracking-tight sm:text-7xl"
         style={{ "--i": 1 } as React.CSSProperties}
       >
         Opportunities
       </h1>
-      <p className="rise mt-6 max-w-xl text-base leading-7 text-muted" style={{ "--i": 2 } as React.CSSProperties}>
+      <p className="intro-reveal mt-6 max-w-xl text-base leading-7 text-muted" style={{ "--i": 2 } as React.CSSProperties}>
         Internships, events, competitions and programs for PCU tech students, soonest closing first. Each one links to
         where you apply or register. Posts leave the list when they close.
       </p>
@@ -57,7 +58,9 @@ async function OpportunityList({ searchParams }: { searchParams: PageProps<"/opp
         <ol aria-label={kind ? `Open ${KIND_LABELS[kind].many.toLowerCase()}` : "Open opportunities"} className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {visible.map((post, index) => (
             <li key={post.slug} className="rise" style={{ "--i": Math.min(index, 8) } as React.CSSProperties}>
-              <OpportunityCard post={post} now={now} />
+              <div className="viewport-reveal h-full" style={revealStyle(index)}>
+                <OpportunityCard post={post} now={now} />
+              </div>
             </li>
           ))}
         </ol>
