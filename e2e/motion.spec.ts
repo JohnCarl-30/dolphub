@@ -141,6 +141,32 @@ test.describe("landing journey", () => {
       expect(incoming.map(({ x }) => x)).toEqual([...incoming.map(({ x }) => x)].sort((a, b) => a - b));
     }).toPass();
   });
+
+  test("featured cards trail one another while their panel slides in", async ({ page }) => {
+    await page.goto("/");
+    const journey = page.locator(".landing-journey");
+    await expect(journey).toHaveAttribute("data-layout", /^(scroll|native)$/);
+    const cards = page.locator("[data-landing-panel] ol > li");
+    await expect(cards).toHaveCount(3);
+    // Stop halfway into the last panel, where the featured projects sit.
+    if ((await journey.getAttribute("data-layout")) === "scroll") {
+      await page.evaluate(() => {
+        const track = document.querySelector<HTMLElement>(".landing-journey-track")!;
+        window.scrollTo(0, document.querySelector<HTMLElement>(".landing-journey")!.offsetTop + track.scrollWidth - innerWidth * 1.5);
+      });
+    } else {
+      await page.locator(".landing-journey-viewport").evaluate((element) => {
+        element.style.scrollSnapType = "none";
+        element.scrollTo({ left: element.scrollWidth - element.clientWidth * 1.5, behavior: "instant" });
+      });
+    }
+    await expect(async () => {
+      const offsets = await cards.evaluateAll((items) => items.map((item) => parseFloat(getComputedStyle(item).translate) || 0));
+      expect(offsets[0]).toBe(0);
+      expect(offsets[1]).toBeGreaterThan(0);
+      expect(offsets[2]).toBeGreaterThan(offsets[1]);
+    }).toPass();
+  });
 });
 
 test.describe("reduced motion", () => {

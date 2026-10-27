@@ -258,6 +258,15 @@ p {
   --drift: 12vw;
 }
 
+/* Featured cards trail one another as well. The sticky frame keeps their vertical view-reveal finished, so this is their entrance on desktop. `translate` stacks on the list's own drift. */
+.landing-panel ol > li:nth-child(2) {
+  translate: calc(var(--panel-shift, 0) * 4vw) 0;
+}
+
+.landing-panel ol > li:nth-child(3) {
+  translate: calc(var(--panel-shift, 0) * 8vw) 0;
+}
+
 @media (min-width: 1024px) and (pointer: fine) {
   .landing-journey:is([data-layout="scroll"], [data-layout="measuring"]) .landing-journey-frame {
     height: calc(100dvh - var(--landing-header-height, 0px));
