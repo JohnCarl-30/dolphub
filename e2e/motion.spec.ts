@@ -113,8 +113,51 @@ test.describe("filter results", () => {
   });
 });
 
+test.describe("landing journey", () => {
+  test("panel content drifts and fades in sequence while panels slide past", async ({ page }) => {
+    await page.goto("/");
+    const journey = page.locator(".landing-journey");
+    await expect(journey).toHaveAttribute("data-layout", /^(scroll|native)$/);
+    // Stop halfway between the hero and What. Snapping would settle a swipe, so it is off for the probe.
+    if ((await journey.getAttribute("data-layout")) === "scroll") {
+      await page.evaluate(() => window.scrollTo(0, document.querySelector<HTMLElement>(".landing-journey")!.offsetTop + innerWidth / 2));
+    } else {
+      await page.locator(".landing-journey-viewport").evaluate((element) => {
+        element.style.scrollSnapType = "none";
+        element.scrollTo({ left: element.clientWidth / 2, behavior: "instant" });
+      });
+    }
+    const drift = (panel: number) => page.locator("[data-landing-panel]").nth(panel).evaluate((element) =>
+      Array.from(element.querySelectorAll(":scope > div > *"), (child) => {
+        const style = getComputedStyle(child);
+        return { x: new DOMMatrix(style.transform).m41, opacity: Number(style.opacity) };
+      }));
+    await expect(async () => {
+      const outgoing = await drift(0);
+      const incoming = await drift(1);
+      expect(outgoing.every(({ x, opacity }) => x < 0 && opacity < 1)).toBe(true);
+      expect(incoming.every(({ x, opacity }) => x > 0 && opacity < 1)).toBe(true);
+      // Each later part trails further behind, so they arrive one after another.
+      expect(incoming.map(({ x }) => x)).toEqual([...incoming.map(({ x }) => x)].sort((a, b) => a - b));
+    }).toPass();
+  });
+});
+
 test.describe("reduced motion", () => {
   test.use({ reducedMotion: "reduce" });
+
+  test("landing panels stay still while the journey moves", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator(".landing-journey")).toHaveAttribute("data-layout", "native");
+    await page.locator(".landing-journey-viewport").evaluate((element) => {
+      element.style.scrollSnapType = "none";
+      element.scrollTo({ left: element.clientWidth / 2, behavior: "instant" });
+    });
+    const heading = page.getByRole("heading", { name: "What", level: 2 });
+    await page.waitForTimeout(100);
+    expect(await heading.evaluate((element) => new DOMMatrix(getComputedStyle(element).transform).m41)).toBe(0);
+    expect(await heading.evaluate((element) => getComputedStyle(element).opacity)).toBe("1");
+  });
 
   test("entrances keep the fade and drop the travel; the showcase is a plain list", async ({ page }) => {
     await page.goto("/home");

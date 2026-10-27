@@ -240,6 +240,24 @@ p {
   min-height: calc(100dvh - 5rem);
 }
 
+/* Panel content drifts against the slide and fades at the edges. Later children drift further, so a panel's label, heading, text and button arrive in sequence. */
+.landing-panel > div > * {
+  opacity: calc(1 - var(--panel-distance, 0) * 0.85);
+  transform: translate3d(calc(var(--panel-shift, 0) * var(--drift, 3vw)), 0, 0);
+}
+
+.landing-panel > div > :nth-child(2) {
+  --drift: 6vw;
+}
+
+.landing-panel > div > :nth-child(3) {
+  --drift: 9vw;
+}
+
+.landing-panel > div > :nth-child(n + 4) {
+  --drift: 12vw;
+}
+
 @media (min-width: 1024px) and (pointer: fine) {
   .landing-journey:is([data-layout="scroll"], [data-layout="measuring"]) .landing-journey-frame {
     height: calc(100dvh - var(--landing-header-height, 0px));
