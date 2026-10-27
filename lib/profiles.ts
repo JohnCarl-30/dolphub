@@ -1,5 +1,5 @@
 import "server-only";
-import { cacheTag } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { connection } from "next/server";
 import { FEATURED_PROJECTS_TAG, GRID_TAG, profileTag } from "./cache-tags";
 import { courseLabel } from "./course-labels";
@@ -19,23 +19,27 @@ import type { Showcase } from "./showcase-data";
  * visitors rarely wait on a Neon cold start.
  */
 
+// Missing-table checks live inside the cached functions: errors lose their code and cause once they leave "use cache".
+// Fallbacks expire within minutes so stars appear soon after the migration runs.
+
 async function cachedProfile(handle: string): Promise<PublicProfile | null> {
   "use cache";
   cacheTag(profileTag(handle));
-  return getPublicProfile(await getServiceContext(), handle);
+  const ctx = await getServiceContext();
+  try {
+    return await getPublicProfile(ctx, handle);
+  } catch (error) {
+    if (!isMissingRelation(error, "project_stars")) throw error;
+    logError("Public profile stars unavailable", error);
+    cacheLife("minutes");
+    return getPublicProfile(ctx, handle, { includeStars: false });
+  }
 }
 
 /** Everything /u/<handle> shows. Null when missing, hidden, or being deleted: call notFound() then. */
 export async function getProfilePage(handle: string): Promise<PublicProfile | null> {
   await connection();
-  const normalizedHandle = handle.trim().toLowerCase();
-  try {
-    return await cachedProfile(normalizedHandle);
-  } catch (error) {
-    if (!isMissingRelation(error, "project_stars")) throw error;
-    logError("Public profile stars unavailable", error);
-    return getPublicProfile(await getServiceContext(), normalizedHandle, { includeStars: false });
-  }
+  return cachedProfile(handle.trim().toLowerCase());
 }
 
 /** The 100-card ceiling is far above the semester target of 50 pages. Add paging before it matters. */
@@ -76,20 +80,19 @@ export interface FeaturedProjectsResult {
 async function cachedFeaturedProjects(): Promise<FeaturedProjectsResult> {
   "use cache";
   cacheTag(FEATURED_PROJECTS_TAG);
-  return { projects: await listFeaturedProjects(await getServiceContext()), starsAvailable: true };
+  const ctx = await getServiceContext();
+  try {
+    return { projects: await listFeaturedProjects(ctx), starsAvailable: true };
+  } catch (error) {
+    if (!isMissingRelation(error, "project_stars")) throw error;
+    logError("Featured project stars unavailable", error);
+    cacheLife("minutes");
+    return { projects: await listFeaturedProjects(ctx, 3, { includeStars: false }), starsAvailable: false };
+  }
 }
 
 /** The public landing's top projects. Ranking changes when a project is starred. */
 export async function getFeaturedProjects(): Promise<FeaturedProjectsResult> {
   await connection();
-  try {
-    return await cachedFeaturedProjects();
-  } catch (error) {
-    if (!isMissingRelation(error, "project_stars")) throw error;
-    logError("Featured project stars unavailable", error);
-    return {
-      projects: await listFeaturedProjects(await getServiceContext(), 3, { includeStars: false }),
-      starsAvailable: false,
-    };
-  }
+  return cachedFeaturedProjects();
 }
