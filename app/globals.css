@@ -213,84 +213,87 @@ p {
   background: color-mix(in srgb, var(--ink) 10%, transparent);
 }
 
-.information-rail-frame {
+.landing-journey-frame {
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 1rem;
+  min-height: 100%;
   padding-block: 1.5rem;
 }
 
-.information-rail-progress {
+.landing-journey-progress {
   display: none;
   height: 2px;
   overflow: clip;
   background: color-mix(in srgb, var(--ink) 10%, transparent);
 }
 
-.information-rail-track {
+.landing-journey-track {
   display: grid;
   gap: 1rem;
-  max-width: 42rem;
-  margin-inline: auto;
   padding: 4px;
-  list-style: none;
 }
 
-.information-rail-track > li {
-  min-height: 20rem;
+.landing-panel {
+  min-width: 100%;
+  min-height: calc(100dvh - 5rem);
 }
 
 @media (min-width: 1024px) and (pointer: fine) {
-  .information-rail:is([data-layout="scroll"], [data-layout="measuring"]) .information-rail-frame {
-    height: 100dvh;
+  .landing-journey:is([data-layout="scroll"], [data-layout="measuring"]) .landing-journey-frame {
+    height: calc(100dvh - var(--landing-header-height, 0px));
     position: sticky;
-    top: 0;
+    top: var(--landing-header-height, 0px);
   }
 
-  .information-rail:is([data-layout="scroll"], [data-layout="measuring"], [data-layout="fits"]) .information-rail-track {
+  .landing-journey:is([data-layout="scroll"], [data-layout="measuring"], [data-layout="native"]) .landing-journey-track {
     display: flex;
     width: max-content;
     max-width: none;
-    margin-inline: 0;
   }
 
-  .information-rail:is([data-layout="scroll"], [data-layout="measuring"], [data-layout="fits"]) .information-rail-track > li {
-    flex: 0 0 min(72vw, 28rem);
-    width: min(72vw, 28rem);
+  .landing-journey:is([data-layout="scroll"], [data-layout="measuring"], [data-layout="native"]) .landing-panel {
+    flex: 0 0 100vw;
+    width: 100vw;
   }
 
-  .information-rail[data-layout="scroll"] .information-rail-viewport {
+  .landing-journey[data-layout="scroll"] .landing-journey-viewport {
     overflow: clip;
   }
 
-  .information-rail:is([data-layout="scroll"], [data-layout="measuring"]) .information-rail-progress {
+  .landing-journey[data-layout="native"] .landing-journey-viewport {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+  }
+
+  .landing-journey:is([data-layout="scroll"], [data-layout="measuring"]) .landing-journey-progress {
     display: block;
   }
 
-  .information-rail[data-layout="scroll"] .information-rail-track {
+  .landing-journey[data-layout="scroll"] .landing-journey-track {
     will-change: transform;
   }
 }
 
 @media (max-width: 1023px), (pointer: coarse) {
-  .information-rail-viewport {
+  .landing-journey[data-layout="native"] .landing-journey-viewport {
     overflow-x: auto;
     overscroll-behavior-x: contain;
     scroll-snap-type: x mandatory;
     scrollbar-width: thin;
   }
 
-  .information-rail-track {
+  .landing-journey[data-layout="native"] .landing-journey-track {
     display: flex;
     width: max-content;
     max-width: none;
-    margin-inline: 0;
   }
 
-  .information-rail-track > li {
-    flex: 0 0 min(82vw, 22rem);
-    width: min(82vw, 22rem);
+  .landing-journey[data-layout="native"] .landing-panel {
+    flex: 0 0 100vw;
+    width: 100vw;
     scroll-snap-align: start;
   }
 }
@@ -356,30 +359,17 @@ p {
     height: auto !important;
   }
 
-  .information-rail {
+  .landing-journey {
     height: auto !important;
   }
 
-  .information-rail-frame {
+  .landing-journey-frame {
     position: static !important;
     height: auto !important;
   }
 
-  .information-rail-progress {
+  .landing-journey-progress {
     display: none !important;
-  }
-
-  .information-rail-track {
-    display: flex;
-    width: max-content;
-    max-width: none;
-    margin-inline: 0;
-  }
-
-  .information-rail-track > li {
-    flex: 0 0 min(82vw, 22rem);
-    width: min(82vw, 22rem);
-    scroll-snap-align: start;
   }
 
   .showcase .showcase-frame {

@@ -3,31 +3,38 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ContentErrorBoundary } from "@/components/content-error-boundary";
 import { revealStyle } from "@/components/animations/reveal";
-import { LandingInformationRail } from "@/components/landing-information-rail";
+import { LandingPageJourney } from "@/components/landing-page-journey";
 import { getFeaturedProjects } from "@/lib/profiles";
 
 const PAGES = [
   { href: "/what", label: "What", text: "A focused portfolio space for PCU tech students to show practical work and share one lasting link." },
   { href: "/about", label: "About", text: "Built for IT, Computer Science, and Computer Engineering students who want their projects to be easier to discover." },
   { href: "/vision", label: "Vision", text: "Every PCU tech student should leave with work that is visible, useful, and easy to share." },
-  { href: "/privacy", label: "Privacy & Security", text: "Understand what Dolphub handles, what becomes public, and the choices available to you." },
-  { href: "/terms", label: "Terms", text: "See the rules for creating, publishing, and using a student portfolio on Dolphub." },
-  { href: "/support", label: "Support", text: "Find sign-in, profile, privacy, and security help, or contact the maintainers." },
 ];
 
 export function LandingPage() {
-  return <div>
-    <section data-hero className="mx-auto w-full max-w-6xl px-4 pb-12 pt-10 sm:px-6 sm:pt-16">
-      <p className="intro-reveal font-mono text-[11px] uppercase tracking-wide text-muted">/dolphub</p>
-      <h1 className="intro-reveal mt-3 max-w-4xl text-5xl font-medium tracking-tight sm:text-7xl" style={{ "--i": 1 } as React.CSSProperties}>One link for every project you&apos;ve built.</h1>
-      <p className="intro-reveal mt-6 max-w-2xl text-base leading-7 text-muted" style={{ "--i": 2 } as React.CSSProperties}>Dolphub gives PCU IT, Computer Science, and Computer Engineering students a public portfolio they can share with classmates, employers, and collaborators.</p>
-      <div className="intro-reveal mt-8 flex flex-wrap gap-3" style={{ "--i": 3 } as React.CSSProperties}>
-        <Link href="/dashboard" className="press inline-flex min-h-11 items-center border border-ink bg-ink px-4 py-2 font-mono text-[11px] uppercase tracking-wide text-white outline-none hover:bg-ink/85 focus-visible:ring-2 focus-visible:ring-ink">Create your page →</Link>
-        <Link href="/login" className="press inline-flex min-h-11 items-center border border-ink/10 bg-background px-4 py-2 font-mono text-[11px] uppercase tracking-wide outline-none hover:bg-paper focus-visible:ring-2 focus-visible:ring-ink">Log in / Sign up →</Link>
+  return <LandingPageJourney>
+    <section data-landing-panel data-hero className="landing-panel flex items-center">
+      <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
+        <p className="intro-reveal font-mono text-[11px] uppercase tracking-wide text-muted">/dolphub</p>
+        <h1 className="intro-reveal mt-3 max-w-4xl text-5xl font-medium tracking-tight sm:text-7xl" style={{ "--i": 1 } as React.CSSProperties}>One link for every project you&apos;ve built.</h1>
+        <p className="intro-reveal mt-6 max-w-2xl text-base leading-7 text-muted" style={{ "--i": 2 } as React.CSSProperties}>Dolphub gives PCU IT, Computer Science, and Computer Engineering students a public portfolio they can share with classmates, employers, and collaborators.</p>
+        <div className="intro-reveal mt-8 flex flex-wrap gap-3" style={{ "--i": 3 } as React.CSSProperties}>
+          <Link href="/dashboard" className="press inline-flex min-h-11 items-center border border-ink bg-ink px-4 py-2 font-mono text-[11px] uppercase tracking-wide text-white outline-none hover:bg-ink/85 focus-visible:ring-2 focus-visible:ring-ink">Create your page →</Link>
+          <Link href="/login" className="press inline-flex min-h-11 items-center border border-ink/10 bg-background px-4 py-2 font-mono text-[11px] uppercase tracking-wide outline-none hover:bg-paper focus-visible:ring-2 focus-visible:ring-ink">Log in / Sign up →</Link>
+        </div>
       </div>
     </section>
-    <LandingInformationRail pages={PAGES} />
-    <section aria-labelledby="featured-projects" className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
+    {PAGES.map((page) => <section key={page.href} data-landing-panel aria-labelledby={`landing-${page.label.toLowerCase()}`} className="landing-panel flex items-center">
+      <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
+        <p className="font-mono text-[11px] uppercase tracking-wide text-muted">/{page.label.toLowerCase()}</p>
+        <h2 id={`landing-${page.label.toLowerCase()}`} className="mt-4 text-5xl font-medium tracking-tight sm:text-7xl">{page.label}</h2>
+        <p className="mt-6 max-w-2xl text-base leading-7 text-muted">{page.text}</p>
+        <Link href={page.href} className="press mt-8 inline-flex min-h-11 items-center border border-ink bg-background px-4 py-2 font-mono text-[11px] uppercase tracking-wide outline-none hover:bg-white focus-visible:ring-2 focus-visible:ring-ink">Read {page.label} →</Link>
+      </div>
+    </section>)}
+    <section data-landing-panel aria-labelledby="featured-projects" className="landing-panel flex items-center">
+      <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
       <p className="font-mono text-[11px] uppercase tracking-wide text-muted">/featured</p><h2 id="featured-projects" className="mt-3 text-3xl font-medium tracking-tight">Featured projects</h2>
       <ContentErrorBoundary
         title="Featured projects are temporarily unavailable."
@@ -35,8 +42,9 @@ export function LandingPage() {
       >
         <Suspense fallback={<p className="mt-4 font-mono text-[11px] uppercase tracking-wide text-muted">Loading featured projects…</p>}><FeaturedProjects /></Suspense>
       </ContentErrorBoundary>
+      </div>
     </section>
-  </div>;
+  </LandingPageJourney>;
 }
 
 async function FeaturedProjects() {
