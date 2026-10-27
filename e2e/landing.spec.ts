@@ -4,12 +4,21 @@ import { authenticate } from "./helpers";
 test("the public landing is the same for signed-out and signed-in visitors", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "One link for every project you've built." })).toBeVisible();
-  for (const heading of ["What", "About", "Vision", "Privacy & Security", "Terms", "Support", "Featured projects"]) {
+  for (const heading of ["One link for every project you've built.", "What", "About", "Vision", "Featured projects"]) {
     await expect(page.getByRole("heading", { name: heading })).toBeVisible();
   }
-  for (const destination of ["/what", "/about", "/vision", "/privacy", "/terms", "/support"]) {
-    await expect(page.locator(`[data-information-card] a[href="${destination}"]`)).toHaveCount(1);
+  for (const destination of ["/what", "/about", "/vision"]) {
+    await expect(page.locator(`[data-landing-panel] a[href="${destination}"]`)).toHaveCount(1);
   }
+  await expect(page.locator("[data-landing-panel]")).toHaveCount(5);
+  await expect(page.locator(".landing-journey")).toHaveAttribute("data-layout", /^(scroll|native)$/);
+  await expect(page.locator("[data-landing-panel] h1, [data-landing-panel] h2")).toHaveText([
+    "One link for every project you've built.",
+    "What",
+    "About",
+    "Vision",
+    "Featured projects",
+  ]);
   await expect(page.getByRole("link", { name: "Create your page →" })).toHaveAttribute("href", "/dashboard");
   await expect(page.getByRole("link", { name: "Log in / Sign up →" })).toHaveAttribute("href", "/login");
   const canonical = page.locator('link[rel="canonical"]');
@@ -20,7 +29,7 @@ test("the public landing is the same for signed-out and signed-in visitors", asy
   await authenticate(page);
   await page.reload();
   await expect(page.getByRole("heading", { name: "One link for every project you've built." })).toBeVisible();
-  for (const heading of ["What", "About", "Vision", "Privacy & Security", "Terms", "Support", "Featured projects"]) {
+  for (const heading of ["One link for every project you've built.", "What", "About", "Vision", "Featured projects"]) {
     await expect(page.getByRole("heading", { name: heading })).toBeVisible();
   }
   await expect(page.getByRole("link", { name: "Create your page →" })).toHaveAttribute("href", "/dashboard");
