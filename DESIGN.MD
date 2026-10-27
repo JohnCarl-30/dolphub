@@ -99,7 +99,8 @@ Use the existing CSS utilities and motion tokens in [app/globals.css](app/global
 | Discovery intro | `intro-reveal`: fade, rise 30px and un-blur from 8px over 1.1s |
 | Discovery intro stagger | `--i`: 125ms intervals |
 | Discovery section reveal | `viewport-reveal`: progressively fade, rise 24px and un-blur from 6px while entering the viewport |
-| Landing panel drift | Position-linked, no duration: as a landing panel slides, its content fades and drifts against the slide by 3, 6, 9 and 12vw per child, so parts arrive in sequence. Off with reduced motion |
+| Landing panel drift | Position-linked, no duration: as a landing panel slides, its content fades and drifts against the slide by 3, 6, 9 and 12vw per child, so parts arrive in sequence. Featured cards trail by a further 4vw each. Off with reduced motion |
+| Link arrow | The `→` on landing buttons and featured cards nudges 4px right on hover over 150ms |
 
 - Use `press` for buttons, link-buttons, and interactive cards; use `rise` for newly arrived operational content such as filter results, errors, and saved notices. Use `transition-colors` for hover color changes.
 - Use `intro-reveal` only for the opening content on `/`, `/home`, `/what`, `/about`, `/vision`, `/opportunities`, opportunity details, and public student profiles. Use `viewport-reveal` for substantial sections and cards on those discovery pages. Legal, support, authentication, dashboard, editor, and admin content stays direct.
