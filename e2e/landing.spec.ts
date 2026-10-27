@@ -12,6 +12,10 @@ test("the public landing is the same for signed-out and signed-in visitors", asy
   }
   await expect(page.locator("[data-landing-panel]")).toHaveCount(5);
   await expect(page.locator(".landing-journey")).toHaveAttribute("data-layout", /^(scroll|native)$/);
+  // toBeVisible passes for content pushed off-screen; the hero must be in view and one viewport wide.
+  await expect(page.locator("h1")).toBeInViewport();
+  const heroWidth = await page.locator("[data-hero]").evaluate((hero) => hero.getBoundingClientRect().width);
+  expect(heroWidth).toBeLessThanOrEqual(page.viewportSize()!.width);
   await expect(page.locator("[data-landing-panel] h1, [data-landing-panel] h2")).toHaveText([
     "One link for every project you've built.",
     "What",

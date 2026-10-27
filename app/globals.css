@@ -231,18 +231,20 @@ p {
 
 .landing-journey-track {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
   padding: 4px;
 }
 
 .landing-panel {
-  min-width: 100%;
   min-height: calc(100dvh - 5rem);
 }
 
 @media (min-width: 1024px) and (pointer: fine) {
   .landing-journey:is([data-layout="scroll"], [data-layout="measuring"]) .landing-journey-frame {
     height: calc(100dvh - var(--landing-header-height, 0px));
+    /* The base min-height: 100% would stretch the frame to the JS-set section height. */
+    min-height: 0;
     position: sticky;
     top: var(--landing-header-height, 0px);
   }
