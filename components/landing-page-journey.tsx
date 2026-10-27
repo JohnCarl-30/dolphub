@@ -26,17 +26,34 @@ export function LandingPageJourney({ children }: { children: ReactNode }) {
     let scheduled = 0;
     let measuring = 0;
     let disposed = false;
+    let panels: { element: HTMLElement; left: number }[] = [];
+
+    // --panel-shift runs from -1 (gone left) through 0 (centred) to 1 (waiting right); CSS turns it into drift and fade.
+    const paintPanels = (x: number) => {
+      const width = windowElement.clientWidth;
+      const animate = !reducedMotion.matches && section.dataset.layout !== "measuring" && width > 0;
+      for (const { element, left } of panels) {
+        if (!animate) {
+          element.style.removeProperty("--panel-shift");
+          element.style.removeProperty("--panel-distance");
+          continue;
+        }
+        const shift = Math.max(-1, Math.min(1, (left - x) / width));
+        element.style.setProperty("--panel-shift", shift.toFixed(3));
+        element.style.setProperty("--panel-distance", Math.abs(shift).toFixed(3));
+      }
+    };
 
     const paint = () => {
       scheduled = 0;
       if (disposed) return;
       const p = maxX > 0 ? Math.max(0, Math.min(maxX, window.scrollY - start)) : 0;
       const percent = maxX > 0 ? Math.round((p / maxX) * 100) : 0;
-      cards.style.transform = desktop.matches && !reducedMotion.matches && maxX > 0
-        ? `translate3d(${-p}px, 0, 0)`
-        : "";
+      const scrollDriven = desktop.matches && !reducedMotion.matches && maxX > 0;
+      cards.style.transform = scrollDriven ? `translate3d(${-p}px, 0, 0)` : "";
       bar.style.transform = `scaleX(${percent / 100})`;
       meter.setAttribute("aria-valuenow", String(percent));
+      paintPanels(scrollDriven ? p : windowElement.scrollLeft);
     };
 
     const schedulePaint = () => {
@@ -64,6 +81,12 @@ export function LandingPageJourney({ children }: { children: ReactNode }) {
         section.dataset.layout = "native";
       }
       start = section.getBoundingClientRect().top + window.scrollY;
+      // Where each panel sits in the untransformed track, measured from the window's left edge.
+      const origin = windowElement.getBoundingClientRect().left - windowElement.scrollLeft;
+      panels = Array.from(cards.querySelectorAll<HTMLElement>("[data-landing-panel]"), (element) => ({
+        element,
+        left: element.getBoundingClientRect().left - origin,
+      }));
       schedulePaint();
     };
 
@@ -83,6 +106,7 @@ export function LandingPageJourney({ children }: { children: ReactNode }) {
     const resizeObserver = new ResizeObserver(scheduleMeasure);
     for (const element of [section, sticky, windowElement, cards]) resizeObserver.observe(element);
     window.addEventListener("scroll", schedulePaint, { passive: true });
+    windowElement.addEventListener("scroll", schedulePaint, { passive: true });
     window.addEventListener("resize", scheduleMeasure);
     desktop.addEventListener("change", scheduleMeasure);
     reducedMotion.addEventListener("change", scheduleMeasure);
@@ -97,6 +121,7 @@ export function LandingPageJourney({ children }: { children: ReactNode }) {
       if (measuring) cancelAnimationFrame(measuring);
       resizeObserver.disconnect();
       window.removeEventListener("scroll", schedulePaint);
+      windowElement.removeEventListener("scroll", schedulePaint);
       window.removeEventListener("resize", scheduleMeasure);
       desktop.removeEventListener("change", scheduleMeasure);
       reducedMotion.removeEventListener("change", scheduleMeasure);
@@ -105,6 +130,10 @@ export function LandingPageJourney({ children }: { children: ReactNode }) {
       section.style.height = "";
       sticky.style.removeProperty("--landing-header-height");
       cards.style.transform = "";
+      for (const { element } of panels) {
+        element.style.removeProperty("--panel-shift");
+        element.style.removeProperty("--panel-distance");
+      }
     };
   }, []);
 
