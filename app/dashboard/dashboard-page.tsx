@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { SharePageButton } from "@/components/share-page-button";
 import { courseLabel } from "@/lib/course-labels";
 import { getOpenOpportunities } from "@/lib/opportunities";
 import { KIND_NAMES } from "@/lib/opportunity-display";
@@ -109,12 +110,15 @@ export function DashboardPage({ email, me }: { email: string; me: DashboardMe })
           </ol>
           <div className="border-t border-ink/10 p-4">
             {doneCount === steps.length && me ? (
-              <p className="text-sm leading-6">
-                Share your link in your class group chat:{" "}
-                <Link href={profilePath(me.handle)} className="font-medium underline decoration-ink/30 underline-offset-4 hover:decoration-ink">
-                  dolphub.tech/u/{me.handle}
-                </Link>
-              </p>
+              <>
+                <p className="text-sm leading-6">
+                  Share your link in your class group chat:{" "}
+                  <Link href={profilePath(me.handle)} className="font-medium underline decoration-ink/30 underline-offset-4 hover:decoration-ink">
+                    dolphub.tech/u/{me.handle}
+                  </Link>
+                </p>
+                <SharePageButton path={profilePath(me.handle)} name={me.displayName} />
+              </>
             ) : (
               <Link
                 href="/profile"
