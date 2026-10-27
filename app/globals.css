@@ -213,6 +213,88 @@ p {
   background: color-mix(in srgb, var(--ink) 10%, transparent);
 }
 
+.information-rail-frame {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1rem;
+  padding-block: 1.5rem;
+}
+
+.information-rail-progress {
+  display: none;
+  height: 2px;
+  overflow: clip;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.information-rail-track {
+  display: grid;
+  gap: 1rem;
+  max-width: 42rem;
+  margin-inline: auto;
+  padding: 4px;
+  list-style: none;
+}
+
+.information-rail-track > li {
+  min-height: 20rem;
+}
+
+@media (min-width: 1024px) and (pointer: fine) {
+  .information-rail:is([data-layout="scroll"], [data-layout="measuring"]) .information-rail-frame {
+    height: 100dvh;
+    position: sticky;
+    top: 0;
+  }
+
+  .information-rail:is([data-layout="scroll"], [data-layout="measuring"], [data-layout="fits"]) .information-rail-track {
+    display: flex;
+    width: max-content;
+    max-width: none;
+    margin-inline: 0;
+  }
+
+  .information-rail:is([data-layout="scroll"], [data-layout="measuring"], [data-layout="fits"]) .information-rail-track > li {
+    flex: 0 0 min(72vw, 28rem);
+    width: min(72vw, 28rem);
+  }
+
+  .information-rail[data-layout="scroll"] .information-rail-viewport {
+    overflow: clip;
+  }
+
+  .information-rail:is([data-layout="scroll"], [data-layout="measuring"]) .information-rail-progress {
+    display: block;
+  }
+
+  .information-rail[data-layout="scroll"] .information-rail-track {
+    will-change: transform;
+  }
+}
+
+@media (max-width: 1023px), (pointer: coarse) {
+  .information-rail-viewport {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+  }
+
+  .information-rail-track {
+    display: flex;
+    width: max-content;
+    max-width: none;
+    margin-inline: 0;
+  }
+
+  .information-rail-track > li {
+    flex: 0 0 min(82vw, 22rem);
+    width: min(82vw, 22rem);
+    scroll-snap-align: start;
+  }
+}
+
 .showcase:is([data-layout="scroll"], [data-layout="measuring"]) .showcase-frame {
   height: 100svh;
 }
@@ -272,6 +354,32 @@ p {
 
   .showcase {
     height: auto !important;
+  }
+
+  .information-rail {
+    height: auto !important;
+  }
+
+  .information-rail-frame {
+    position: static !important;
+    height: auto !important;
+  }
+
+  .information-rail-progress {
+    display: none !important;
+  }
+
+  .information-rail-track {
+    display: flex;
+    width: max-content;
+    max-width: none;
+    margin-inline: 0;
+  }
+
+  .information-rail-track > li {
+    flex: 0 0 min(82vw, 22rem);
+    width: min(82vw, 22rem);
+    scroll-snap-align: start;
   }
 
   .showcase .showcase-frame {
