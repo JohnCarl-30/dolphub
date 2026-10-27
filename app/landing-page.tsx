@@ -3,12 +3,16 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ContentErrorBoundary } from "@/components/content-error-boundary";
 import { revealStyle } from "@/components/animations/reveal";
+import { LandingInformationRail } from "@/components/landing-information-rail";
 import { getFeaturedProjects } from "@/lib/profiles";
 
 const PAGES = [
   { href: "/what", label: "What", text: "A focused portfolio space for PCU tech students to show practical work and share one lasting link." },
   { href: "/about", label: "About", text: "Built for IT, Computer Science, and Computer Engineering students who want their projects to be easier to discover." },
   { href: "/vision", label: "Vision", text: "Every PCU tech student should leave with work that is visible, useful, and easy to share." },
+  { href: "/privacy", label: "Privacy & Security", text: "Understand what Dolphub handles, what becomes public, and the choices available to you." },
+  { href: "/terms", label: "Terms", text: "See the rules for creating, publishing, and using a student portfolio on Dolphub." },
+  { href: "/support", label: "Support", text: "Find sign-in, profile, privacy, and security help, or contact the maintainers." },
 ];
 
 export function LandingPage() {
@@ -22,11 +26,7 @@ export function LandingPage() {
         <Link href="/login" className="press inline-flex min-h-11 items-center border border-ink/10 bg-background px-4 py-2 font-mono text-[11px] uppercase tracking-wide outline-none hover:bg-paper focus-visible:ring-2 focus-visible:ring-ink">Log in / Sign up →</Link>
       </div>
     </section>
-    <section className="border-y border-ink/10 bg-paper"><div className="mx-auto grid w-full max-w-6xl gap-px sm:grid-cols-3">
-      {PAGES.map((page, index) => <Link key={page.href} href={page.href} style={revealStyle(index)} className="viewport-reveal press p-6 outline-none transition-colors hover:bg-background focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink">
-        <p className="font-mono text-[11px] uppercase tracking-wide text-muted">/{page.label.toLowerCase()}</p><h2 className="mt-3 text-2xl font-medium tracking-tight">{page.label} Dolphub</h2><p className="mt-3 text-sm leading-6 text-muted">{page.text}</p>
-      </Link>)}
-    </div></section>
+    <LandingInformationRail pages={PAGES} />
     <section aria-labelledby="featured-projects" className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
       <p className="font-mono text-[11px] uppercase tracking-wide text-muted">/featured</p><h2 id="featured-projects" className="mt-3 text-3xl font-medium tracking-tight">Featured projects</h2>
       <ContentErrorBoundary

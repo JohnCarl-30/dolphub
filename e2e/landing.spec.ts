@@ -4,8 +4,11 @@ import { authenticate } from "./helpers";
 test("the public landing is the same for signed-out and signed-in visitors", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "One link for every project you've built." })).toBeVisible();
-  for (const heading of ["What Dolphub", "About Dolphub", "Vision Dolphub", "Featured projects"]) {
+  for (const heading of ["What", "About", "Vision", "Privacy & Security", "Terms", "Support", "Featured projects"]) {
     await expect(page.getByRole("heading", { name: heading })).toBeVisible();
+  }
+  for (const destination of ["/what", "/about", "/vision", "/privacy", "/terms", "/support"]) {
+    await expect(page.locator(`[data-information-card] a[href="${destination}"]`)).toHaveCount(1);
   }
   await expect(page.getByRole("link", { name: "Create your page →" })).toHaveAttribute("href", "/dashboard");
   await expect(page.getByRole("link", { name: "Log in / Sign up →" })).toHaveAttribute("href", "/login");
@@ -17,6 +20,9 @@ test("the public landing is the same for signed-out and signed-in visitors", asy
   await authenticate(page);
   await page.reload();
   await expect(page.getByRole("heading", { name: "One link for every project you've built." })).toBeVisible();
+  for (const heading of ["What", "About", "Vision", "Privacy & Security", "Terms", "Support", "Featured projects"]) {
+    await expect(page.getByRole("heading", { name: heading })).toBeVisible();
+  }
   await expect(page.getByRole("link", { name: "Create your page →" })).toHaveAttribute("href", "/dashboard");
 });
 
