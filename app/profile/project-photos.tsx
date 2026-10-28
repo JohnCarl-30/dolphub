@@ -29,6 +29,8 @@ export function ProjectPhotos({
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // The prepared photo from an upload that failed on the way, so "Try again" resends it without picking it again.
+  const [unsent, setUnsent] = useState<Blob | null>(null);
   const inputId = `project-${n}-photo`;
 
   if (!projectId) {
@@ -41,22 +43,34 @@ export function ProjectPhotos({
     event.target.value = "";
     if (!file || !projectId) return;
     onStart();
-    setError(null);
-    setBusy("Uploading photo…");
+    let photo: Blob;
     try {
-      const result = await uploadPhoto(projectId, await preparePhoto(file));
-      if (result.ok) onAdded(result.data.image);
-      else setError(result.error);
+      photo = await preparePhoto(file);
     } catch (problem) {
+      setUnsent(null);
       setError(problem instanceof PhotoError ? problem.message : "Couldn't read that photo. Try another one.");
-    } finally {
-      setBusy(null);
+      return;
     }
+    await send(photo);
+  }
+
+  async function send(photo: Blob) {
+    if (!projectId) return;
+    onStart();
+    setError(null);
+    setUnsent(null);
+    setBusy("Uploading photo…");
+    const result = await uploadPhoto(projectId, photo);
+    setBusy(null);
+    if (result.ok) return onAdded(result.data.image);
+    setError(result.error);
+    if ("retryable" in result) setUnsent(photo);
   }
 
   async function remove(imageId: string) {
     onStart();
     setError(null);
+    setUnsent(null);
     setBusy("Removing photo…");
     const result = await deleteImageAction(imageId);
     setBusy(null);
@@ -116,9 +130,22 @@ export function ProjectPhotos({
         </p>
       </div>
       {error ? (
-        <p key={error} role="alert" className="rise text-sm text-red-700">
-          Photo: {error}
-        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <p key={error} role="alert" className="rise text-sm text-red-700">
+            Photo: {error}
+          </p>
+          {unsent ? (
+            <button
+              type="button"
+              disabled={busy !== null}
+              onClick={() => send(unsent)}
+              aria-label={`Try again: upload the photo for project ${n}`}
+              className="press min-h-11 border border-ink/15 px-3 font-mono text-[11px] uppercase tracking-wide outline-none hover:border-ink/40 focus-visible:ring-2 focus-visible:ring-ink disabled:opacity-60"
+            >
+              Try again
+            </button>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );
