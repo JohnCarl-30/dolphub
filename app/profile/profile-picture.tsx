@@ -11,27 +11,38 @@ export function ProfilePicture({ name, initialPicture }: { name: string; initial
   const [picture, setPicture] = useState(initialPicture);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // The prepared picture from an upload that failed on the way, so "Try again" resends it without picking it again.
+  const [unsent, setUnsent] = useState<Blob | null>(null);
 
   async function onFile(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
-
-    setError(null);
-    setBusy(picture ? "Replacing picture…" : "Uploading picture…");
+    let photo: Blob;
     try {
-      const result = await uploadProfilePicture(await preparePhoto(file));
-      if (result.ok) setPicture(result.data.image);
-      else setError(result.error);
+      photo = await preparePhoto(file);
     } catch (problem) {
+      setUnsent(null);
       setError(problem instanceof PhotoError ? problem.message : "Couldn't read that picture. Try another one.");
-    } finally {
-      setBusy(null);
+      return;
     }
+    await send(photo);
+  }
+
+  async function send(photo: Blob) {
+    setError(null);
+    setUnsent(null);
+    setBusy(picture ? "Replacing picture…" : "Uploading picture…");
+    const result = await uploadProfilePicture(photo);
+    setBusy(null);
+    if (result.ok) return setPicture(result.data.image);
+    setError(result.error);
+    if ("retryable" in result) setUnsent(photo);
   }
 
   async function remove() {
     setError(null);
+    setUnsent(null);
     setBusy("Removing picture…");
     const result = await deleteProfilePictureAction();
     setBusy(null);
@@ -81,9 +92,22 @@ export function ProfilePicture({ name, initialPicture }: { name: string; initial
             {busy ?? "JPEG, PNG, or WebP. Your picture is centered and square on the page."}
           </p>
           {error ? (
-            <p role="alert" className="rise mt-3 text-sm text-red-700">
-              Profile picture: {error}
-            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <p role="alert" className="rise text-sm text-red-700">
+                Profile picture: {error}
+              </p>
+              {unsent ? (
+                <button
+                  type="button"
+                  disabled={busy !== null}
+                  onClick={() => send(unsent)}
+                  aria-label="Try again: upload the profile picture"
+                  className="press min-h-11 border border-ink/15 px-3 font-mono text-[11px] uppercase tracking-wide outline-none hover:border-ink/40 focus-visible:ring-2 focus-visible:ring-ink disabled:opacity-60"
+                >
+                  Try again
+                </button>
+              ) : null}
+            </div>
           ) : null}
         </div>
       </div>

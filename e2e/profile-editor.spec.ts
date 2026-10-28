@@ -53,7 +53,11 @@ test("a new student creates a page, publishes a project, and removes it", async 
   const portrait = await sharp({ create: { width: 480, height: 640, channels: 3, background: "#f5a623" } })
     .png()
     .toBuffer();
+  // A server hiccup offers a retry of the same picture.
+  await page.route("**/api/profile-picture", (route) => route.fulfill({ status: 503, json: { ok: false, error: "Something went wrong. Please try again." } }), { times: 1 });
   await page.getByLabel("Upload profile picture").setInputFiles({ name: "portrait.png", mimeType: "image/png", buffer: portrait });
+  await expect(page.getByRole("region", { name: "Profile picture" }).getByRole("alert")).toHaveText("Profile picture: Something went wrong. Please try again.");
+  await page.getByRole("button", { name: "Try again: upload the profile picture" }).click();
   await expect(page.getByRole("img", { name: `Profile picture of ${name}` })).toBeVisible();
 
   // A page with no project exists but stays off the showcase.
@@ -86,13 +90,22 @@ test("a new student creates a page, publishes a project, and removes it", async 
   const addPhoto = page.getByLabel("Add a photo to project 1");
   await addPhoto.setInputFiles({ name: "notes.png", mimeType: "image/png", buffer: Buffer.from("not a picture") });
   await expect(page.locator("form").getByRole("alert")).toHaveText("Photo: That file is not an image we can read.");
+  // Sending the same file again would be refused again, so there is no retry.
+  await expect(page.getByRole("button", { name: /^Try again/ })).toHaveCount(0);
   // The older "Nothing to save." notice goes away once a photo is chosen.
   await expect(page.locator("form").getByRole("status")).toHaveCount(0);
   const screenshot = await sharp({ create: { width: 640, height: 360, channels: 3, background: "#2f6fdf" } })
     .png()
     .toBuffer();
+  // The connection drops on the first try. "Try again" resends the same photo without picking it again.
+  await page.route("**/api/upload", (route) => route.abort("internetdisconnected"), { times: 1 });
   await addPhoto.setInputFiles({ name: "seats.png", mimeType: "image/png", buffer: screenshot });
+  await expect(page.locator("form").getByRole("alert")).toHaveText(
+    "Photo: The upload didn't finish. Check your connection and try again.",
+  );
+  await page.getByRole("button", { name: "Try again: upload the photo for project 1" }).click();
   await expect(page.getByRole("img", { name: "Photo 1 of Lab seat finder" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Try again/ })).toHaveCount(0);
   await expect(page.locator("form").getByRole("alert")).toHaveCount(0);
   await expect(page.getByText("Photos: 1 of 10 used")).toBeVisible();
 

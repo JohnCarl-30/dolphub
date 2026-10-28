@@ -66,44 +66,38 @@ export async function preparePhoto(file: File): Promise<Blob> {
   throw new PhotoError("This photo is too large to upload. Try a smaller one.");
 }
 
+/** A failed upload that may work if the same photo is sent again: no connection, or the server hiccuped. */
+export type UploadAttempt = UploadResult | { ok: false; error: string; field?: string; retryable: true };
+
 /** Sends one photo to /api/upload. Never throws: network and server problems come back as messages. */
-export async function uploadPhoto(projectId: string, photo: Blob): Promise<UploadResult> {
+export function uploadPhoto(projectId: string, photo: Blob): Promise<UploadAttempt> {
   const form = new FormData();
   form.set("projectId", projectId);
   form.set("image", photo, photo instanceof File ? photo.name : "photo.jpg");
-
-  let response: Response;
-  try {
-    response = await fetch("/api/upload", { method: "POST", body: form });
-  } catch {
-    return { ok: false, error: "The upload didn't finish. Check your connection and try again." };
-  }
-  try {
-    return (await response.json()) as UploadResult;
-  } catch {
-    // The host itself refused, before the app could answer.
-    return response.status === 413
-      ? { ok: false, error: "Image is too large. Upload a file under 4 MB." }
-      : { ok: false, error: "Something went wrong. Please try again." };
-  }
+  return send("/api/upload", form);
 }
 
 /** Sends a portrait to the dedicated profile-picture route. */
-export async function uploadProfilePicture(photo: Blob): Promise<UploadResult> {
+export function uploadProfilePicture(photo: Blob): Promise<UploadAttempt> {
   const form = new FormData();
   form.set("image", photo, photo instanceof File ? photo.name : "profile-picture.jpg");
+  return send("/api/profile-picture", form);
+}
 
+async function send(url: string, form: FormData): Promise<UploadAttempt> {
   let response: Response;
   try {
-    response = await fetch("/api/profile-picture", { method: "POST", body: form });
+    response = await fetch(url, { method: "POST", body: form });
   } catch {
-    return { ok: false, error: "The upload didn't finish. Check your connection and try again." };
+    return { ok: false, error: "The upload didn't finish. Check your connection and try again.", retryable: true };
   }
+  let result: UploadResult;
   try {
-    return (await response.json()) as UploadResult;
+    result = (await response.json()) as UploadResult;
   } catch {
-    return response.status === 413
-      ? { ok: false, error: "Image is too large. Upload a file under 4 MB." }
-      : { ok: false, error: "Something went wrong. Please try again." };
+    // The host itself refused, before the app could answer.
+    if (response.status === 413) return { ok: false, error: "Image is too large. Upload a file under 4 MB." };
+    result = { ok: false, error: "Something went wrong. Please try again." };
   }
+  return !result.ok && response.status >= 500 ? { ...result, retryable: true } : result;
 }
