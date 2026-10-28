@@ -134,6 +134,23 @@ test("a new student creates a page, publishes a project, and removes it", async 
   await expect(steps.getByRole("link", { name: `dolphub.tech/u/${handle}` })).toHaveAttribute("href", `/u/${handle}`);
   await expect(rail.getByRole("link", { name: "View public page →" })).toHaveAttribute("href", `/u/${handle}`);
 
+  // Sharing hands the full link to the share sheet, and copies it where there is no share sheet.
+  const shareButton = steps.getByRole("button", { name: "Share my page" });
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "share", {
+      configurable: true,
+      value: async (data: ShareData) => void ((window as unknown as { shared: ShareData }).shared = data),
+    });
+  });
+  await shareButton.click();
+  const shared = await page.evaluate(() => (window as unknown as { shared: ShareData }).shared);
+  expect(shared.url).toBe(new URL(`/u/${handle}`, page.url()).href);
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.evaluate(() => Object.defineProperty(navigator, "share", { configurable: true, value: undefined }));
+  await shareButton.click();
+  await expect(steps.getByRole("status")).toHaveText("Link copied.");
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(shared.url);
+
   // The saved project and its photo load back into the editor. Removing the photo saves straight away.
   await page.goto("/profile");
   await expect(page.getByRole("textbox", { name: "Project 1 title" })).toHaveValue("Lab seat finder");
