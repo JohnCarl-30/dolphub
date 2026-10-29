@@ -22,6 +22,9 @@ describe("loadConfig", () => {
     expect(() => loadConfig({ ...dev, RATE_LIMIT_SECRET: "short" })).toThrow(/RATE_LIMIT_SECRET/);
     expect(c.CRON_SECRET).toBeUndefined();
     expect(() => loadConfig({ ...dev, CRON_SECRET: "short" })).toThrow(/CRON_SECRET/);
+    expect(c.ADMIN_MCP_TOKEN).toBeUndefined();
+    expect(() => loadConfig({ ...dev, ADMIN_MCP_TOKEN: "x".repeat(32) })).toThrow(/ADMIN_MCP_EMAIL/);
+    expect(() => loadConfig({ ...dev, ADMIN_MCP_TOKEN: "short", ADMIN_MCP_EMAIL: "a@pcu.edu.ph" })).toThrow(/ADMIN_MCP_TOKEN/);
   });
 
   it("requires Resend, R2, https and a real database in production", () => {

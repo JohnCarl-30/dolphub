@@ -50,8 +50,8 @@ The metric is one count query shown on the admin page. No tracking script, no co
 14. **Opportunities.** Internships and OJT, events, competitions and programs, each with a link to apply or register. Only admins post. A post leaves the list when it closes: at its deadline, or else its end time, or else its start time, in Philippine time. Dolphub stores nothing about which students opened or applied to a post. Full plan in [OPPORTUNITIES.md](./OPPORTUNITIES.md).
 15. **Backend and frontend are split by owner.** JohnCarl-30 owns the backend: the database, sign-in, the upload pipeline, server actions and API routes, page refreshes, and admin and moderation logic, in `lib/` and the `actions.ts` files. fnzh-i owns the frontend: pages and components under `app/`, including the dashboard screens, the public page and grid layout, browser image compression, and phone testing. Server actions with typed results are the contract between them.
 16. **One service layer.** All reads and writes live in plain functions under `lib/services/`. Server actions, API routes and MCP servers are thin wrappers over them, so logic is written once.
-17. **MCP servers, in two stages. Proposed, not yet confirmed.** Both use Vercel's `mcp-handler` in Next.js route handlers and call the service layer. Neither calls a model, so neither adds AI cost.
-    - **Admin MCP (by 2026-11-21):** private, bearer-token auth, used from Claude Code. Tools for stats, hiding pages, freezing signups, posting opportunities and deleting accounts. Every write is recorded in `admin_audit_log`. The phone kill switch stays on the admin web page, because claude.ai and the phone apps need OAuth.
+17. **MCP servers, in two stages.** Both use Vercel's `mcp-handler` in Next.js route handlers and call the service layer. Neither calls a model, so neither adds AI cost.
+    - **Admin MCP (built 2026-10-29, at `/api/mcp/admin`):** private, bearer-token auth, used from Claude Code. Tools for stats, hiding pages, freezing signups, posting opportunities and deleting accounts. Every write is recorded in `admin_audit_log`. The phone kill switch stays on the admin web page, because claude.ai and the phone apps need OAuth.
     - **Public directory MCP (January 2027):** read-only, rate-limited, opt-in profiles only. Tools to search students, get one student, and list open opportunities. Student-written text is returned as length-capped data. It waits for 50 profiles and the opt-in toggle.
 18. **Drizzle ORM with Neon's HTTP driver.** Schema lives in `lib/db/schema.ts`, and migrations are generated into `drizzle/`. Tests run the real migrations against PGlite, an in-memory Postgres, so they need no accounts or network.
 19. **Signup domains are configuration.** `PCU_EMAIL_DOMAINS` lists the allowed email domains, matched exactly. The real PCU student email domain still needs confirming.
@@ -97,7 +97,7 @@ Added after launch: `profiles.recovery_email`, `profiles.in_directory` (opt-in f
 | `/api/profile-picture` | Validates, re-encodes and replaces the signed-in student's optional public profile picture |
 | `/admin` | Profile count metric, hide profile, freeze signups |
 
-Added later: `/api/mcp/admin` for the admin MCP server, and `/api/mcp` for the public directory MCP server.
+`/api/mcp/admin` is the admin MCP server. Added later: `/api/mcp` for the public directory MCP server.
 
 ## Launch cut list
 
