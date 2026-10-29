@@ -1,4 +1,5 @@
 import { getCurrentUser } from "@/lib/auth";
+import { unstable_rethrow } from "next/navigation";
 import { getServiceContext } from "@/lib/server";
 import { getOwnDashboard } from "@/lib/services/dashboard";
 import { SiteMenu } from "./site-menu";
@@ -10,6 +11,7 @@ export async function AuthenticatedSiteMenu({ homeHref = "/" }: { homeHref?: "/"
   try {
     user = await getCurrentUser();
   } catch (error) {
+    unstable_rethrow(error);
     logError("Load menu session", error);
     return <SiteMenu homeHref={homeHref} />;
   }
@@ -19,6 +21,7 @@ export async function AuthenticatedSiteMenu({ homeHref = "/" }: { homeHref?: "/"
   try {
     dashboard = await getOwnDashboard(await getServiceContext(), user.id);
   } catch (error) {
+    unstable_rethrow(error);
     logError("Load menu account details", error);
     return <SiteMenu homeHref={homeHref} account={{ name: user.email.split("@")[0]!, handle: null, profilePictureUrl: null, isAdmin: user.isAdmin }} />;
   }

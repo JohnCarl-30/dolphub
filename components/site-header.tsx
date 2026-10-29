@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Suspense } from "react";
+import { unstable_rethrow } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { AuthenticatedSiteMenu } from "./authenticated-site-menu";
 import { NavLink } from "./nav-link";
@@ -21,6 +22,7 @@ async function AuthenticatedSiteHeader() {
   try {
     signedIn = Boolean(await getCurrentUser());
   } catch (error) {
+    unstable_rethrow(error);
     logError("Load header session", error);
     return <SiteHeaderContent homeHref="/" signedIn={false} />;
   }
