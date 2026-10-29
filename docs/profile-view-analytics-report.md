@@ -25,4 +25,5 @@ Add anonymous, aggregated activity reporting to student dashboards while keeping
 - `npm run typecheck` passed.
 - `npm run lint` passed.
 - `npm test -- lib/services/analytics.test.ts` passed (2 tests).
+- `npm test -- lib/cleanup-route.test.ts` passed (4 tests), including the `analytics` purge count in cleanup responses.
 - `npm run build` and `npm run test:e2e` could not start because the sandbox blocked Turbopack worker port creation and Playwright's local IPC pipe, respectively.
