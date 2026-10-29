@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import Link from "next/link";
 import { signOutAction } from "@/app/auth/actions";
+import { profilePath } from "@/lib/seo";
 import { ProfileAvatar } from "./profile-avatar";
 import { NavLink } from "./nav-link";
 import { PUBLIC_NAV_LINKS } from "./site-navigation";
@@ -68,15 +70,23 @@ export function SiteMenu({
           className="glass-popover absolute right-0 top-[calc(100%+0.75rem)] z-50 w-[min(18rem,calc(100vw-2rem))] border border-white/50 shadow-[0_16px_40px_rgb(14_16_18_/_0.14)]"
         >
           {account ? (
-            <div className="flex items-center gap-3 border-b border-ink/10 p-4">
-              <ProfileAvatar name={account.name} src={account.profilePictureUrl} className="size-10 shrink-0" />
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{account.name}</p>
-                <p className="truncate font-mono text-[10px] uppercase tracking-wide text-muted">
-                  {account.handle ? `/u/${account.handle}` : "Signed in"}
-                </p>
-              </div>
-            </div>
+            <Link
+              href={account.handle ? profilePath(account.handle) : "/profile"}
+              aria-label={account.handle ? `View your profile, /u/${account.handle}` : "Create your profile"}
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 border-b border-ink/10 p-4 outline-none transition-colors hover:bg-paper focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ink"
+            >
+              <span aria-hidden="true">
+                <ProfileAvatar name={account.name} src={account.profilePictureUrl} className="size-10 shrink-0" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium">{account.name}</span>
+                <span className="block truncate font-mono text-[10px] uppercase tracking-wide text-muted">
+                  {account.handle ? `/u/${account.handle}` : "Create your profile"}
+                </span>
+              </span>
+              <span aria-hidden="true" className="font-mono text-sm text-muted">→</span>
+            </Link>
           ) : null}
           <div>
             {PUBLIC_NAV_LINKS.map((item) => (
