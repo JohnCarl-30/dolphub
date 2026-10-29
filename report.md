@@ -8,12 +8,12 @@ Split the signed-in profile editor into separate details and projects pages so s
 - Added editor tabs, route-specific active state, and warnings for unsaved edits when switching tabs or leaving the browser page.
 - Kept project, profile, and image changes on the existing server actions and ownership checks. The image limit and upload validation are unchanged.
 - Updated dashboard project navigation, architecture routes, and unit and browser coverage.
-- Updated the canvas property access to the installed tsParticles v4 API so the repository typecheck can pass.
+- Matched particle startup events by the target container ID, avoiding version-specific access to the canvas manager.
 
 ## Files touched
 
 - `app/profile/` and `components/nav-link.tsx` for the split editors, route, tabs, and active navigation.
-- `components/particles/particle-background.tsx` for the tsParticles v4 canvas property type correction.
+- `components/particles/particle-background.tsx` for matching startup events to the current particle container.
 - `app/dashboard/dashboard-page.tsx` and `docs/ARCHITECTURE.md` for project navigation and route documentation.
 - `lib/profile-form.ts`, `lib/profile-form.test.ts`, and profile editor browser tests for isolated form changes and regression coverage.
 - `e2e/seed-auth.ts` for independent browser-test accounts.
@@ -32,3 +32,4 @@ Split the signed-in profile editor into separate details and projects pages so s
 - `npm run test:e2e` passed (226 passed, 2 skipped).
 - The final profile, page, and navigation browser specs passed (98 tests) after the last route assertions were added.
 - The full `npm test` run produced no test results for about 30 seconds and was stopped; the focused profile, project ownership, and upload unit tests passed (16 tests).
+- After installing the locked dependencies (`@tsparticles/engine` and `@tsparticles/slim` 4.5.0), `npm run typecheck` and `npm run lint` passed, and the production Playwright suite passed (226 passed, 2 skipped).
