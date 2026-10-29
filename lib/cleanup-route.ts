@@ -1,4 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
+import { lt } from "drizzle-orm";
+import { analyticsDedupe } from "./db/schema";
 import { logError } from "./log";
 import { purgeExpiredAuthRecords } from "./services/auth";
 import type { ServiceContext } from "./services/context";
@@ -15,6 +17,7 @@ export interface CleanupReport {
   /** Null when that job failed. */
   images: { deleted: number; failed: number } | null;
   auth: { loginTokens: number; sessions: number } | null;
+  analytics: number | null;
 }
 
 function json(body: unknown, status: number): Response {
@@ -40,7 +43,7 @@ export function createCleanupRoute(deps: CleanupRouteDeps) {
     if (!sameSecret(header, `Bearer ${deps.secret}`)) return json({ ok: false, error: "Not allowed." }, 401);
 
     const ctx = await deps.context();
-    const report: CleanupReport = { ok: true, images: null, auth: null };
+    const report: CleanupReport = { ok: true, images: null, auth: null, analytics: null };
     try {
       const { deleted, failed } = await sweepOrphanedImages(ctx);
       report.images = { deleted: deleted.length, failed: failed.length };
@@ -53,6 +56,13 @@ export function createCleanupRoute(deps: CleanupRouteDeps) {
       report.auth = await purgeExpiredAuthRecords(ctx);
     } catch (error) {
       logError("Purge expired sign-in records", error);
+      report.ok = false;
+    }
+    try {
+      const removed = await ctx.db.delete(analyticsDedupe).where(lt(analyticsDedupe.expiresAt, new Date())).returning({ key: analyticsDedupe.visitorKey });
+      report.analytics = removed.length;
+    } catch (error) {
+      logError("Purge analytics dedupe keys", error);
       report.ok = false;
     }
     return json(report, report.ok ? 200 : 500);

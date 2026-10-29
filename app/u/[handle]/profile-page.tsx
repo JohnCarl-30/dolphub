@@ -2,6 +2,7 @@ import { ProjectList } from "@/components/project-list";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { REPORT_EMAIL } from "@/components/support-contacts";
 import type { PublicProfile } from "@/lib/services/profiles";
+import { AnalyticsLink } from "@/components/analytics-link";
 
 export function ProfilePage({
   profile,
@@ -85,14 +86,14 @@ function ContactLinks({ profile }: { profile: PublicProfile }) {
     <ul className="intro-reveal mt-8 flex flex-wrap gap-3" style={{ "--i": 3 } as React.CSSProperties}>
       {profile.messengerUrl ? (
         <li>
-          <a href={profile.messengerUrl} target="_blank" rel="noopener noreferrer" className={primaryLink}>
+          <AnalyticsLink kind="messenger" targetId={profile.handle} href={profile.messengerUrl} target="_blank" rel="noopener noreferrer" className={primaryLink}>
             Message on Messenger
-          </a>
+          </AnalyticsLink>
         </li>
       ) : null}
       {github ? (
         <li>
-          <a
+          <AnalyticsLink kind="github" targetId={profile.handle}
             href={`https://github.com/${github}`}
             target="_blank"
             rel="noopener noreferrer"
@@ -100,18 +101,18 @@ function ContactLinks({ profile }: { profile: PublicProfile }) {
             className={secondaryLink}
           >
             GitHub
-          </a>
+          </AnalyticsLink>
         </li>
       ) : null}
       {email ? (
         <li>
-          <a
+          <AnalyticsLink kind="email" targetId={profile.handle}
             href={`mailto:${email}`}
             aria-label={`Email ${profile.displayName}`}
             className={secondaryLink}
           >
             Email
-          </a>
+          </AnalyticsLink>
         </li>
       ) : null}
     </ul>

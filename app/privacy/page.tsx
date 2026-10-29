@@ -45,6 +45,7 @@ export default function PrivacyPage() {
             email address.
           </li>
           <li>Project stars you add or remove while signed in. Dolphub shows project totals publicly, not who starred them.</li>
+          <li>Anonymous, aggregated profile views, estimated unique visitors, referral categories, and project or contact-link clicks. A short-lived keyed hash supports daily deduplication and is removed by nightly cleanup; raw network addresses and browser user agents are not stored by Dolphub.</li>
           <li>If you sign up for the opportunities email, the address and topics you choose. Unsubscribing or deleting your account removes them.</li>
           <li>
             Security records such as hashed sign-in and session tokens, a keyed hash of the requesting
@@ -58,6 +59,7 @@ export default function PrivacyPage() {
         <InfoList>
           <li>Verify eligibility, send sign-in links, and keep you signed in.</li>
           <li>Create, display, update, cache, and share the portfolio page you ask Dolphub to host.</li>
+          <li>Show profile owners aggregate traffic and link-click counts for their own pages.</li>
           <li>Protect the service, enforce limits, investigate abuse, and moderate public content.</li>
           <li>Answer support, privacy, deletion, and security requests.</li>
           <li>Meet legal obligations and establish or defend legal claims when necessary.</li>
@@ -78,7 +80,7 @@ export default function PrivacyPage() {
         </p>
         <p>
           Your sign-in email is not copied to your public page. Dolphub does not sell personal
-          information, run advertising profiles, or use a tracking script.
+          information or run advertising profiles. A small first-party beacon records anonymous aggregate portfolio activity.
         </p>
       </InfoSection>
 

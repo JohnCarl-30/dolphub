@@ -7,6 +7,8 @@ import { getOpenOpportunities } from "@/lib/opportunities";
 import { KIND_NAMES } from "@/lib/opportunity-display";
 import { closingLabel } from "@/lib/opportunity-time";
 import { opportunityPath, profilePath } from "@/lib/seo";
+import { ContentErrorBoundary } from "@/components/content-error-boundary";
+import { DashboardTraffic } from "./dashboard-traffic";
 
 /** The signed-in student's own page, or null before they create one. */
 export type DashboardMe = {
@@ -145,6 +147,7 @@ export function DashboardPage({ email, me }: { email: string; me: DashboardMe })
           </Link>
         </aside>
       </div>
+      {me ? <ContentErrorBoundary eyebrow="/analytics" title="Analytics are temporarily unavailable." description="Your dashboard is still ready. Try loading these statistics again." variant="inline"><Suspense fallback={<p className="mt-4 border border-ink/10 bg-background p-4 font-mono text-[11px] uppercase tracking-wide text-muted">Loading analytics…</p>}><DashboardTraffic /></Suspense></ContentErrorBoundary> : null}
     </section>
   );
 }

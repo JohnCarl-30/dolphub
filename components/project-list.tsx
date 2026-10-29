@@ -1,6 +1,7 @@
 import type { PublicProject } from "@/lib/services/profiles";
 import { ProjectStar } from "./project-star";
 import { revealStyle } from "./animations/reveal";
+import { AnalyticsLink } from "./analytics-link";
 
 export function ProjectList({
   projects,
@@ -48,24 +49,24 @@ export function ProjectList({
                 />
               ) : null}
               {project.demoUrl ? (
-                <a
+                <AnalyticsLink kind="demo" targetId={project.id}
                   href={project.demoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="outline-none transition-colors hover:text-muted focus-visible:ring-2 focus-visible:ring-ink"
                 >
                   Demo →
-                </a>
+                </AnalyticsLink>
               ) : null}
               {project.sourceUrl ? (
-                <a
+                <AnalyticsLink kind="source" targetId={project.id}
                   href={project.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="outline-none transition-colors hover:text-muted focus-visible:ring-2 focus-visible:ring-ink"
                 >
                   Source →
-                </a>
+                </AnalyticsLink>
               ) : null}
             </div>
           </div>
