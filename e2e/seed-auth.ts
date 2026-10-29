@@ -15,8 +15,11 @@ export const E2E_USER_EMAIL = "feed-test@pcu.edu.ph";
 export const E2E_ADMIN_SESSION_TOKEN = "dolphub-e2e-admin-session-token";
 export const E2E_ADMIN_EMAIL = "admin-test@pcu.edu.ph";
 export const E2E_LOGOUT_PROJECTS = ["desktop", "phone"];
-/** One account without a profile per Playwright project, for e2e/profile-editor.spec.ts. */
-export const E2E_NEWCOMER_PROJECTS = ["desktop", "phone"];
+/** Isolated no-profile accounts for profile details and projects browser flows. */
+export const E2E_NEWCOMER_PROJECTS = [
+  "desktop", "phone", "details-desktop", "details-phone",
+  "projects-desktop", "projects-phone", "projects-empty-desktop", "projects-empty-phone",
+];
 
 async function main() {
   await mkdir(".data", { recursive: true });
