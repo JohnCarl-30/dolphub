@@ -1,9 +1,11 @@
 import "server-only";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { getCurrentUser } from "./auth";
 import { getServiceContext } from "./server";
 import type { SessionUser } from "./services/auth";
 import { getStats, listProfilesForAdmin, type Stats } from "./services/admin";
+import { audit } from "./services/access";
+import { logError } from "./log";
 
 /*
  * Loaders for the admin pages. None are cached: an admin must always see the
@@ -11,13 +13,19 @@ import { getStats, listProfilesForAdmin, type Stats } from "./services/admin";
  */
 
 /**
- * Call first in every admin page. Signed out goes to /login. Signed in but not
- * an admin gets the ordinary 404, so the page does not advertise that it exists.
+ * Call first in every admin page. Unauthorized visitors receive the ordinary 404.
  */
 export async function requireAdminPage(): Promise<SessionUser> {
   const user = await getCurrentUser();
-  if (!user) redirect("/login");
-  if (!user.isAdmin) notFound();
+  if (!user) notFound();
+  if (!user.isAdmin) {
+    try {
+      await audit((await getServiceContext()).db, { actorUserId: user.id, action: "admin_denied", target: `user:${user.id}` });
+    } catch (error) {
+      logError("Record denied admin access", error);
+    }
+    notFound();
+  }
   return user;
 }
 
