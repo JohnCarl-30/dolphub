@@ -7,7 +7,9 @@ export function SharePageButton({ path, name }: { path: string; name: string }) 
   const [status, setStatus] = useState("");
 
   async function share() {
-    const url = new URL(path, window.location.origin).href;
+    const shareUrl = new URL(path, window.location.origin);
+    shareUrl.searchParams.set("ref", "share");
+    const url = shareUrl.href;
     if (navigator.share) {
       try {
         await navigator.share({ title: `${name} on Dolphub`, url });

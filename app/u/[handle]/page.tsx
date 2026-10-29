@@ -11,6 +11,7 @@ import { starredProjectIds } from "@/lib/services/project-stars";
 import { getProfileByUserId } from "@/lib/services/profiles";
 import { Suspense } from "react";
 import { ProfilePage } from "./profile-page";
+import { ViewBeacon } from "./view-beacon";
 
 /**
  * Cache Components needs one param at build time to prerender the page shell.
@@ -66,6 +67,7 @@ async function ResolvedProfile({
   const seo = await getSeoProfile(handle);
   return (
     <>
+      <ViewBeacon handle={profile.handle} />
       {seo && isIndexable(seo) ? <JsonLd data={profilePageJsonLd(seo, siteUrl())} /> : null}
       <ProfilePage
         profile={profile}

@@ -2,6 +2,7 @@ import {
   type AnyPgColumn,
   boolean,
   check,
+  date,
   index,
   integer,
   primaryKey,
@@ -127,6 +128,35 @@ export const projectStars = pgTable(
     index("project_stars_user_id_idx").on(t.userId),
   ],
 );
+
+/** Daily anonymous profile analytics. No row represents an individual visit. */
+export const profileViewsDaily = pgTable("profile_views_daily", {
+  profileId: uuid("profile_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  day: date("day").notNull(),
+  views: integer("views").notNull().default(0),
+  uniqueVisitors: integer("unique_visitors").notNull().default(0),
+}, (t) => [primaryKey({ columns: [t.profileId, t.day] })]);
+
+export const projectClicksDaily = pgTable("project_clicks_daily", {
+  projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+  day: date("day").notNull(), kind: text("kind").notNull(), count: integer("count").notNull().default(0),
+}, (t) => [primaryKey({ columns: [t.projectId, t.day, t.kind] }), check("project_clicks_kind", sql`${t.kind} in ('demo','source')`)]);
+
+export const profileLinkClicksDaily = pgTable("profile_link_clicks_daily", {
+  profileId: uuid("profile_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  day: date("day").notNull(), kind: text("kind").notNull(), count: integer("count").notNull().default(0),
+}, (t) => [primaryKey({ columns: [t.profileId, t.day, t.kind] }), check("profile_link_clicks_kind", sql`${t.kind} in ('github','messenger','email')`)]);
+
+export const viewSourcesDaily = pgTable("view_sources_daily", {
+  profileId: uuid("profile_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  day: date("day").notNull(), source: text("source").notNull(), count: integer("count").notNull().default(0),
+}, (t) => [primaryKey({ columns: [t.profileId, t.day, t.source] }), check("view_sources_source", sql`${t.source} in ('showcase','search','share','external','direct')`)]);
+
+/** Hashed visitor/day keys expire nightly and cannot be used to reconstruct a visit. */
+export const analyticsDedupe = pgTable("analytics_dedupe", {
+  visitorKey: text("visitor_key").notNull(), profileId: uuid("profile_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  day: date("day").notNull(), expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+}, (t) => [primaryKey({ columns: [t.visitorKey, t.profileId, t.day] }), index("analytics_dedupe_expiry_idx").on(t.expiresAt)]);
 
 /** One newsletter subscription per account, removed with the account. Nothing is sent yet. */
 export const newsletterSubscriptions = pgTable("newsletter_subscriptions", {
