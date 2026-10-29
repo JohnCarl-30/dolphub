@@ -127,7 +127,7 @@ export function ProjectsEditor({ dashboard }: { dashboard: Dashboard & { profile
           </button>
         </div>
         <p className="text-xs leading-5 text-muted">
-          Photos: {photoCount} of {imageLimit} used, across all projects. Photos save as soon as you add or remove them.
+          Photos: {photoCount} of {imageLimit} used, across all projects. Preview and confirm a photo before it uploads.
         </p>
         {projects.length === 0 ? (
           <p className="text-sm leading-6 text-muted">Add a project to appear in the home showcase.</p>

@@ -19,6 +19,7 @@ export const E2E_LOGOUT_PROJECTS = ["desktop", "phone"];
 export const E2E_NEWCOMER_PROJECTS = [
   "desktop", "phone", "details-desktop", "details-phone",
   "projects-desktop", "projects-phone", "projects-empty-desktop", "projects-empty-phone",
+  "photo-editor-desktop", "photo-editor-phone", "project-photo-editor-desktop", "project-photo-editor-phone",
 ];
 
 async function main() {

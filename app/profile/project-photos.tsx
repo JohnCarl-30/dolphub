@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { deleteImageAction } from "@/app/dashboard/actions";
-import { PhotoError, preparePhoto, uploadPhoto } from "@/lib/photo-upload";
+import { PhotoEditor } from "@/components/photo-editor";
+import { uploadPhoto } from "@/lib/photo-upload";
 import type { PublicImage } from "@/lib/services/profiles";
 
 /** One project's photos. Unlike the text fields, adding or removing a photo saves straight away. */
@@ -29,6 +30,19 @@ export function ProjectPhotos({
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<{ file: File; url: string } | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const restoreFocus = useRef(false);
+  useEffect(() => {
+    if (!selected) return;
+    return () => URL.revokeObjectURL(selected.url);
+  }, [selected]);
+  useEffect(() => {
+    if (restoreFocus.current && !selected && busy === null && !atLimit) {
+      restoreFocus.current = false;
+      inputRef.current?.focus();
+    }
+  }, [selected, busy, atLimit]);
   // The prepared photo from an upload that failed on the way, so "Try again" resends it without picking it again.
   const [unsent, setUnsent] = useState<Blob | null>(null);
   const inputId = `project-${n}-photo`;
@@ -37,21 +51,26 @@ export function ProjectPhotos({
     return <p className="text-xs leading-5 text-muted">Save this project to add photos.</p>;
   }
 
-  async function onFile(event: React.ChangeEvent<HTMLInputElement>) {
+  function onFile(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     // Clear it, so choosing the same file again after an error still fires.
     event.target.value = "";
-    if (!file || !projectId) return;
+    if (!file || !projectId || atLimit) return;
     onStart();
-    let photo: Blob;
-    try {
-      photo = await preparePhoto(file);
-    } catch (problem) {
-      setUnsent(null);
-      setError(problem instanceof PhotoError ? problem.message : "Couldn't read that photo. Try another one.");
-      return;
-    }
-    await send(photo);
+    setError(null);
+    setUnsent(null);
+    setSelected({ file, url: URL.createObjectURL(file) });
+  }
+
+  function cancelEdit() {
+    restoreFocus.current = true;
+    setSelected(null);
+  }
+
+  async function useEdit(photo: Blob) {
+    restoreFocus.current = true;
+    setSelected(null);
+    if (!atLimit) await send(photo);
   }
 
   async function send(photo: Blob) {
@@ -110,6 +129,7 @@ export function ProjectPhotos({
 
       <div className="flex flex-wrap items-center gap-3">
         <input
+          ref={inputRef}
           id={inputId}
           type="file"
           accept="image/jpeg,image/png,image/webp"
@@ -147,6 +167,7 @@ export function ProjectPhotos({
           ) : null}
         </div>
       ) : null}
+      {selected ? <PhotoEditor file={selected.file} url={selected.url} aspect={16 / 9} onCancel={cancelEdit} onUse={useEdit} /> : null}
     </div>
   );
 }

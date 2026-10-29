@@ -36,6 +36,8 @@ test("projects are edited separately, with photo limits and unsaved-change warni
   const photo = await sharp({ create: { width: 32, height: 32, channels: 3, background: "#3366cc" } }).png().toBuffer();
   const addPhoto = page.getByLabel("Add a photo to project 1");
   await addPhoto.setInputFiles({ name: "campus.png", mimeType: "image/png", buffer: photo });
+  await expect(page.getByText("Photos: 0 of 10 used")).toBeVisible();
+  await page.getByRole("button", { name: "Use photo" }).click();
   await expect(page.getByRole("img", { name: "Photo 1 of Campus map" })).toBeVisible();
   await expect(page.getByText("Photos: 1 of 10 used")).toBeVisible();
   await page.getByRole("button", { name: "Remove photo 1 from project 1" }).click();
@@ -43,6 +45,7 @@ test("projects are edited separately, with photo limits and unsaved-change warni
 
   for (let index = 0; index < 10; index++) {
     await addPhoto.setInputFiles({ name: `campus-${index}.png`, mimeType: "image/png", buffer: photo });
+    await page.getByRole("button", { name: "Use photo" }).click();
     await expect(page.getByText(`Photos: ${index + 1} of 10 used`)).toBeVisible();
   }
   await expect(addPhoto).toBeDisabled();
@@ -81,4 +84,60 @@ test("projects are edited separately, with photo limits and unsaved-change warni
 test("signed-out visitors are redirected from the projects editor", async ({ page }) => {
   await page.goto("/profile/projects");
   await expect(page).toHaveURL(/\/login$/);
+});
+
+test("project photo retry sends the confirmed 16:9 edit without reopening the editor", async ({ page }, testInfo) => {
+  const suffix = `proj-edit-${testInfo.project.name}`;
+  await authenticate(page, `newcomer-project-photo-editor-${testInfo.project.name}`);
+  const { handle } = await createProfile(page, suffix);
+  await page.goto("/profile/projects");
+  await page.getByRole("button", { name: "Add project" }).click();
+  await page.getByRole("textbox", { name: "Project 1 title" }).fill("Campus map");
+  await page.getByRole("textbox", { name: "Project 1 description" }).fill("Places on campus.");
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.locator("form").getByRole("status")).toContainText("Saved.");
+
+  const photo = await sharp({ create: { width: 80, height: 80, channels: 3, background: "#3366cc" } }).png().toBuffer();
+  let requests = 0;
+  await page.route("**/api/upload", async (route) => {
+    requests++;
+    if (requests === 1) await route.abort("failed");
+    else await route.continue();
+  });
+  await page.getByLabel("Add a photo to project 1").setInputFiles({ name: "campus.png", mimeType: "image/png", buffer: photo });
+  await expect(page.getByRole("dialog", { name: "Preview photo" })).toBeVisible();
+  await expect(page.getByText("Photos: 0 of 10 used")).toBeVisible();
+  expect(requests).toBe(0);
+  if (testInfo.project.name === "phone") {
+    const box = await page.getByLabel("Photo crop area").boundingBox();
+    expect(box).not.toBeNull();
+    const x = box!.x + box!.width / 2;
+    const y = box!.y + box!.height / 2;
+    const scrollBefore = await page.evaluate(() => window.scrollY);
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: x - 25, y }, { x: x + 25, y }] });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: x - 55, y }, { x: x + 55, y }] });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await expect(page.getByRole("slider", { name: "Zoom" })).not.toHaveValue("1");
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: x + 20, y: y + 15 }] });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    expect(await page.evaluate(() => window.scrollY)).toBe(scrollBefore);
+  }
+  await page.getByRole("button", { name: "Use photo" }).click();
+  await expect(page.getByRole("button", { name: "Try again: upload the photo for project 1" })).toBeVisible();
+  await expect(page.getByLabel("Add a photo to project 1")).toBeFocused();
+  await expect(page.getByText("Photos: 0 of 10 used")).toBeVisible();
+  await page.getByRole("button", { name: "Try again: upload the photo for project 1" }).click();
+  await expect(page.getByText("Photos: 1 of 10 used")).toBeVisible();
+  expect(requests).toBe(2);
+  await expect(page.getByRole("dialog", { name: "Preview photo" })).toHaveCount(0);
+
+  await page.goto(`/u/${handle}`);
+  const image = page.getByRole("img", { name: "Screenshot of Campus map" });
+  const response = await page.request.get(await image.getAttribute("src") ?? "");
+  const metadata = await sharp(await response.body()).metadata();
+  expect(metadata.width).toBeTruthy();
+  expect(metadata.height).toBeTruthy();
+  expect(metadata.width! / metadata.height!).toBeCloseTo(16 / 9, 1);
 });
