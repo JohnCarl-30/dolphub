@@ -92,7 +92,8 @@ Added after launch: `profiles.recovery_email`, `profiles.in_directory` (opt-in f
 | `/auth/verify` | Where the emailed link lands. A button finishes sign-in |
 | `/auth/google` and `/auth/google/callback` | Google sign-in. Failures return to `/dashboard?signin=<reason>` |
 | `/dashboard` | Signed out: a sign-in landing with Google and the email link. Signed in: the student's page card, a checklist of next steps (page, project, photo) and the three open opportunities closing soonest |
-| `/profile` | Owner edits profile and projects, phone-first. Signed-in only |
+| `/profile` | Owner edits profile details and profile picture, phone-first. Signed-in only; shows profile creation when no page exists |
+| `/profile/projects` | Owner edits projects and project photos, phone-first. Signed-in only; redirects to `/profile` when no page exists |
 | `/api/upload` | Validates, re-encodes and stores an image in R2 |
 | `/api/profile-picture` | Validates, re-encodes and replaces the signed-in student's optional public profile picture |
 | `/admin` | Profile count metric, hide profile, freeze signups |

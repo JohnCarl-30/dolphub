@@ -121,10 +121,10 @@ export function DashboardPage({ email, me }: { email: string; me: DashboardMe })
               </>
             ) : (
               <Link
-                href="/profile"
+                href={me ? "/profile/projects" : "/profile"}
                 className="press inline-flex min-h-11 items-center border border-ink bg-ink px-4 py-2 font-mono text-[11px] uppercase tracking-wide text-white outline-none hover:bg-ink/85 focus-visible:ring-2 focus-visible:ring-ink"
               >
-                {me ? "Continue your page →" : "Create your page →"}
+                {me ? "Continue your projects →" : "Create your page →"}
               </Link>
             )}
           </div>

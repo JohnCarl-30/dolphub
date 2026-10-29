@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   changedProfileFields,
-  hasChanges,
+  hasProfileChanges,
+  hasProjectChanges,
   planProjectSaves,
   profileFields,
   projectFields,
@@ -81,7 +82,9 @@ describe("planProjectSaves", () => {
   it("plans nothing when the projects are unchanged", () => {
     const plan = planProjectSaves(saved, saved.map((p) => ({ ...p })));
     expect(plan).toEqual({ create: [], update: [], remove: [] });
-    expect(hasChanges({}, plan)).toBe(false);
-    expect(hasChanges({ tagline: "x" }, plan)).toBe(true);
+    expect(hasProjectChanges(plan)).toBe(false);
+    expect(hasProjectChanges(planProjectSaves(saved, [{ ...saved[0]!, title: "Changed" }]))).toBe(true);
+    expect(hasProfileChanges({})).toBe(false);
+    expect(hasProfileChanges({ tagline: "x" })).toBe(true);
   });
 });

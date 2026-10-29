@@ -316,7 +316,7 @@ test.describe("dashboard", () => {
     await expect(steps.getByText("1 of 3 done")).toBeVisible();
     await expect(steps.getByText("Create your page, done")).toBeAttached();
     await expect(steps.getByText("Add a project, not done yet")).toBeAttached();
-    await expect(steps.getByRole("link", { name: "Continue your page →" })).toHaveAttribute("href", "/profile");
+    await expect(steps.getByRole("link", { name: "Continue your projects →" })).toHaveAttribute("href", "/profile/projects");
 
     const discover = page.getByTestId("discovery-rail");
     await expect(discover.getByRole("link", { name: /Cloud hack day/ })).toBeVisible();
@@ -343,6 +343,10 @@ test.describe("profile editor", () => {
   test("marks Profile as current and preserves editor validation", async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 800 });
     await page.goto("/profile");
+    await expect(page.getByRole("navigation", { name: "Profile editor" }).getByRole("link", { name: "Details" }))
+      .toHaveAttribute("aria-current", "page");
+    await expect(page.getByRole("navigation", { name: "Profile editor" }).getByRole("link", { name: "Projects" }))
+      .not.toHaveAttribute("aria-current", "page");
     await expect(page.getByRole("link", { name: "Profile" })).toHaveAttribute(
       "aria-current",
       "page",
@@ -356,20 +360,20 @@ test.describe("profile editor", () => {
     await expect(github).toHaveAttribute("aria-invalid", "true");
   });
 
-  test("can add a project", async ({ page }) => {
-    await page.goto("/profile");
-    // Count only once the editor has loaded, or the count reads 0.
+  test("opens the separate projects editor", async ({ page }) => {
+    await page.goto("/profile/projects");
     const add = page.getByRole("button", { name: "Add project" });
     await expect(add).toBeVisible();
-    const before = await page.locator("fieldset").count();
     await add.click();
-    await expect(page.locator("fieldset")).toHaveCount(before + 1);
+    await expect(page.getByRole("textbox", { name: "Project 1 title" })).toBeVisible();
   });
 });
 
-test("the profile editor redirects signed-out visitors to login", async ({ page }) => {
-  await page.goto("/profile");
-  await expect(page).toHaveURL(/\/login$/);
+test("profile editors redirect signed-out visitors to login", async ({ page }) => {
+  for (const path of ["/profile", "/profile/projects"]) {
+    await page.goto(path);
+    await expect(page).toHaveURL(/\/login$/);
+  }
 });
 
 test.describe("login", () => {
@@ -411,10 +415,10 @@ test("logs out from the hamburger menu and clears the browser session", async ({
   await expect(page).toHaveURL(/\/login$/);
 });
 
-for (const path of ["/", "/u/mira", "/dashboard", "/profile", "/login", "/privacy", "/terms", "/support"]) {
+for (const path of ["/", "/u/mira", "/dashboard", "/profile", "/profile/projects", "/login", "/privacy", "/terms", "/support"]) {
   test.describe(path, () => {
     test("every control has a name and the first few tab stops show a ring", async ({ page }) => {
-      if (path === "/dashboard" || path === "/profile") await authenticate(page);
+      if (path === "/dashboard" || path === "/profile" || path === "/profile/projects") await authenticate(page);
       await page.goto(path);
       const unnamed = await page.locator("a, button").evaluateAll((elements) =>
         elements
@@ -437,7 +441,7 @@ for (const path of ["/", "/u/mira", "/dashboard", "/profile", "/login", "/privac
     });
 
     test("nothing spills past the viewport edge", async ({ page }) => {
-      if (path === "/dashboard" || path === "/profile") await authenticate(page);
+      if (path === "/dashboard" || path === "/profile" || path === "/profile/projects") await authenticate(page);
       await page.setViewportSize({ width: 320, height: 640 });
       await page.goto(path);
       await expectNoHorizontalOverflow(page);

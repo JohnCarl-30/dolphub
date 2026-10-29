@@ -57,7 +57,7 @@ export default function ParticleBackground({
     window.addEventListener("orientationchange", onResize);
     const onStarted = (args?: CustomEventArgs) => {
       const instance = args?.container;
-      if (instance?.canvas.domElement?.parentElement === target) syncPlayback(instance);
+      if (instance?.canvas.element?.parentElement === target) syncPlayback(instance);
     };
     tsParticles.addEventListener("containerStarted", onStarted);
     const dispose = startParticleSession({

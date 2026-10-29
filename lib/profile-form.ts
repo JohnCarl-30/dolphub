@@ -98,11 +98,10 @@ export function planProjectSaves(saved: ProjectFields[], draft: ProjectFields[])
   return plan;
 }
 
-export function hasChanges(changes: Partial<ProfileFields>, plan: ProjectPlan): boolean {
-  return (
-    Object.keys(changes).length > 0 ||
-    plan.create.length > 0 ||
-    plan.update.length > 0 ||
-    plan.remove.length > 0
-  );
+export function hasProfileChanges(changes: Partial<ProfileFields>): boolean {
+  return Object.keys(changes).length > 0;
+}
+
+export function hasProjectChanges(plan: ProjectPlan): boolean {
+  return plan.create.length > 0 || plan.update.length > 0 || plan.remove.length > 0;
 }
