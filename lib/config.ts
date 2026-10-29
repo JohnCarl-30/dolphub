@@ -46,6 +46,10 @@ const envSchema = z
     GOOGLE_CLIENT_SECRET: optional,
     /** Vercel sends it with the nightly cleanup request. Without it, /api/cron/cleanup refuses every request. */
     CRON_SECRET: optional.pipe(z.string().min(16, "use at least 16 characters").optional()),
+    /** Bearer token for the admin MCP server at /api/mcp/admin. Without it, the route refuses every request. */
+    ADMIN_MCP_TOKEN: optional.pipe(z.string().min(32, "use at least 32 characters").optional()),
+    /** The admin the MCP server acts as. Every write is audited under this account. */
+    ADMIN_MCP_EMAIL: optional,
     R2_ACCOUNT_ID: optional,
     R2_ACCESS_KEY_ID: optional,
     R2_SECRET_ACCESS_KEY: optional,
@@ -67,6 +71,10 @@ const envSchema = z
     if (!env.GOOGLE_CLIENT_ID !== !env.GOOGLE_CLIENT_SECRET) {
       for (const k of ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"] as const)
         if (!env[k]) ctx.addIssue({ code: "custom", path: [k], message: "set both Google variables or neither" });
+    }
+    if (!env.ADMIN_MCP_TOKEN !== !env.ADMIN_MCP_EMAIL) {
+      for (const k of ["ADMIN_MCP_TOKEN", "ADMIN_MCP_EMAIL"] as const)
+        if (!env[k]) ctx.addIssue({ code: "custom", path: [k], message: "set both admin MCP variables or neither" });
     }
     if (env.NODE_ENV === "production" && env.E2E_TEST !== "1") {
       if (!env.RESEND_API_KEY) ctx.addIssue({ code: "custom", path: ["RESEND_API_KEY"], message: "required in production" });

@@ -78,6 +78,16 @@ Keep the file off the repo. To load it into an empty database: `pg_restore --no-
 
 Images live in R2, not Neon, so a restore doesn't bring back deleted photos.
 
+## Admin from Claude Code
+
+The admin MCP server at `/api/mcp/admin` gives Claude Code the admin page's tools: stats, hiding pages, freezing signups, posting and removing opportunities, and deleting accounts. claude.ai and the phone apps can't connect to it, so the phone kill switch is still the admin web page.
+
+1. Make a token: `openssl rand -hex 32`.
+2. In Vercel, under Settings, Environment Variables, Production, set `ADMIN_MCP_TOKEN` to it and `ADMIN_MCP_EMAIL` to your admin sign-in email. Redeploy.
+3. Connect Claude Code: `claude mcp add --transport http dolphub-admin https://dolphub.tech/api/mcp/admin --header "Authorization: Bearer <token>"`.
+
+To cut off access, change or remove `ADMIN_MCP_TOKEN` and redeploy. Every write is in `admin_audit_log`, under the `ADMIN_MCP_EMAIL` admin.
+
 ## Nightly cleanup
 
 Vercel runs `/api/cron/cleanup` every day at 19:00 UTC (3 AM in Manila). It deletes orphaned images from R2 and expired sign-in links and sessions. Check it under Vercel's Cron Jobs tab. To run it by hand:

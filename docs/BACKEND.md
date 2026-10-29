@@ -369,6 +369,21 @@ Both wait for the request and then read a cached copy, so builds never touch the
 
 It runs `sweepOrphanedImages`, then `purgeExpiredAuthRecords`. Each runs even when the other fails. The answer counts what went: `{ ok, images: { deleted, failed }, auth: { loginTokens, sessions } }`, with `null` for a job that failed and status 500 when anything failed. The route's logic lives in `lib/cleanup-route.ts`. To run it by hand: `curl -H "Authorization: Bearer $CRON_SECRET" https://dolphub.tech/api/cron/cleanup`.
 
+## Admin MCP server at `/api/mcp/admin`
+
+A private MCP server for running the site from Claude Code. It uses `mcp-handler` 2.x, which is stateless, so it needs no Redis. The route refuses requests without `Authorization: Bearer <ADMIN_MCP_TOKEN>` (401), and every request while `ADMIN_MCP_TOKEN` or `ADMIN_MCP_EMAIL` is unset, or while that email isn't an active admin (503). Tools act as that admin, so every write goes through the same service as the admin page and lands in `admin_audit_log`.
+
+| Tool | Service |
+|---|---|
+| `get_stats`, `list_profiles` | `getStats`, `listProfilesForAdmin` |
+| `hide_profile`, `unhide_profile` | `hideProfile`, `unhideProfile` |
+| `set_signups_frozen` | `setSignupsFrozen` |
+| `list_opportunities`, `post_opportunity` | `listOpportunitiesForAdmin`, `createOpportunity` |
+| `remove_opportunity` | `setOpportunityHidden`. It hides, so the admin page can restore it |
+| `delete_account` | `deleteAccountByHandle`. Needs `confirm: true`, and refuses the MCP admin's own account |
+
+Service errors come back as tool errors with the service's message. Writes to pages and opportunities expire their cache tags at once. The logic lives in `lib/admin-mcp-route.ts`.
+
 ## Health check at `/api/health`
 
 Runs `select 1` against the database. It answers 200 `{ ok: true }`, or 503 `{ ok: false }` and logs the error when the database can't be reached. The answer is never cached. The uptime monitor in the runbook points here.
