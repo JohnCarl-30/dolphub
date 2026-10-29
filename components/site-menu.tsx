@@ -15,7 +15,7 @@ export function SiteMenu({
   account,
   homeHref = "/",
 }: {
-  account?: { name: string; handle: string | null; profilePictureUrl: string | null };
+  account?: { name: string; handle: string | null; profilePictureUrl: string | null; isAdmin: boolean };
   homeHref?: "/" | "/home";
 }) {
   const [open, setOpen] = useState(false);
@@ -88,6 +88,7 @@ export function SiteMenu({
               <span aria-hidden="true" className="font-mono text-sm text-muted">→</span>
             </Link>
           ) : null}
+          {account?.isAdmin ? <NavLink href="/admin" className={linkClass} onClick={() => setOpen(false)}>Admin</NavLink> : null}
           <div>
             {PUBLIC_NAV_LINKS.map((item) => (
               <NavLink

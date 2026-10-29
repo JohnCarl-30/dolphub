@@ -13,14 +13,16 @@ function manilaDate(days: number): string {
 }
 
 test.describe("admin access", () => {
-  test("sends signed-out visitors to sign in", async ({ page }) => {
-    await page.goto("/admin");
-    await expect(page).toHaveURL(/\/login$/);
+  test("returns 404 to signed-out visitors", async ({ page }) => {
+    const response = await page.request.get("/admin");
+    expect(response.status()).toBe(404);
   });
 
   test("shows students who are not admins the ordinary not-found page", async ({ page }) => {
     await authenticate(page);
-    for (const path of ["/admin", "/admin/opportunities", "/admin/opportunities/new"]) {
+    for (const path of ["/admin", "/admin/opportunities", "/admin/opportunities/new", "/admin/opportunities/unknown"]) {
+      const response = await page.request.get(path);
+      expect(response.status()).toBe(404);
       await page.goto(path);
       await expect(page.getByRole("heading", { name: "This page could not be found." })).toBeVisible();
       await expect(page.getByRole("heading", { level: 1, name: "Admin" })).toHaveCount(0);
