@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { setProjectStarAction } from "@/app/project-stars/actions";
 
+const pillClassName =
+  "press inline-flex min-w-[8rem] items-center justify-center gap-2 border border-ink px-3 py-1.5 text-ink outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2";
+
 export function ProjectStar({
   projectId,
   count,
@@ -24,10 +27,23 @@ export function ProjectStar({
   const [error, setError] = useState<string | null>(null);
 
   if (!canStar) {
-    if (signedIn) return <span>★ {count}</span>;
+    if (signedIn) {
+      return (
+        <span className="inline-flex items-center gap-2 text-muted">
+          <span aria-hidden="true">★</span>
+          <span className="tabular-nums">{count}</span>
+        </span>
+      );
+    }
     return (
-      <Link href="/login" className="outline-none transition-colors hover:text-muted focus-visible:ring-2 focus-visible:ring-ink">
-        ★ {count} · Log in to star
+      <Link
+        href="/login"
+        aria-label={`Star project (${count})`}
+        className={`${pillClassName} hover:bg-ink hover:text-paper`}
+      >
+        <span aria-hidden="true">☆</span>
+        <span>Star</span>
+        <span className="min-w-[3ch] text-right tabular-nums">{count}</span>
       </Link>
     );
   }
@@ -38,8 +54,8 @@ export function ProjectStar({
         type="button"
         disabled={pending}
         aria-pressed={state.starred}
-        aria-label={state.starred ? "Remove star from project" : "Star project"}
-        className="outline-none transition-colors hover:text-muted disabled:cursor-wait focus-visible:ring-2 focus-visible:ring-ink"
+        aria-label={state.starred ? `Remove star (${state.count})` : `Star project (${state.count})`}
+        className={`${pillClassName} ${state.starred ? "bg-ink text-paper hover:bg-paper hover:text-ink" : "hover:bg-ink hover:text-paper"} disabled:cursor-wait disabled:opacity-60`}
         onClick={() => {
           const next = !state.starred;
           setError(null);
@@ -54,9 +70,11 @@ export function ProjectStar({
           });
         }}
       >
-        ★ {state.count} · {state.starred ? "Starred" : "Star"}
+        <span aria-hidden="true">{state.starred ? "★" : "☆"}</span>
+        <span>{state.starred ? "Starred" : "Star"}</span>
+        <span className="min-w-[3ch] text-right tabular-nums">{state.count}</span>
       </button>
-      {error ? <span role="status">{error}</span> : null}
+      {error ? <span role="status" className="normal-case text-muted">{error}</span> : null}
     </>
   );
 }
