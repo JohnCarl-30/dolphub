@@ -2,7 +2,8 @@ interface PlaybackTarget {
   destroyed: boolean;
   actualOptions: {
     autoPlay: boolean;
-    interactivity: { events: { onHover: { mode: string | string[] } } };
+    // v4 moved interactivity into a plugin, so the engine types it as optional.
+    interactivity?: { events: { onHover: { mode: string | string[] } } };
     particles: { move: { enable: boolean } };
   };
   play(): void;
@@ -20,7 +21,8 @@ export function syncParticlePlayback(
   container.actualOptions.autoPlay = playing;
   // Showcase traversal stops autonomous drift but leaves the render loop alive for repulsion.
   container.actualOptions.particles.move.enable = playing && driftAllowed;
-  container.actualOptions.interactivity.events.onHover.mode = playing && finePointer ? "repulse" : [];
+  const hover = container.actualOptions.interactivity?.events.onHover;
+  if (hover) hover.mode = playing && finePointer ? "repulse" : [];
   if (playing) container.play();
   else container.pause();
 }

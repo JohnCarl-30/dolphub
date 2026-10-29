@@ -1,7 +1,6 @@
 "use client";
 
-import { initParticlesEngine } from "@tsparticles/react";
-import { tsParticles, type Container } from "@tsparticles/engine";
+import { tsParticles, type Container, type CustomEventArgs } from "@tsparticles/engine";
 import { loadSlim } from "@tsparticles/slim";
 import { useEffect, useEffectEvent, useRef } from "react";
 import { MAX_PARTICLES, particleOptions } from "@/lib/particles";
@@ -10,7 +9,7 @@ import { startParticleSession, syncParticlePlayback } from "@/lib/particle-sessi
 let engineInitialization: Promise<void> | undefined;
 
 function initialize() {
-  engineInitialization ??= initParticlesEngine(loadSlim).catch((error: unknown) => {
+  engineInitialization ??= loadSlim(tsParticles).catch((error: unknown) => {
     engineInitialization = undefined;
     throw error;
   });
@@ -56,8 +55,9 @@ export default function ParticleBackground({
     };
     window.addEventListener("resize", onResize);
     window.addEventListener("orientationchange", onResize);
-    const onStarted = ({ container: instance }: { container?: Container }) => {
-      if (instance?.canvas.element?.parentElement === target) syncPlayback(instance);
+    const onStarted = (args?: CustomEventArgs) => {
+      const instance = args?.container;
+      if (instance?.canvas.domElement?.parentElement === target) syncPlayback(instance);
     };
     tsParticles.addEventListener("containerStarted", onStarted);
     const dispose = startParticleSession({
