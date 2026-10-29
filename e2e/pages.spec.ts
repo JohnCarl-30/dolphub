@@ -85,8 +85,66 @@ test.describe("site menu", () => {
 
     await page.getByRole("button", { name: "Open navigation menu" }).click();
     const menu = page.getByRole("navigation", { name: "Site menu" });
-    await expect(menu.getByRole("link")).toHaveText(publicDestinations);
+    await expect(
+      menu.locator("a:visible").filter({ hasText: /^(What|About|Vision|Privacy & Security|Terms|Support)$/ }),
+    ).toHaveText(publicDestinations);
+    await expect(menu.getByRole("link", { name: "View your profile, /u/feed-test" })).toHaveAttribute(
+      "href",
+      "/u/feed-test",
+    );
     await expect(menu.getByRole("button", { name: "Log out" })).toBeVisible();
+  });
+
+  test("opens the public profile from the account header and closes the menu", async ({ page }) => {
+    await authenticate(page);
+    await page.goto("/home");
+    await page.getByRole("button", { name: "Open navigation menu" }).click();
+
+    const menu = page.getByRole("navigation", { name: "Site menu" });
+    const profileLink = menu.getByRole("link", { name: "View your profile, /u/feed-test" });
+    await expect(profileLink).toHaveAttribute("href", "/u/feed-test");
+    await expect(profileLink).toHaveClass(/hover:bg-paper/);
+    await expect(profileLink).toHaveClass(/focus-visible:ring-2/);
+    await profileLink.click();
+
+    await expect(page).toHaveURL(/\/u\/feed-test$/);
+    await expect(page.getByRole("navigation", { name: "Site menu" })).toHaveCount(0);
+  });
+
+  test("puts the account header first in the tab order and preserves Escape focus return", async ({ page }) => {
+    await authenticate(page);
+    await page.goto("/home");
+    const trigger = page.getByRole("button", { name: "Open navigation menu" });
+    await trigger.click();
+
+    const menu = page.getByRole("navigation", { name: "Site menu" });
+    const profileLink = menu.getByRole("link", { name: "View your profile, /u/feed-test" });
+    await page.keyboard.press("Tab");
+    await expect(profileLink).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(menu).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+
+    await trigger.click();
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/\/u\/feed-test$/);
+  });
+
+  test("routes members without a profile to the create profile form", async ({ page }, testInfo) => {
+    await authenticate(page, `newcomer-${testInfo.project.name}`);
+    await page.goto("/home");
+    await page.getByRole("button", { name: "Open navigation menu" }).click();
+
+    const menu = page.getByRole("navigation", { name: "Site menu" });
+    const createLink = menu.getByRole("link", { name: "Create your profile" });
+    await expect(createLink).toHaveAttribute("href", "/profile");
+    await expect(createLink).toContainText("Create your profile");
+    await createLink.click();
+
+    await expect(page).toHaveURL(/\/profile$/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Create your page");
+    await expect(page.getByRole("navigation", { name: "Site menu" })).toHaveCount(0);
   });
 
   test("centers public links and separates signed-out authentication pills", async ({ page }) => {
@@ -147,7 +205,13 @@ test.describe("site menu", () => {
     await page.getByRole("button", { name: "Open navigation menu" }).click();
 
     const menu = page.getByRole("navigation", { name: "Site menu" });
-    await expect(menu.locator("a:visible")).toHaveText([...publicDestinations, "Home", "Dashboard", "Profile"]);
+    await expect(
+      menu.locator("a:visible").filter({ hasText: /^(What|About|Vision|Privacy & Security|Terms|Support)$/ }),
+    ).toHaveText(publicDestinations);
+    await expect(menu.getByRole("link", { name: "View your profile, /u/feed-test" })).toBeVisible();
+    await expect(menu.getByRole("link", { name: "Home" })).toBeVisible();
+    await expect(menu.getByRole("link", { name: "Dashboard" })).toBeVisible();
+    await expect(menu.getByRole("link", { name: "Profile", exact: true })).toBeVisible();
     await menu.getByRole("link", { name: "Privacy & Security" }).click();
 
     await expect(page).toHaveURL(/\/privacy$/);
