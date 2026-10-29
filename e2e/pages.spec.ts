@@ -217,12 +217,20 @@ test.describe("information pages", () => {
 test.describe("profile", () => {
   test("shows public star counts and lets a signed-in student star another project", async ({ page }) => {
     await page.goto("/u/mira");
-    await expect(page.getByRole("link", { name: /Log in to star/ }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: /Star project \(\d+\)/ }).first()).toBeVisible();
     await authenticate(page);
     await page.goto("/u/mira");
-    const star = page.getByRole("button", { name: "Star project" }).first();
-    await star.click();
-    await expect(page.getByRole("button", { name: "Remove star from project" }).first()).toBeVisible();
+    const star = page.getByRole("button", { name: /Star project \(\d+\)/ }).first();
+    await expect(star).toHaveAttribute("aria-pressed", "false");
+    await star.focus();
+    await page.keyboard.press("Space");
+    const starred = page.getByRole("button", { name: /Remove star \(\d+\)/ }).first();
+    await expect(starred).toHaveAttribute("aria-pressed", "true");
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("button", { name: /Star project \(\d+\)/ }).first()).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
   });
 
   test("shows contact links and projects, with projects staggered", async ({ page }) => {
