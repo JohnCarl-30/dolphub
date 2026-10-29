@@ -53,7 +53,7 @@ Reuse the tokens in [app/globals.css](app/globals.css). Do not introduce a secon
 - Use slash section labels such as `/students`, `/u/{handle}`, `/publish`, `/dashboard`, and `/login`.
 - Keep the public landing page as one horizontal journey through the hero, What, About, Vision, and up to three featured projects. Privacy & Security, Terms, and Support remain shared navigation and footer destinations. On desktop, vertical scrolling drives the journey; on smaller or reduced-motion contexts it remains a native horizontal list. Rank featured projects by public star count, fill zero-star slots with recent projects, and show at most one project per student.
 - Keep streamed-data failures local. A failed featured-project request replaces only that section with a neutral explanation and Retry control; a failed public profile shows its own page-sized fallback. Unexpected route failures retain the shared shell and offer Retry and Home without exposing server messages or error digests.
-- Keep dashboard forms phone-first. Existing image uploads remain labeled slots until an image workflow is implemented.
+- Keep dashboard forms phone-first. Profile and project photo pickers open a crop preview before upload, using square and 16:9 frames respectively.
 
 ### Informational pages
 

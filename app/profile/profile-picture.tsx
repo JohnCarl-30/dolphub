@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { deleteProfilePictureAction } from "@/app/dashboard/actions";
+import { PhotoEditor } from "@/components/photo-editor";
 import { ProfileAvatar } from "@/components/profile-avatar";
-import { PhotoError, preparePhoto, uploadProfilePicture } from "@/lib/photo-upload";
+import { uploadProfilePicture } from "@/lib/photo-upload";
 import type { PublicImage } from "@/lib/services/profiles";
 
 /** The owner's independent portrait uploader. It does not use a project slot. */
@@ -11,21 +12,39 @@ export function ProfilePicture({ name, initialPicture }: { name: string; initial
   const [picture, setPicture] = useState(initialPicture);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<{ file: File; url: string } | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const restoreFocus = useRef(false);
+  useEffect(() => {
+    if (!selected) return;
+    return () => URL.revokeObjectURL(selected.url);
+  }, [selected]);
+  useEffect(() => {
+    if (restoreFocus.current && !selected && busy === null) {
+      restoreFocus.current = false;
+      inputRef.current?.focus();
+    }
+  }, [selected, busy]);
   // The prepared picture from an upload that failed on the way, so "Try again" resends it without picking it again.
   const [unsent, setUnsent] = useState<Blob | null>(null);
 
-  async function onFile(event: React.ChangeEvent<HTMLInputElement>) {
+  function onFile(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
-    let photo: Blob;
-    try {
-      photo = await preparePhoto(file);
-    } catch (problem) {
-      setUnsent(null);
-      setError(problem instanceof PhotoError ? problem.message : "Couldn't read that picture. Try another one.");
-      return;
-    }
+    setError(null);
+    setUnsent(null);
+    setSelected({ file, url: URL.createObjectURL(file) });
+  }
+
+  function cancelEdit() {
+    restoreFocus.current = true;
+    setSelected(null);
+  }
+
+  async function useEdit(photo: Blob) {
+    restoreFocus.current = true;
+    setSelected(null);
     await send(photo);
   }
 
@@ -63,6 +82,7 @@ export function ProfilePicture({ name, initialPicture }: { name: string; initial
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <input
+              ref={inputRef}
               id="profile-picture"
               type="file"
               accept="image/jpeg,image/png,image/webp"
@@ -89,7 +109,7 @@ export function ProfilePicture({ name, initialPicture }: { name: string; initial
             ) : null}
           </div>
           <p aria-live="polite" className="mt-3 text-xs leading-5 text-muted">
-            {busy ?? "JPEG, PNG, or WebP. Your picture is centered and square on the page."}
+            {busy ?? "JPEG, PNG, or WebP. Preview and crop to a square before uploading."}
           </p>
           {error ? (
             <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -111,6 +131,7 @@ export function ProfilePicture({ name, initialPicture }: { name: string; initial
           ) : null}
         </div>
       </div>
+      {selected ? <PhotoEditor file={selected.file} url={selected.url} aspect={1} onCancel={cancelEdit} onUse={useEdit} /> : null}
     </section>
   );
 }

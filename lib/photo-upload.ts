@@ -31,6 +31,31 @@ export function fitWithin(width: number, height: number, max: number): { width: 
   return { width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)) };
 }
 
+export type PhotoCrop = { x: number; y: number; width: number; height: number };
+
+/** The cropper reports coordinates in the bounding box after the user's rotation. */
+export function rotatedSize(width: number, height: number, rotation: number) {
+  const quarterTurns = (((rotation / 90) % 4) + 4) % 4;
+  if (!Number.isInteger(quarterTurns)) throw new PhotoError("Choose a quarter-turn rotation.");
+  return quarterTurns % 2 === 0 ? { width, height } : { width: height, height: width };
+}
+
+/** Keep floating-point crop coordinates inside the oriented image without changing their aspect. */
+export function boundedCrop(crop: PhotoCrop, width: number, height: number): PhotoCrop {
+  if (![crop.x, crop.y, crop.width, crop.height, width, height].every(Number.isFinite) ||
+      crop.width <= 0 || crop.height <= 0 || width <= 0 || height <= 0) {
+    throw new PhotoError("Couldn't read the selected crop. Try adjusting the photo again.");
+  }
+  const cropWidth = Math.min(crop.width, width);
+  const cropHeight = Math.min(crop.height, height);
+  return {
+    x: Math.min(Math.max(0, crop.x), width - cropWidth),
+    y: Math.min(Math.max(0, crop.y), height - cropHeight),
+    width: cropWidth,
+    height: cropHeight,
+  };
+}
+
 export class PhotoError extends Error {}
 
 /** The file to send: the original when it already fits, otherwise a smaller JPEG. */
@@ -58,6 +83,45 @@ export async function preparePhoto(file: File): Promise<Blob> {
       context.fillRect(0, 0, size.width, size.height);
       context.drawImage(bitmap, 0, 0, size.width, size.height);
       const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+      if (blob && blob.size <= SEND_AS_IS_BYTES) return blob;
+    }
+  } finally {
+    bitmap.close();
+  }
+  throw new PhotoError("This photo is too large to upload. Try a smaller one.");
+}
+
+/** Rasterizes the visible crop into the uploaded JPEG, including for small original files. */
+export async function renderEdit(file: File, edit: { rotation: number; crop: PhotoCrop }): Promise<Blob> {
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  } catch {
+    throw new PhotoError("This phone can't open that file. Upload a JPEG, PNG or WebP image.");
+  }
+
+  try {
+    const rotated = rotatedSize(bitmap.width, bitmap.height, edit.rotation);
+    const crop = boundedCrop(edit.crop, rotated.width, rotated.height);
+    for (const { side, quality } of ATTEMPTS) {
+      const size = fitWithin(crop.width, crop.height, side);
+      const canvas = document.createElement("canvas");
+      canvas.width = size.width;
+      canvas.height = size.height;
+      const context = canvas.getContext("2d");
+      if (!context) break;
+      context.fillStyle = "#fff";
+      context.fillRect(0, 0, size.width, size.height);
+      context.save();
+      context.scale(size.width / crop.width, size.height / crop.height);
+      context.translate(-crop.x, -crop.y);
+      context.translate(rotated.width / 2, rotated.height / 2);
+      context.rotate((edit.rotation * Math.PI) / 180);
+      context.drawImage(bitmap, -bitmap.width / 2, -bitmap.height / 2);
+      context.restore();
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+      canvas.width = 0;
+      canvas.height = 0;
       if (blob && blob.size <= SEND_AS_IS_BYTES) return blob;
     }
   } finally {
