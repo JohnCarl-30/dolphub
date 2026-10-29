@@ -5,6 +5,10 @@
 export const GRID_TAG = "grid";
 export const FEATURED_PROJECTS_TAG = "featured-projects";
 
+export function dashboardStatsTag(userId: string): string {
+  return `dashboard-stats:${userId}`;
+}
+
 export function profileTag(handle: string): string {
   return `profile:${handle.toLowerCase()}`;
 }
