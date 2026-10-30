@@ -81,7 +81,7 @@ describe("Google sign-in", () => {
 
     expect(session.user.email).toBe("mira.santos@pcu.edu.ph");
     expect(await getSessionUser(ctx, session.sessionToken)).toEqual(session.user);
-    expect(session.expiresAt.getTime() - NOW.getTime()).toBe(30 * 24 * 60 * 60 * 1000);
+    expect(session.expiresAt.getTime() - NOW.getTime()).toBe(90 * 24 * 60 * 60 * 1000);
     expect(Object.fromEntries(google.calls[0]!)).toEqual({
       code: "code-1",
       client_id: settings.clientId,

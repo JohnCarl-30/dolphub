@@ -452,14 +452,26 @@ test.describe("login", () => {
   test("uses the shared tokens and a single main landmark", async ({ page }) => {
     await page.goto("/login");
     await expect(page.getByRole("main")).toHaveCount(1);
+    const styleOf = (locator: import("@playwright/test").Locator) =>
+      locator.evaluate((element) => {
+        const style = getComputedStyle(element);
+        return { radius: style.borderRadius, background: style.backgroundColor };
+      });
+    // Google is the main way in; the email link is the outlined fallback.
+    const google = page.getByRole("link", { name: "Continue with Google" });
     const button = page.getByRole("button", { name: "Email me a sign-in link" });
-    const styles = await button.evaluate((element) => {
-      const style = getComputedStyle(element);
-      return { radius: style.borderRadius, background: style.backgroundColor };
-    });
-    expect(styles.radius).toBe("0px");
-    expect(styles.background).toBe("rgb(14, 16, 18)");
+    expect(await styleOf(google)).toEqual({ radius: "0px", background: "rgb(14, 16, 18)" });
+    expect(await styleOf(button)).toEqual({ radius: "0px", background: "rgb(255, 255, 255)" });
     await expect(button).toHaveClass(/press/);
+    await expect(page.getByRole("link", { name: "Get a sign-in link by email instead" })).toHaveCount(0);
+  });
+
+  test("sends signed-in visitors on without offering an email link", async ({ page }) => {
+    await authenticate(page);
+    await page.goto("/login");
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await page.goto("/login?next=/opportunities");
+    await expect(page).toHaveURL(/\/opportunities$/);
   });
 
   // Browser tests run a production build, which must never offer the fixed-password admin.
@@ -485,6 +497,14 @@ test("logs out from the hamburger menu and clears the browser session", async ({
 
   await page.goto("/profile");
   await expect(page).toHaveURL(/\/login$/);
+
+  // A remembered browser signs straight back in with the same address, no email.
+  await page.context().addCookies([
+    { name: "device", value: `dolphub-e2e-device-${testInfo.project.name}`, url: page.url(), httpOnly: true, sameSite: "Lax" },
+  ]);
+  await page.getByRole("textbox", { name: "PCU email" }).fill(`logout-${testInfo.project.name}@pcu.edu.ph`);
+  await page.getByRole("button", { name: "Email me a sign-in link" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
 });
 
 for (const path of ["/", "/u/mira", "/dashboard", "/profile", "/profile/projects", "/login", "/privacy", "/terms", "/support"]) {

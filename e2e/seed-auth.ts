@@ -7,7 +7,7 @@ import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { schema } from "../lib/db";
 import { seedBaseData } from "../lib/db/seed-data";
-import { appSettings, courses, opportunities, profiles, projects, sessions, users } from "../lib/db/schema";
+import { appSettings, courses, opportunities, profiles, projects, sessions, trustedDevices, users } from "../lib/db/schema";
 import { closesAtFor } from "../lib/opportunity-time";
 
 export const E2E_SESSION_TOKEN = "dolphub-e2e-session-token";
@@ -213,6 +213,13 @@ async function seedLogoutUsers(db: E2eDb) {
     await db.insert(users).values({ email }).onConflictDoNothing({ target: users.email });
     const [user] = await db.select({ id: users.id }).from(users).where(eq(users.email, email));
     await storeSession(db, user!.id, `dolphub-e2e-logout-${project}`);
+    // A browser that finished an email sign-in before, so it can get back in without an email.
+    const tokenHash = createHash("sha256").update(`dolphub-e2e-device-${project}`).digest("hex");
+    const expiresAt = new Date("2100-01-01T00:00:00.000Z");
+    await db
+      .insert(trustedDevices)
+      .values({ userId: user!.id, tokenHash, expiresAt })
+      .onConflictDoUpdate({ target: trustedDevices.tokenHash, set: { userId: user!.id, expiresAt } });
   }
 }
 

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { loginTokens, sessions } from "../db/schema";
+import { loginTokens, sessions, trustedDevices } from "../db/schema";
 import { MemoryEmailSender } from "../email/dev";
 import { createTestContext, PCU_DOMAINS, type TestEnv } from "../test/helpers";
 import { deleteAccount } from "./admin";
@@ -11,6 +11,8 @@ import {
   hashToken,
   networkOf,
   purgeExpiredAuthRecords,
+  signInTrustedDevice,
+  trustDevice,
   requestSignInLink,
   signOut,
 } from "./auth";
@@ -157,7 +159,34 @@ describe("sign-in links", () => {
     await requestSignInLink(ctx, sender, settings, "a@pcu.edu.ph");
     await consumeSignInLink(ctx, settings, tokenFrom(sender));
     advance(AUTH_LIMITS.sessionTtlMs + 1);
-    expect(await purgeExpiredAuthRecords(ctx)).toEqual({ loginTokens: 1, sessions: 1 });
+    expect(await purgeExpiredAuthRecords(ctx)).toEqual({ loginTokens: 1, sessions: 1, trustedDevices: 0 });
+  });
+
+  it("signs a remembered browser back in without an email, only for its own address", async () => {
+    await requestSignInLink(ctx, sender, settings, "a@pcu.edu.ph");
+    const first = await consumeSignInLink(ctx, settings, tokenFrom(sender));
+    const { deviceToken } = await trustDevice(ctx, first.user.id);
+    await signOut(ctx, first.sessionToken);
+
+    const again = await signInTrustedDevice(ctx, deviceToken, " A@pcu.edu.ph ");
+    expect(again?.user.id).toBe(first.user.id);
+    expect(await getSessionUser(ctx, again!.sessionToken)).toMatchObject({ email: "a@pcu.edu.ph" });
+    expect(await signInTrustedDevice(ctx, deviceToken, "b@pcu.edu.ph")).toBeNull();
+    expect(await signInTrustedDevice(ctx, "made-up", "a@pcu.edu.ph")).toBeNull();
+    expect(await signInTrustedDevice(ctx, undefined, "a@pcu.edu.ph")).toBeNull();
+
+    advance(AUTH_LIMITS.deviceTtlMs + 1);
+    expect(await signInTrustedDevice(ctx, deviceToken, "a@pcu.edu.ph")).toBeNull();
+    expect((await purgeExpiredAuthRecords(ctx)).trustedDevices).toBe(1);
+  });
+
+  it("forgets remembered browsers when the account is deleted", async () => {
+    await requestSignInLink(ctx, sender, settings, "a@pcu.edu.ph");
+    const session = await consumeSignInLink(ctx, settings, tokenFrom(sender));
+    const { deviceToken } = await trustDevice(ctx, session.user.id);
+    await deleteAccount(ctx, { actorUserId: session.user.id, targetUserId: session.user.id, confirm: true });
+    expect(await signInTrustedDevice(ctx, deviceToken, "a@pcu.edu.ph")).toBeNull();
+    expect(await env.db.select().from(trustedDevices)).toHaveLength(0);
   });
 });
 

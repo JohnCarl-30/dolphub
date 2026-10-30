@@ -115,8 +115,13 @@ export default function PrivacyPage() {
             after two days.
           </li>
           <li>
-            Sessions become unusable after 30 days. Authentication cleanup removes expired session
+            Sessions become unusable after 90 days. Authentication cleanup removes expired session
             records.
+          </li>
+          <li>
+            After you sign in with an email link, a cookie remembers that browser for 180 days so you can
+            sign in there again without another email. It stays after you log out. Clear your browser
+            cookies to remove it, for example on a shared computer.
           </li>
           <li>Account and portfolio content remains while the account is active or until it is deleted.</li>
           <li>

@@ -15,7 +15,7 @@ test.describe("nightly cleanup", () => {
     expect(await run.json()).toMatchObject({
       ok: true,
       images: { deleted: expect.any(Number), failed: 0 },
-      auth: { loginTokens: expect.any(Number), sessions: expect.any(Number) },
+      auth: { loginTokens: expect.any(Number), sessions: expect.any(Number), trustedDevices: expect.any(Number) },
     });
   });
 });
