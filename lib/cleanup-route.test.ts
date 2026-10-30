@@ -40,7 +40,7 @@ describe("cleanup route", () => {
     expect(await response.json()).toEqual({
       ok: true,
       images: { deleted: 1, failed: 0 },
-      auth: { loginTokens: 1, sessions: 1 },
+      auth: { loginTokens: 1, sessions: 1, trustedDevices: 0 },
       analytics: 0,
     });
     expect(env.storage.objects.size).toBe(0);
@@ -64,7 +64,7 @@ describe("cleanup route", () => {
     };
     const response = await GET(cron(`Bearer ${SECRET}`));
     expect(response.status).toBe(500);
-    expect(await response.json()).toEqual({ ok: false, images: null, auth: { loginTokens: 1, sessions: 1 }, analytics: 0 });
+    expect(await response.json()).toEqual({ ok: false, images: null, auth: { loginTokens: 1, sessions: 1, trustedDevices: 0 }, analytics: 0 });
   });
 
   it("reports photos it could not delete", async () => {

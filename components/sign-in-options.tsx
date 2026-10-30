@@ -4,9 +4,18 @@ import { GoogleMark } from "./google-mark";
 
 /**
  * "Continue with Google" and the email-link fallback. `next` is a path to
- * return to after sign-in; both flows carry it through.
+ * return to after sign-in; both flows carry it through. Pass `email` to show
+ * the email form in place of the link to /login.
  */
-export function SignInOptions({ next, children }: { next: string | null; children?: React.ReactNode }) {
+export function SignInOptions({
+  next,
+  children,
+  email,
+}: {
+  next: string | null;
+  children?: React.ReactNode;
+  email?: React.ReactNode;
+}) {
   return (
     <div className="flex flex-col gap-3">
       {/* A plain link: /auth/google is a route handler that redirects to Google. */}
@@ -24,9 +33,11 @@ export function SignInOptions({ next, children }: { next: string | null; childre
         Use your @pcu.edu.ph account. Personal Gmail addresses cannot sign in.
       </p>
       {children}
-      <Link href={withNext("/login", next)} className="text-sm underline underline-offset-4 transition-colors hover:text-muted">
-        Get a sign-in link by email instead
-      </Link>
+      {email ?? (
+        <Link href={withNext("/login", next)} className="text-sm underline underline-offset-4 transition-colors hover:text-muted">
+          Get a sign-in link by email instead
+        </Link>
+      )}
     </div>
   );
 }

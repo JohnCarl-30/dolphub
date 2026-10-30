@@ -71,6 +71,13 @@
       "when": 1793300866099,
       "tag": "0009_thankful_marten_broadcloak",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793334866147,
+      "tag": "0010_trusted_devices",
+      "breakpoints": true
     }
   ]
 }

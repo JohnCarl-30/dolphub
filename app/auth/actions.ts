@@ -1,10 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { clearSessionCookie, readSessionToken, setSessionCookie } from "@/lib/auth";
+import { clearSessionCookie, readSessionToken, setDeviceCookie, setSessionCookie } from "@/lib/auth";
 import { logError } from "@/lib/log";
 import { safeNextPath } from "@/lib/next-path";
-import { consumeSignInLink, signOut } from "@/lib/services/auth";
+import { consumeSignInLink, signOut, trustDevice } from "@/lib/services/auth";
 import { ServiceError } from "@/lib/services/errors";
 import { getAuthSettings, getServiceContext } from "@/lib/server";
 
@@ -15,8 +15,11 @@ export async function verifyAction(_prev: VerifyState, formData: FormData): Prom
   const token = String(formData.get("token") ?? "");
   const next = safeNextPath(formData.get("next"));
   try {
-    const session = await consumeSignInLink(await getServiceContext(), getAuthSettings(), token);
+    const ctx = await getServiceContext();
+    const session = await consumeSignInLink(ctx, getAuthSettings(), token);
     await setSessionCookie(session.sessionToken, session.expiresAt);
+    const device = await trustDevice(ctx, session.user.id);
+    await setDeviceCookie(device.deviceToken, device.expiresAt);
   } catch (error) {
     if (error instanceof ServiceError) return { error: error.message };
     logError("Sign-in", error);

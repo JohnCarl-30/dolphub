@@ -1,11 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { setSessionCookie } from "@/lib/auth";
+import { getCurrentUser, readDeviceToken, setSessionCookie } from "@/lib/auth";
 import { logError } from "@/lib/log";
 import { safeNextPath } from "@/lib/next-path";
 import { getClientIp } from "@/lib/request-ip";
-import { requestSignInLink } from "@/lib/services/auth";
+import { requestSignInLink, signInTrustedDevice } from "@/lib/services/auth";
 import { ServiceError } from "@/lib/services/errors";
 import { mockAdminEnabled, signInMockAdmin } from "@/lib/services/mock-admin";
 import { getAuthSettings, getEmailSender, getServiceContext } from "@/lib/server";
@@ -18,22 +18,31 @@ export type LoginState =
 export async function requestLinkAction(_prev: LoginState, formData: FormData): Promise<LoginState> {
   const email = String(formData.get("email") ?? "");
   const next = safeNextPath(formData.get("next"));
+  // A form left open in another tab can still post after sign-in. Don't spend an email on it.
+  if (await getCurrentUser()) redirect(next ?? "/dashboard");
   try {
-    const result = await requestSignInLink(
-      await getServiceContext(),
-      getEmailSender(),
-      getAuthSettings(),
-      email,
-      await getClientIp(),
-      next,
-    );
-    return { status: "sent", email: result.email };
+    const ctx = await getServiceContext();
+    // This browser finished an email sign-in for this address before, so skip the email.
+    const session = await signInTrustedDevice(ctx, await readDeviceToken(), email);
+    if (!session) {
+      const result = await requestSignInLink(
+        ctx,
+        getEmailSender(),
+        getAuthSettings(),
+        email,
+        await getClientIp(),
+        next,
+      );
+      return { status: "sent", email: result.email };
+    }
+    await setSessionCookie(session.sessionToken, session.expiresAt);
   } catch (error) {
     // Returned so the form can show what was typed. React resets forms after an action.
     if (error instanceof ServiceError) return { status: "error", message: error.message, email };
     logError("Sign-in link request", error);
     return { status: "error", message: "Something went wrong. Please try again.", email };
   }
+  redirect(next ?? "/dashboard");
 }
 
 export type MockAdminState = { error: string | null };

@@ -2,7 +2,7 @@ import { createHash, createHmac, randomBytes } from "node:crypto";
 import { isIP } from "node:net";
 import { and, count, eq, gt, gte, isNull, lt } from "drizzle-orm";
 import { z } from "zod";
-import { loginTokens, sessions, users } from "../db/schema";
+import { loginTokens, sessions, trustedDevices, users } from "../db/schema";
 import type { EmailSender } from "../email/types";
 import { logError } from "../log";
 import { safeNextPath, withNext } from "../next-path";
@@ -12,7 +12,9 @@ import { assertCanRegister, findActiveUserByEmail, normalizeEmail, signInOrRegis
 
 export const AUTH_LIMITS = {
   linkTtlMs: 15 * 60 * 1000,
-  sessionTtlMs: 30 * 24 * 60 * 60 * 1000,
+  sessionTtlMs: 90 * 24 * 60 * 60 * 1000,
+  /** How long a browser stays remembered after an email sign-in. */
+  deviceTtlMs: 180 * 24 * 60 * 60 * 1000,
   /** Links one address may request per window. */
   linksPerEmail: 3,
   linkWindowMs: 15 * 60 * 1000,
@@ -241,7 +243,7 @@ export interface NewSession {
   user: SessionUser;
 }
 
-/** Starts a 30-day session for a user who has proved they own their address. Only the token hash is stored. */
+/** Starts a 90-day session for a user who has proved they own their address. Only the token hash is stored. */
 export async function startSession(ctx: ServiceContext, user: SessionUser): Promise<NewSession> {
   const now = nowOf(ctx);
   const sessionToken = newToken();
@@ -275,6 +277,37 @@ export async function getSessionUser(
   return row ?? null;
 }
 
+/** Remembers this browser for the account after an email sign-in. Only the token hash is stored. */
+export async function trustDevice(ctx: ServiceContext, userId: string): Promise<{ deviceToken: string; expiresAt: Date }> {
+  const deviceToken = newToken();
+  const now = nowOf(ctx);
+  const expiresAt = new Date(now.getTime() + AUTH_LIMITS.deviceTtlMs);
+  await ctx.db.insert(trustedDevices).values({ userId, tokenHash: hashToken(deviceToken), expiresAt, createdAt: now });
+  return { deviceToken, expiresAt };
+}
+
+/** Starts a session without an email when this browser is remembered for the typed address. Null otherwise. */
+export async function signInTrustedDevice(
+  ctx: ServiceContext,
+  deviceToken: string | undefined,
+  rawEmail: string,
+): Promise<NewSession | null> {
+  if (!deviceToken) return null;
+  const [user] = await ctx.db
+    .select({ id: users.id, email: users.email, isAdmin: users.isAdmin })
+    .from(trustedDevices)
+    .innerJoin(users, eq(users.id, trustedDevices.userId))
+    .where(
+      and(
+        eq(trustedDevices.tokenHash, hashToken(deviceToken)),
+        gt(trustedDevices.expiresAt, nowOf(ctx)),
+        eq(users.email, normalizeEmail(rawEmail)),
+        isNull(users.deletedAt),
+      ),
+    );
+  return user ? startSession(ctx, user) : null;
+}
+
 export async function signOut(ctx: ServiceContext, sessionToken: string | undefined): Promise<void> {
   if (!sessionToken) return;
   await ctx.db.delete(sessions).where(eq(sessions.tokenHash, hashToken(sessionToken)));
@@ -282,7 +315,7 @@ export async function signOut(ctx: ServiceContext, sessionToken: string | undefi
 
 /**
  * Nightly cleanup. Keeps two days of sign-in links, because the daily cap
- * counts the last 24 hours. Drops expired sessions.
+ * counts the last 24 hours. Drops expired sessions and remembered browsers.
  */
 export async function purgeExpiredAuthRecords(ctx: ServiceContext) {
   const now = nowOf(ctx);
@@ -294,5 +327,9 @@ export async function purgeExpiredAuthRecords(ctx: ServiceContext) {
     .delete(sessions)
     .where(lt(sessions.expiresAt, now))
     .returning({ id: sessions.id });
-  return { loginTokens: tokens.length, sessions: expired.length };
+  const devices = await ctx.db
+    .delete(trustedDevices)
+    .where(lt(trustedDevices.expiresAt, now))
+    .returning({ id: trustedDevices.id });
+  return { loginTokens: tokens.length, sessions: expired.length, trustedDevices: devices.length };
 }

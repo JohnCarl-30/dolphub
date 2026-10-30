@@ -254,6 +254,21 @@ export const sessions = pgTable(
   (t) => [index("sessions_user_id_idx").on(t.userId)],
 );
 
+/** Browsers that finished an email sign-in. The same address can sign in there again without an email. */
+export const trustedDevices = pgTable(
+  "trusted_devices",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull().unique(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("trusted_devices_user_id_idx").on(t.userId)],
+);
+
 /** Internships, events, competitions and programs. Admins post them, and each links out. */
 export const opportunities = pgTable(
   "opportunities",

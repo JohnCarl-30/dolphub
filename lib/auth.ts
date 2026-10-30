@@ -14,6 +14,9 @@ const isProduction = process.env.NODE_ENV === "production" && process.env.E2E_TE
  */
 export const SESSION_COOKIE = isProduction ? "__Host-session" : "session";
 
+/** Marks a browser that finished an email sign-in. It stays after sign-out, so the student can get back in without an email. */
+export const DEVICE_COOKIE = isProduction ? "__Host-device" : "device";
+
 export async function readSessionToken(): Promise<string | undefined> {
   return (await cookies()).get(SESSION_COOKIE)?.value;
 }
@@ -50,4 +53,19 @@ export async function setSessionCookie(token: string, expiresAt: Date): Promise<
 /** Only from a server action or route handler. */
 export async function clearSessionCookie(): Promise<void> {
   (await cookies()).delete(SESSION_COOKIE);
+}
+
+export async function readDeviceToken(): Promise<string | undefined> {
+  return (await cookies()).get(DEVICE_COOKIE)?.value;
+}
+
+/** Only from a server action or route handler. */
+export async function setDeviceCookie(token: string, expiresAt: Date): Promise<void> {
+  (await cookies()).set(DEVICE_COOKIE, token, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: "lax",
+    path: "/",
+    expires: expiresAt,
+  });
 }
