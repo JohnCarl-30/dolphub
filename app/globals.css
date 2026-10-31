@@ -316,6 +316,8 @@ p {
 
   .landing-journey[data-layout="native"] .landing-journey-track {
     display: flex;
+    /* Without this every panel stretches to the tallest one and the hero text sinks below the fold. */
+    align-items: flex-start;
     width: max-content;
     max-width: none;
   }

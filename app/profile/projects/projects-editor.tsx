@@ -46,6 +46,8 @@ export function ProjectsEditor({ dashboard }: { dashboard: Dashboard & { profile
   const dirty = hasProjectChanges(plan);
   useBeforeUnloadWarning(dirty);
 
+  const addProject = () => setProjects((prev) => [...prev, emptyProject()]);
+
   function setProject(key: string, field: ProjectText, value: string) {
     setProjects((prev) => prev.map((project) => (project.key === key ? { ...project, [field]: value } : project)));
   }
@@ -120,7 +122,7 @@ export function ProjectsEditor({ dashboard }: { dashboard: Dashboard & { profile
           <h2 className="text-xl font-medium tracking-tight">Projects</h2>
           <button
             type="button"
-            onClick={() => setProjects((prev) => [...prev, emptyProject()])}
+            onClick={addProject}
             className="press min-h-11 font-mono text-[11px] uppercase tracking-wide outline-none hover:text-muted focus-visible:ring-2 focus-visible:ring-ink"
           >
             Add project
@@ -130,7 +132,10 @@ export function ProjectsEditor({ dashboard }: { dashboard: Dashboard & { profile
           Photos: {photoCount} of {imageLimit} used, across all projects. Preview and confirm a photo before it uploads.
         </p>
         {projects.length === 0 ? (
-          <p className="text-sm leading-6 text-muted">Add a project to appear in the home showcase.</p>
+          <>
+            <p className="text-sm leading-6 text-muted">Add a project to appear in the home showcase.</p>
+            <button type="button" onClick={addProject} className={submitClass}>Add your first project</button>
+          </>
         ) : null}
         {projects.map((project, index) => {
           const n = index + 1;
@@ -177,7 +182,9 @@ export function ProjectsEditor({ dashboard }: { dashboard: Dashboard & { profile
         })}
 
         <FormMessages error={error?.message ?? null} notice={notice} />
-        <button type="submit" disabled={pending} className={submitClass}>{pending ? "Saving…" : "Save changes"}</button>
+        {projects.length > 0 || dirty ? (
+          <button type="submit" disabled={pending} className={submitClass}>{pending ? "Saving…" : "Save changes"}</button>
+        ) : null}
       </form>
     </section>
   );
