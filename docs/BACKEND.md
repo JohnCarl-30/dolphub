@@ -262,7 +262,7 @@ Students sign in with a one-time link emailed through Resend. The link opens a p
 | `finishGoogleSignIn(ctx, settings, { code, state, attempt })` | `GET /auth/google/callback`. Checks the state, trades the code for an ID token, checks its issuer, audience, expiry, nonce and verified email, then signs in or registers under the same domain and frozen-signup rules as email links. Failures return to `/dashboard?signin=<reason>` |
 | `startSession(ctx, user)` | Starts a 90-day session. Used by both sign-in methods |
 | `trustDevice(ctx, userId)` | Remembers a browser for 180 days after an email sign-in. Only the token hash is stored |
-| `signInTrustedDevice(ctx, deviceToken, email)` | Starts a session without an email when the browser is remembered for that address, or returns null |
+| `signInTrustedDevice(ctx, deviceToken, email)` | Starts a session without an email when the browser is remembered for that address, or returns null. Always null for admins |
 | `getSessionUser(ctx, token)` | The user behind a session token, or null if expired or the account is being deleted |
 | `signOut(ctx, token)` | Ends that session |
 | `purgeExpiredAuthRecords(ctx)` | Nightly job. Removes old links and expired sessions |

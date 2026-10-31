@@ -188,6 +188,12 @@ describe("sign-in links", () => {
     expect(await signInTrustedDevice(ctx, deviceToken, "a@pcu.edu.ph")).toBeNull();
     expect(await env.db.select().from(trustedDevices)).toHaveLength(0);
   });
+
+  it("never signs an admin in from a remembered browser", async () => {
+    const admin = await env.createUser({ admin: true, email: "admin@pcu.edu.ph" });
+    const { deviceToken } = await trustDevice(ctx, admin.id);
+    expect(await signInTrustedDevice(ctx, deviceToken, "admin@pcu.edu.ph")).toBeNull();
+  });
 });
 
 describe("networkOf", () => {

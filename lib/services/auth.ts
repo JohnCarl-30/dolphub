@@ -286,7 +286,7 @@ export async function trustDevice(ctx: ServiceContext, userId: string): Promise<
   return { deviceToken, expiresAt };
 }
 
-/** Starts a session without an email when this browser is remembered for the typed address. Null otherwise. */
+/** Starts a session without an email when this browser is remembered for the typed address. Null otherwise, and always null for admins so a shared PC cannot reopen an admin account. */
 export async function signInTrustedDevice(
   ctx: ServiceContext,
   deviceToken: string | undefined,
@@ -303,6 +303,7 @@ export async function signInTrustedDevice(
         gt(trustedDevices.expiresAt, nowOf(ctx)),
         eq(users.email, normalizeEmail(rawEmail)),
         isNull(users.deletedAt),
+        eq(users.isAdmin, false),
       ),
     );
   return user ? startSession(ctx, user) : null;
