@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { courseLabel } from "@/lib/course-labels";
 import type { ShowcaseCard } from "@/lib/showcase-data";
+import { ImagePlaceholder } from "./image-placeholder";
 
 export function ProfileCard({
   profile,
@@ -29,9 +30,7 @@ export function ProfileCard({
           <img src={profile.coverImageUrl} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
         </div>
       ) : (
-        <div className="flex aspect-[16/10] items-center justify-center border-y border-ink/10 bg-white text-muted">
-          <span className="font-mono text-[11px] uppercase tracking-wide">No image yet</span>
-        </div>
+        <ImagePlaceholder name={profile.displayName} />
       )}
       <div className="flex flex-1 flex-col gap-3 px-4 py-5">
         <h2 className="text-2xl font-medium tracking-tight">{profile.displayName}</h2>
