@@ -26,7 +26,9 @@ test("projects are edited separately, with photo limits and unsaved-change warni
   const routeRobots = await page.locator('meta[name="robots"]').evaluateAll((tags) => tags.map((tag) => tag.getAttribute("content")));
   expect(routeRobots.some((content) => content?.includes("noindex"))).toBe(true);
 
-  await page.getByRole("button", { name: "Add project" }).click();
+  // Nothing to save yet, so the empty state leads with adding a project.
+  await expect(page.getByRole("button", { name: "Save changes" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Add your first project" }).click();
   const title = page.getByRole("textbox", { name: "Project 1 title" });
   await title.fill("Campus map");
   await page.getByRole("textbox", { name: "Project 1 description" }).fill("A map of useful places.");
@@ -77,6 +79,7 @@ test("projects are edited separately, with photo limits and unsaved-change warni
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.locator("form").getByRole("status")).toHaveText("Saved. Your public page shows the changes now.");
   await expect(page.getByText("Add a project to appear in the home showcase.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Save changes" })).toHaveCount(0);
   await page.goto(`/u/${handle}`);
   await expect(page.getByRole("article").getByText("No projects on this page yet.")).toBeVisible();
 });
