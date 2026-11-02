@@ -2,6 +2,7 @@ import type { PublicProject } from "@/lib/services/profiles";
 import { ProjectStar } from "./project-star";
 import { revealStyle } from "./animations/reveal";
 import { AnalyticsLink } from "./analytics-link";
+import { ImagePlaceholder } from "./image-placeholder";
 
 export function ProjectList({
   projects,
@@ -78,13 +79,7 @@ export function ProjectList({
 
 function ProjectImage({ project }: { project: PublicProject }) {
   const image = project.images[0];
-  if (!image) {
-    return (
-      <div className="flex aspect-[16/9] items-center justify-center border-y border-ink/10 bg-white">
-        <span className="font-mono text-[11px] uppercase tracking-wide text-muted">No image yet</span>
-      </div>
-    );
-  }
+  if (!image) return <ImagePlaceholder name={project.title} />;
   return (
     <div className="aspect-[16/9] overflow-hidden border-y border-ink/10 bg-white">
       {/* Uploads are already re-encoded WebP under 500 KB, so they skip the image optimizer. */}

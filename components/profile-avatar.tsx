@@ -1,7 +1,8 @@
-function initialsFor(name: string) {
+export function initialsFor(name: string) {
   return name
     .split(/[\s._-]+/)
-    .filter(Boolean)
+    // Skip "&" and other symbols so "Lost & Found" reads LF, not L&.
+    .filter((part) => /[\p{L}\p{N}]/u.test(part[0]))
     .map((part) => part[0])
     .join("")
     .slice(0, 2)

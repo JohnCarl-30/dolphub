@@ -135,6 +135,12 @@ p {
   will-change: transform;
 }
 
+.image-placeholder {
+  background-color: var(--background);
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--ink) 28%, transparent) 0.75px, transparent 1px);
+  background-size: 14px 14px;
+}
+
 .home-network:has(canvas) {
   background-image: none;
   mask-image: none;
