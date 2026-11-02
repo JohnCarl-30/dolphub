@@ -16,6 +16,14 @@ test("the public landing is the same for signed-out and signed-in visitors", asy
   await expect(page.locator("h1")).toBeInViewport();
   const heroWidth = await page.locator("[data-hero]").evaluate((hero) => hero.getBoundingClientRect().width);
   expect(heroWidth).toBeLessThanOrEqual(page.viewportSize()!.width);
+  if (test.info().project.name === "phone") {
+    // Phones scroll down: every panel sits below the one before it, and nothing scrolls sideways.
+    const tops = await page.locator("[data-landing-panel]").evaluateAll((panels) => panels.map((panel) => panel.getBoundingClientRect().top));
+    expect(tops).toEqual([...tops].sort((a, b) => a - b));
+    expect(new Set(tops).size).toBe(tops.length);
+    const viewport = await page.locator(".landing-journey-viewport").evaluate((element) => element.scrollWidth - element.clientWidth);
+    expect(viewport).toBe(0);
+  }
   await expect(page.locator("[data-landing-panel] h1, [data-landing-panel] h2")).toHaveText([
     "One link for every project you've built.",
     "What",

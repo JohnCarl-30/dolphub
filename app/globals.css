@@ -312,26 +312,10 @@ p {
   }
 }
 
+/* Phones scroll down, not sideways, so the panels stack. Only the hero fills the screen; the rest take their own height. */
 @media (max-width: 1023px), (pointer: coarse) {
-  .landing-journey[data-layout="native"] .landing-journey-viewport {
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: thin;
-  }
-
-  .landing-journey[data-layout="native"] .landing-journey-track {
-    display: flex;
-    /* Without this every panel stretches to the tallest one and the hero text sinks below the fold. */
-    align-items: flex-start;
-    width: max-content;
-    max-width: none;
-  }
-
-  .landing-journey[data-layout="native"] .landing-panel {
-    flex: 0 0 100vw;
-    width: 100vw;
-    scroll-snap-align: start;
+  .landing-panel:not([data-hero]) {
+    min-height: 0;
   }
 }
 
