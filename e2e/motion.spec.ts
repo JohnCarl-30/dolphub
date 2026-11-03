@@ -114,6 +114,8 @@ test.describe("filter results", () => {
 });
 
 test.describe("landing journey", () => {
+  test.skip(({ isMobile }) => isMobile, "Phones stack the panels, so nothing slides past.");
+
   test("panel content drifts and fades in sequence while panels slide past", async ({ page }) => {
     await page.goto("/");
     const journey = page.locator(".landing-journey");
